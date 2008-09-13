@@ -37,7 +37,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
     <Reference Include="IronPython">
-      <HintPath>..\IronPython.dll</HintPath>
+      <HintPath>IronPython.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="System" />

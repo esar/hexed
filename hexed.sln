@@ -4,8 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 # SharpDevelop 2.2.1.2648
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hexed", "hexed.csproj", "{D6F74BFC-29D8-436B-9A93-B7AA58F75A32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlugin", "TestPlugin\TestPlugin.csproj", "{AB9EF224-681F-49A9-B406-BCAA55689316}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorPlugin", "CalculatorPlugin\CalculatorPlugin.csproj", "{A4BF13C9-1B17-4D0A-B236-16B740DD9F09}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HistogramPlugin", "HistogramPlugin\HistogramPlugin.csproj", "{764C2C55-0470-4015-84CC-9198298EB218}"

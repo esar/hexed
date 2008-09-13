@@ -37,18 +37,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AboutDialog.cs" />
-    <Compile Include="Buffer.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="HexViewForm.cs" />
-    <Compile Include="Icons.cs" />
     <Compile Include="PieceBuffer.cs" />
     <Compile Include="PieceBufferTest.cs" />
     <Compile Include="PluginInterface.cs" />
     <Compile Include="SelectionPanel.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="StructureDefinitionCompiler.cs" />
     <Compile Include="StructurePanel.cs" />
     <Compile Include="TreeListView.cs" />
-    <Compile Include="Workspace.cs" />
     <Compile Include="AddressDialog.cs" />
     <Compile Include="HexEd.cs" />
     <Compile Include="HexView.cs" />
