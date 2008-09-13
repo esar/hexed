@@ -1,0 +1,120 @@
+
+
+record EXE
+{
+    record IMAGEDOSHEADER
+    {
+        record uint16 magic;
+        record uint16 cblp;
+        record uint16 cp;
+        record uint16 crlc;
+        record uint16 cparhdr;
+        record uint16 minalloc;
+        record uint16 maxalloc;
+        record uint16 ss;
+        record uint16 sp;
+        record uint16 csum;
+        record uint16 ip;
+        record uint16 cs;
+        record uint16 lfarlc;
+        record uint16 ovno;
+        record uint16 res[4];
+        record uint16 oemid;
+        record uint16 oeminfo;
+        record uint16 res2[10];
+        record uint32 lfanew;
+
+    } IMAGEDOSHEADER;
+
+    record char DosStub[IMAGEDOSHEADER.lfanew - (IMAGEDOSHEADER.cparhdr * 0x10)];
+
+    record PeHeader
+    {
+        record char Signature[4];
+        record uint16 CpuType;
+        record uint16 NumSections;
+        record uint32 Time;
+        record uint32 PointerToSymbolTable;
+        record uint32 NumberOfSymbols;
+        record uint16 NtHeaderSize;
+        record PeHeaderFlags
+        {
+            record uint1 Flag1;
+            record uint1 Flag2;
+            record uint1 Flag3;
+            record uint1 Flag4;
+            record uint1 Flag5;
+            record uint1 Flag6;
+            record uint1 Flag7;
+            record uint1 Flag8;
+            record uint1 Flag9;
+            record uint1 Flag10;
+            record uint1 Flag11;
+            record uint1 Flag12;
+            record uint1 Flag13;
+            record uint1 Flag14;
+            record uint1 Flag15;
+            record uint1 Flag16;
+
+        } Flags;
+
+    } PeHeader;
+
+    record OptionalHeader
+    {
+        record uint16 Reserved;
+        record char LMajor;
+        record char LMinor;
+        record uint32 SizeOfCode;
+        record uint32 SizeOfInitData;
+        record uint32 SizeOfUninitData;
+        record uint32 EntrypointRva;
+        record uint32 BaseOfCode;
+        record uint32 BaseOfData;
+        record uint32 ImageBase;
+        record uint32 SectionAlign;
+        record uint32 FileAlign;
+        record uint16 OsMajor;
+        record uint16 OsMinor;
+        record uint16 UserMajor;
+        record uint16 UserMinor;
+        record uint16 SubsystemMajor;
+        record uint16 SubsystemMinor;
+        record uint32 Win32VersionValue;
+        record uint32 ImageSize;
+        record uint32 HeaderSize;
+        record uint32 FileChecksum;
+        record uint16 Subsystem;
+        record uint16 DllFlags;
+        record uint32 StackReserveSize;
+        record uint32 StackCommitSize;
+        record uint32 HeapReserveSize;
+        record uint32 HeapCommitSize;
+        record uint32 LoaderFlags;
+        record uint32 NumInterestingRvaSize;
+
+    } OptionalHeader;
+
+    record DataDir
+    {
+        record uint32 rva;
+        record uint32 size;
+
+    } DataDir[16];
+
+    record SectionTable
+    {
+        record char SectionName[8];
+        record uint32 VirtualSize;
+        record uint32 VirtualAddress;
+        record uint32 SizeOfRawData;
+        record uint32 PointerToRawData;
+        record uint32 PointerToRelocations;
+        record uint32 PointerToLineNumbers;
+        record uint16 NumberOfRelocations;
+        record uint16 NumberOfLineNumbers;
+        record uint32 Characteristics;
+
+    } SectionTable[PeHeader.NumSections];
+
+} EXE;

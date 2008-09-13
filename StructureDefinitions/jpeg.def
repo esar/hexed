@@ -1,0 +1,38 @@
+
+
+
+record JpegImage
+{
+    record uint16 StartOfImageMarker;
+    
+    record Segment
+    {
+        record uint16 SegmentMarker;
+        record uint16 SegmentLength;
+        record char Magic[6];
+        record char Align[2];
+        record uint16 TagMark;
+        record uint32 OffsetFirstIfd;
+        
+        record uint16 NumDirEntries;
+
+        for(int i = 0; i < NumDirEntries; ++i)
+        {
+            record DirEntry
+            {
+                record uint16 Tag;
+                record uint16 DataFormat;
+                record uint32 nComponent;
+                record uint32 OffsetData;
+
+            } Entry;
+        }
+
+        
+        record uint32 NextIfOffset;
+        
+
+    } Segment;
+
+
+} JpegImage;

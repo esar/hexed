@@ -1,0 +1,58 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>hexed</RootNamespace>
+    <AssemblyName>hexed</AssemblyName>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D6F74BFC-29D8-436B-9A93-B7AA58F75A32}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <Optimize>False</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <Optimize>True</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="nunit.framework" />
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="Microsoft.JScript" />
+    <Reference Include="DotNetMagic2005">
+      <HintPath>DotNetMagic2005.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AboutDialog.cs" />
+    <Compile Include="Buffer.cs" />
+    <Compile Include="Document.cs" />
+    <Compile Include="HexViewForm.cs" />
+    <Compile Include="Icons.cs" />
+    <Compile Include="PieceBuffer.cs" />
+    <Compile Include="PieceBufferTest.cs" />
+    <Compile Include="PluginInterface.cs" />
+    <Compile Include="SelectionPanel.cs" />
+    <Compile Include="StructureDefinitionCompiler.cs" />
+    <Compile Include="StructurePanel.cs" />
+    <Compile Include="TreeListView.cs" />
+    <Compile Include="Workspace.cs" />
+    <Compile Include="AddressDialog.cs" />
+    <Compile Include="HexEd.cs" />
+    <Compile Include="HexView.cs" />
+    <EmbeddedResource Include="treelistview.resources" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+</Project>

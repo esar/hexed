@@ -1,0 +1,80 @@
+
+
+record PCAP
+{
+    record PcapHeader
+    {
+        record uint32 MagicNumber;
+        record uint16 VersionMajor;
+        record uint16 VersionMinor;
+        record uint32 TZOffset;
+        record uint32 TimeSigFigures;
+        record uint32 SnapLength;
+        record uint32 DataLinkType;
+
+    } Header;
+
+    record PcapPacket
+    {
+        record uint32 Seconds;
+        record uint32 MicroSeconds;
+        record uint32 IncludedLength;
+        record uint32 OriginalLength;
+
+        record EthernetFrame
+        {
+            record uint48 DstMAC;
+            record uint48 SrcMAC;
+            record uint16 EtherType;
+            
+            record IPPacket
+            {
+                record uint4 Version;
+                record uint4 HeaderLength;
+                record uint8 TOS;
+                record uint16 TotalLength;
+                record uint16 ID;
+                record uint3 Flags;
+                record uint13 FragmentOffset;
+                record uint8 TTL;
+                record uint8 Protocol;
+                record uint16 Checksum;
+                record uint32 SrcIP;
+                record uint32 DstIP;
+
+                record TCPPacket
+                {
+                    record uint16 SrcPort;
+                    record uint16 DstPort;
+                    record uint32 Seq;
+                    record uint32 Ack;
+                    record uint4 DataOffset;
+                    record uint6 Reserved;
+                    record TCPFlags
+                    {
+                        record uint1 URG;
+                        record uint1 ACK;
+                        record uint1 PSH;
+                        record uint1 RST;
+                        record uint1 SYN;
+                        record uint1 FIN;
+
+                    } Flags;
+                    record uint16 Window;
+                    record uint16 Checksum;
+                    record uint16 UrgentPointer;
+                    record uint14 Options;
+                    record uint8 Padding;
+
+
+                } TCPPacket;
+
+            } IPPacket;
+
+        } EthernetFrame;
+
+
+    } Packet;    
+
+} PCAP;
+

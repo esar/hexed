@@ -1,0 +1,50 @@
+
+
+using System.Drawing;
+
+record HU01
+{
+    record FileHeader
+    {
+        record char Method[2];
+        record char Version[2];
+        record uint32 HeaderLength;
+        record uint32 Unknown1;
+        record uint32 Unknown2;
+        record uint32 Unknown3;
+        record uint32 Unknown4;
+        record uint32 Unknown5;
+        record uint32 Unknown6;
+        record uint32 DecompressedLength;
+        record uint32 Unknown7;
+
+    } FileHeader;
+
+    uint length = 0;
+    while(length < FileHeader.DecompressedLength)
+    {
+        record Block
+        {
+            record BlockHeader
+            {
+                record char BlockType[4];
+                BlockType.BackColor = Color.LightBlue;
+                record uint32 HeaderLength;
+                record uint32 DecompressedLength;
+                record uint32 Checksum;
+                Checksum.BackColor = Color.LightPink;
+                record uint32 CompressedLength;
+
+            } BlockHeader;
+
+            record uint8 huffmanTable[256];
+            record uint8 data[BlockHeader.CompressedLength - 256];
+
+        } Block;
+
+        length += Block.BlockHeader.DecompressedLength;
+    }
+} HU01;
+
+
+
