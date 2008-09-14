@@ -50,6 +50,7 @@
     <Compile Include="AddressDialog.cs" />
     <Compile Include="HexEd.cs" />
     <Compile Include="HexView.cs" />
+    <Compile Include="Win32Caret.cs" />
     <EmbeddedResource Include="treelistview.resources" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />

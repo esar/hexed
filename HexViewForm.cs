@@ -29,13 +29,17 @@ class HexViewForm : Form
 		Commands.Add("ViewGoToSelectionEnd", OnViewGoToSelectionEnd);
 		Commands.Add("ViewGoToAddress", OnViewGoToAddress);
 		Commands.Add("ViewGoToSelectionAsAddress", OnViewGoToSelectionAsAddress);
+		Commands.Add("ViewBytes", OnViewBytes);
+		Commands.Add("ViewWords", OnViewWords);
+		Commands.Add("ViewDwords", OnViewDwords);
+		Commands.Add("ViewQwords", OnViewQwords);
 		
 		View = new HexView(doc);
 		View.Dock = DockStyle.Fill;
 		View.ContextMenu += OnViewContextMenu;
 		Controls.Add(View);
-
-		Size = new Size(580, 300);
+		
+		Size = new Size(800, 300);
 
 		Document = doc;
 	}
@@ -84,12 +88,12 @@ class HexViewForm : Form
 	
 	protected void OnEditUndo(object sender, EventArgs e)
 	{
-		MessageBox.Show("Undo");
+		Document.Buffer.Undo();
 	}
 
 	protected void OnEditRedo(object sender, EventArgs e)
 	{
-		MessageBox.Show("Redo");
+		Document.Buffer.Redo();
 	}
 
 	protected void OnSelectionDefineField(object sender, EventArgs e)
@@ -140,5 +144,26 @@ class HexViewForm : Form
 	protected void OnViewGoToSelectionAsAddress(object sender, EventArgs e)
 	{
 		View.ScrollToAddress(View.Selection.AsInteger());
+	}
+	
+	protected void OnViewBytes(object sender, EventArgs e)
+	{
+		View.BytesPerWord = 1;
+		((CommandSet.Command)sender).Checked = true;
+	}
+	
+	protected void OnViewWords(object sender, EventArgs e)
+	{
+		View.BytesPerWord = 2;
+	}
+	
+	protected void OnViewDwords(object sender, EventArgs e)
+	{
+		View.BytesPerWord = 4;
+	}
+	
+	protected void OnViewQwords(object sender, EventArgs e)
+	{
+		View.BytesPerWord = 8;
 	}
 }

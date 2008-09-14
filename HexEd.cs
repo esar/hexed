@@ -314,6 +314,7 @@ class HexEdApp : Form, IPluginHost
 	private ToolStripPanel		ToolStripPanel;
 	private ToolStrip			FileToolStrip = new ToolStrip();
 	private ToolStrip			EditToolStrip = new ToolStrip();
+	private ToolStrip			ViewToolStrip = new ToolStrip();
 	private StatusStrip			StatusBar = new StatusStrip();
 	private SelectionPanel		selectionPanel = new SelectionPanel();
 	private StructurePanel		structurePanel;
@@ -364,6 +365,7 @@ class HexEdApp : Form, IPluginHost
 		Commands.Add("EditCut", null, OnUpdateUiElement);
 		Commands.Add("EditCopy", null, OnUpdateUiElement);
 		Commands.Add("EditPaste", null, OnUpdateUiElement);
+		Commands.Add("EditDelete", null, OnUpdateUiElement);
 		Commands.Add("EditOptions", null, OnUpdateUiElement);
 		
 		Commands.Add("ViewAddressRadix", null, OnUpdateUiElement);
@@ -375,6 +377,12 @@ class HexEdApp : Form, IPluginHost
 		Commands.Add("ViewGoToSelectionEnd", null, OnUpdateUiElement);
 		Commands.Add("ViewGoToAddress", null, OnUpdateUiElement);
 		Commands.Add("ViewGoToSelectionAsAddress", null, OnUpdateUiElement);
+		Commands.Add("ViewBytes", null, OnUpdateUiElement);
+		Commands.Add("ViewWords", null, OnUpdateUiElement);
+		Commands.Add("ViewDwords", null, OnUpdateUiElement);
+		Commands.Add("ViewQwords", null, OnUpdateUiElement);
+		Commands.Add("ViewLittleEndian", null, OnUpdateUiElement);
+		Commands.Add("ViewBigEndian", null, OnUpdateUiElement);
 		
 		Commands.Add("WindowSplit", OnWindowSplit, OnUpdateUiElement);
 		Commands.Add("WindowDuplicate", OnWindowDuplicate, OnUpdateUiElement);
@@ -389,23 +397,47 @@ class HexEdApp : Form, IPluginHost
 		ToolStripPanel.Dock = DockStyle.Top;
 		Controls.Add(ToolStripPanel);
 		
-		FileToolStrip.Items.Add(new ToolStripButton(null, Settings.Instance.Image("new_16.png"), OnUiCommand, "FileNew"));
-		FileToolStrip.Items.Add(new ToolStripButton(null, Settings.Instance.Image("open_16.png"), OnUiCommand, "FileOpen"));
+		FileToolStrip.Items.Add(CreateToolButton(null, "new_16.png", "FileNew", "New"));
+		FileToolStrip.Items.Add(CreateToolButton(null, "open_16.png", "FileOpen", "Open"));
 		FileToolStrip.Items.Add(new ToolStripSeparator());
-		FileToolStrip.Items.Add(new ToolStripButton(null, Settings.Instance.Image("save_16.png"), OnUiCommand, "FileSave"));
+		FileToolStrip.Items.Add(CreateToolButton(null, "save_16.png", "FileSave", "Save"));
+		FileToolStrip.Items.Add(CreateToolButton(null, "saveall_16.png", "FileSaveAll", "Save All"));
 		
-		EditToolStrip.Items.Add(new ToolStripButton(null, Settings.Instance.Image("undo_16.png"), OnUiCommand, "EditUndo"));
-		EditToolStrip.Items.Add(new ToolStripButton(null, Settings.Instance.Image("redo_16.png"), OnUiCommand, "EditRedo"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "undo_16.png", "EditUndo", "Undo"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "redo_16.png", "EditRedo", "Redo"));
 		EditToolStrip.Items.Add(new ToolStripSeparator());
-		EditToolStrip.Items.Add(new ToolStripButton(null, Settings.Instance.Image("cut_16.png"), OnUiCommand, "EditCut"));
-		EditToolStrip.Items.Add(new ToolStripButton(null, Settings.Instance.Image("copy_16.png"), OnUiCommand, "EditCopy"));
-		EditToolStrip.Items.Add(new ToolStripButton(null, Settings.Instance.Image("paste_16.png"), OnUiCommand, "EditPaste"));
-			
+		EditToolStrip.Items.Add(CreateToolButton(null, "cut_16.png", "EditCut", "Cut"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "copy_16.png", "EditCopy", "Copy"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "paste_16.png", "EditPaste", "Paste"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "delete_16.png", "EditDelete", "Delete"));
+		
+		ViewToolStrip.Items.Add(new ToolStripButton("B", null, OnUiCommand, "ViewBytes"));
+		ViewToolStrip.Items.Add(new ToolStripButton("W", null, OnUiCommand, "ViewWords"));
+		ViewToolStrip.Items.Add(new ToolStripButton("D", null, OnUiCommand, "ViewDwords"));
+		ViewToolStrip.Items.Add(new ToolStripButton("Q", null, OnUiCommand, "ViewQwords"));
+		ViewToolStrip.Items.Add(new ToolStripSeparator());
+		ViewToolStrip.Items.Add(new ToolStripButton("LE", null, OnUiCommand, "ViewLittleEndian"));
+		ViewToolStrip.Items.Add(new ToolStripButton("BE", null, OnUiCommand, "ViewBigEndian"));
+		
+		ToolStripPanel.Join(ViewToolStrip, 1);
 		ToolStripPanel.Join(EditToolStrip, 1);
 		ToolStripPanel.Join(FileToolStrip, 1);
 
 	
 		StatusBar.Dock = DockStyle.Bottom;
+		ToolStripStatusLabel label = new ToolStripStatusLabel("Ready");
+		label.Spring = true;
+		label.TextAlign = ContentAlignment.MiddleLeft;
+		StatusBar.Items.Add(label);
+		label = new ToolStripStatusLabel("Addr: 00000000");
+		//label.BorderSides = ToolStripStatusLabelBorderSides.All;
+		//label.BorderStyle = Border3DStyle.SunkenOuter;
+		StatusBar.Items.Add(label);
+		label = new ToolStripStatusLabel("OVR");
+		//label.BorderSides = ToolStripStatusLabelBorderSides.All;
+		//label.BorderStyle = Border3DStyle.SunkenOuter;
+		StatusBar.Items.Add(label);
+		
 		Controls.Add(StatusBar);
 
 		ToolStripMenuItem mi;
@@ -417,7 +449,7 @@ class HexEdApp : Form, IPluginHost
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi.DropDownItems.Add(CreateMenuItem("&Save", "save_16.png", "FileSave", Keys.Control | Keys.S));
 		mi.DropDownItems.Add(CreateMenuItem("Save &As", null, "FileSaveAs", Keys.None));
-		mi.DropDownItems.Add(CreateMenuItem("Save All", null, "FileSaveAll", Keys.Control | Keys.Shift | Keys.S));
+		mi.DropDownItems.Add(CreateMenuItem("Save All", "saveall_16.png", "FileSaveAll", Keys.Control | Keys.Shift | Keys.S));
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi.DropDownItems.Add(CreateMenuItem("Print Setup...", "printsetup_16.png", "FilePrintSetup", Keys.None));
 		mi.DropDownItems.Add(CreateMenuItem("P&rint Preview...", "printpreview_16.png", "FilePrintPreview", Keys.None));
@@ -427,14 +459,15 @@ class HexEdApp : Form, IPluginHost
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&Edit");
-		mi.DropDownItems.Add(new ToolStripMenuItem("&Undo", Settings.Instance.Image("undo_16.png"), OnUiCommand, "EditUndo"));
-		mi.DropDownItems.Add(new ToolStripMenuItem("&Redo", Settings.Instance.Image("redo_16.png"), OnUiCommand, "EditRedo"));
+		mi.DropDownItems.Add(CreateMenuItem("&Undo", "undo_16.png", "EditUndo", Keys.Control | Keys.Z));
+		mi.DropDownItems.Add(CreateMenuItem("&Redo", "redo_16.png", "EditRedo", Keys.Control | Keys.Y));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(new ToolStripMenuItem("Cu&t", Settings.Instance.Image("cut_16.png"), OnUiCommand, "EditCut"));
-		mi.DropDownItems.Add(new ToolStripMenuItem("&Copy", Settings.Instance.Image("copy_16.png"), OnUiCommand, "EditCopy"));
-		mi.DropDownItems.Add(new ToolStripMenuItem("&Paste", Settings.Instance.Image("paste_16.png"), OnUiCommand, "EditPaste"));
+		mi.DropDownItems.Add(CreateMenuItem("Cu&t", "cut_16.png", "EditCut", Keys.Control | Keys.X));
+		mi.DropDownItems.Add(CreateMenuItem("&Copy", "copy_16.png", "EditCopy", Keys.Control | Keys.C));
+		mi.DropDownItems.Add(CreateMenuItem("&Paste", "paste_16.png", "EditPaste", Keys.Control | Keys.V));
+		mi.DropDownItems.Add(CreateMenuItem("&Delete", "delete_16.png", "EditDelete", Keys.Delete));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(new ToolStripMenuItem("&Options", Settings.Instance.Image("options_16.png"), OnUiCommand, "EditOptions"));
+		mi.DropDownItems.Add(CreateMenuItem("&Options", "options_16.png", "EditOptions", Keys.None));
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&View");
@@ -495,6 +528,13 @@ class HexEdApp : Form, IPluginHost
 		return i;
 	}
 	
+	public static ToolStripButton CreateToolButton(string text, string image, string name, string tooltip)
+	{
+		ToolStripButton i = new ToolStripButton(text, Settings.Instance.Image(image), OnUiCommand, name);
+		i.ToolTipText = tooltip;
+		return i;
+	}
+	
 	protected void OnUpdateUiElement(object sender, EventArgs e)
 	{
 		CommandSet.Command cmd = (CommandSet.Command)sender;
@@ -514,6 +554,13 @@ class HexEdApp : Form, IPluginHost
 		}
 
 		items = EditToolStrip.Items.Find(cmd.Name, true);
+		foreach(ToolStripButton i in items)
+		{
+			i.Enabled = cmd.Enabled;
+			i.Checked = cmd.Checked;
+		}
+		
+		items = ViewToolStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
@@ -542,7 +589,8 @@ class HexEdApp : Form, IPluginHost
 		Commands["EditRedo"].Enabled = haveChild;
 		Commands["EditCut"].Enabled = haveChild;
 		Commands["EditCopy"].Enabled = haveChild;
-		Commands["EditPaste"].Enabled = haveChild;		
+		Commands["EditPaste"].Enabled = haveChild;
+		Commands["EditDelete"].Enabled = haveChild;
 
 		Commands["ViewAddressRadix"].Enabled = haveChild;
 		Commands["ViewDataRadix"].Enabled = haveChild;
@@ -553,7 +601,7 @@ class HexEdApp : Form, IPluginHost
 		Commands["ViewGoToSelectionEnd"].Enabled = haveChild;
 		Commands["ViewGoToAddress"].Enabled = haveChild;
 		Commands["ViewGoToSelectionAsAddress"].Enabled = haveChild;
-		
+				
 		Commands["WindowSplit"].Enabled = (ActiveMdiChild != null);		
 		Commands["WindowDuplicate"].Enabled = (ActiveMdiChild != null);
 		Commands["WindowTileHorizontally"].Enabled = (MdiChildren.Length > 1);
@@ -645,9 +693,9 @@ class HexEdApp : Form, IPluginHost
 		if(ActiveMdiChild != null && items[0].Tag != null)
 		{
 			Record r = (Record)items[0].Tag;
-			((HexViewForm)ActiveMdiChild).View.Selection.Set(	(long)r.Position / 8,
-			                                               (long)( r.Position + (r.Length * r.ArrayLength)) / 8);
-			((HexViewForm)ActiveMdiChild).View.EnsureVisible((long)r.Position / 8);
+			((HexViewForm)ActiveMdiChild).View.Selection.Set(	(long)r.Position,
+			                                               (long)( r.Position + (r.Length * r.ArrayLength)));
+			((HexViewForm)ActiveMdiChild).View.EnsureVisible((long)r.Position);
 		}
 	}
 
