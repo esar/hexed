@@ -484,8 +484,10 @@ public class HexView : Control
 		long firstLine = (long)(pixelOffset / LayoutDimensions.WordSize.Height);
 		long dataOffset = firstLine * LayoutDimensions.BitsPerRow;
 
-		if(address < dataOffset || address >= dataOffset + LayoutDimensions.BitsPerRow * (ClientSize.Height / LayoutDimensions.WordSize.Height))
+		if(address < dataOffset)
 			ScrollToAddress(address);
+		else if(address >= dataOffset + (LayoutDimensions.BitsPerRow * (LayoutDimensions.VisibleLines - 2)))
+			ScrollToAddress(address - (LayoutDimensions.BitsPerRow * (LayoutDimensions.VisibleLines - 2)));
 	}
 
 	public void ScrollToAddress(long address)
@@ -969,15 +971,28 @@ public class HexView : Control
 		if(hit.Type == HexViewHit.HitType.Data)
 		{
 			//Selection.Start = hit.Address;
+			Capture = true;
 			Selection.Set(hit.Address, hit.Address);
 		}
 	}
 
 	protected void OnDrag(MouseEventArgs e)
 	{
-		HexViewHit hit = HitTest(new Point(e.X, e.Y));
-		if(hit.Type == HexViewHit.HitType.Data || hit.Type == HexViewHit.HitType.DataSelection)
-			Selection.Set(DragStartHit.Address, hit.Address + (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
+		if(e.Y < 0)
+		{
+			OnScroll(this, new ScrollEventArgs(ScrollEventType.SmallDecrement, 1));
+		}
+		else if(e.Y > ClientRectangle.Height)
+		{
+			OnScroll(this, new ScrollEventArgs(ScrollEventType.SmallIncrement, 1));
+//			Selection.Set(DragStartHit.Address, Selection.End + (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
+		}
+		else
+		{
+			HexViewHit hit = HitTest(new Point(e.X, e.Y));
+			if(hit.Type == HexViewHit.HitType.Data || hit.Type == HexViewHit.HitType.DataSelection)
+				Selection.Set(DragStartHit.Address, hit.Address + (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
+		}
 	}
 
 	protected void OnEndDrag(MouseEventArgs e)
@@ -988,6 +1003,8 @@ public class HexView : Control
 		{
 			Selection.End = hit.Address;
 		}
+		
+		Capture = false;
 	}
 
 	protected override bool IsInputKey(Keys keys)
@@ -1009,6 +1026,7 @@ public class HexView : Control
 					else
 						Selection.Set(Selection.End + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
 				}
+				EnsureVisible(Selection.End);
 				break;
 			case Keys.Left:
 				if(e.Shift)
@@ -1020,18 +1038,37 @@ public class HexView : Control
 					else
 						Selection.Set(Selection.Start - LayoutDimensions.BitsPerDigit, Selection.Start - LayoutDimensions.BitsPerDigit);
 				}
+				EnsureVisible(Selection.End);
 				break;
 			case Keys.Up:
 				if(e.Shift)
 					Selection.End -= LayoutDimensions.BitsPerRow;
 				else
 					Selection.Set(Selection.Start - LayoutDimensions.BitsPerRow, Selection.Start - LayoutDimensions.BitsPerRow);
+				EnsureVisible(Selection.End);
 				break;
 			case Keys.Down:
 				if(e.Shift)
 					Selection.End += LayoutDimensions.BitsPerRow;
 				else
 					Selection.Set(Selection.Start + LayoutDimensions.BitsPerRow, Selection.Start + LayoutDimensions.BitsPerRow);
+				EnsureVisible(Selection.End);
+				break;
+			case Keys.PageDown:
+				if(e.Shift)
+					Selection.End += LayoutDimensions.VisibleLines * LayoutDimensions.BitsPerRow;
+				else
+					Selection.Set(Selection.Start + LayoutDimensions.VisibleLines * LayoutDimensions.BitsPerRow,
+					              Selection.Start + LayoutDimensions.VisibleLines * LayoutDimensions.BitsPerRow);
+				EnsureVisible(Selection.End);
+				break;
+			case Keys.PageUp:
+				if(e.Shift)
+					Selection.End -= LayoutDimensions.VisibleLines * LayoutDimensions.BitsPerRow;
+				else
+					Selection.Set(Selection.Start - LayoutDimensions.VisibleLines * LayoutDimensions.BitsPerRow,
+					              Selection.Start - LayoutDimensions.VisibleLines * LayoutDimensions.BitsPerRow);
+				EnsureVisible(Selection.End);
 				break;
 			default:
 				break;

@@ -121,12 +121,16 @@ class HexViewForm : Form
 
 	protected void OnViewGoToBottom(object sender, EventArgs e)
 	{
-		View.ScrollToAddress(Document.Buffer.Length - 1);
+		View.Selection.Set((Document.Buffer.Length - 1) * 8, (Document.Buffer.Length - 1) * 8);
+		View.EnsureVisible(View.Selection.Start);
+//		View.ScrollToAddress(Document.Buffer.Length - 1);
 	}
 
 	protected void OnViewGoToSelectionStart(object sender, EventArgs e)
 	{
-		View.ScrollToAddress(View.Selection.Start);
+		View.Selection.Set(0, 0);
+		View.EnsureVisible(0);
+//		View.ScrollToAddress(View.Selection.Start);
 	}
 
 	protected void OnViewGoToSelectionEnd(object sender, EventArgs e)

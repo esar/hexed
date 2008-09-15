@@ -476,8 +476,8 @@ class HexEdApp : Form, IPluginHost
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi2 = new ToolStripMenuItem("Go To", null, null, "ViewGoTo");
 		mi.DropDownItems.Add(mi2);
-		mi2.DropDownItems.Add(new ToolStripMenuItem("Top", null, OnUiCommand, "ViewGoToTop"));
-		mi2.DropDownItems.Add(new ToolStripMenuItem("Bottom", null, OnUiCommand, "ViewGoToBottom"));
+		mi2.DropDownItems.Add(CreateMenuItem("Top", null, "ViewGoToTop", Keys.Control | Keys.Home));
+		mi2.DropDownItems.Add(CreateMenuItem("Bottom", null, "ViewGoToBottom", Keys.Control | Keys.End));
 		mi2.DropDownItems.Add(new ToolStripMenuItem("Selection Start", null, OnUiCommand, "ViewGoToSelectionStart"));
 		mi2.DropDownItems.Add(new ToolStripMenuItem("Selection End", null, OnUiCommand, "ViewGoToSelectionEnd"));
 		mi2.DropDownItems.Add(new ToolStripMenuItem("Address...", null, OnUiCommand, "ViewGoToAddress"));
