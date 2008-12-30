@@ -239,19 +239,11 @@ using System.Drawing;
     	                  uint arrayLength) : base(name, pos, length, arrayLength) {}
     	public static implicit operator uint(UintRecord r)
     	{
-//    		uint x = 0;    		
-//    		for(ulong i = 0; i < r.Length / 8; ++i)
-//    			x |= (uint)r.Document.Buffer[(long)(r.Position/8 + i)] << (int)(i * 8);
-//    		return x;
 			return (uint)r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
     	}
 
     	public static implicit operator ulong(UintRecord r)
     	{
-//    		ulong x = 0;
-//    		for(ulong i = 0; i < r.Length / 8; ++i)
-//    			x |= (ulong)r.Document.Buffer[(long)(r.Position/8 + i)] << (int)(i * 8);
-//    		return x;
 			return r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
     	}
 

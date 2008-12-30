@@ -27,6 +27,7 @@ public class Settings
 //			BasePath = BasePath.Substring(0, BasePath.LastIndexOf('\\'));
 //		}
 		
+		// TODO: Fix this hard coded path (mono bodge)
 		BasePath = "/home/stephen/projects/dotnet/hexed";
 	}
 	

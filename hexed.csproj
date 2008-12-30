@@ -58,7 +58,6 @@
     <Compile Include="Settings.cs" />
     <Compile Include="StructureDefinitionCompiler.cs" />
     <Compile Include="StructurePanel.cs" />
-    <Compile Include="TreeListView.cs" />
     <Compile Include="AddressDialog.cs" />
     <Compile Include="HexEd.cs" />
     <Compile Include="HexView.cs" />

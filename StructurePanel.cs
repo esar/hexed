@@ -154,36 +154,36 @@ class StructurePanel : Panel
 		_NodeControlType = new Aga.Controls.Tree.NodeControls.NodeTextBox();
 
 	
-		this._TreeView.AllowColumnReorder = true;
-		this._TreeView.AutoRowHeight = true;
-//		this._TreeView.BackColor = System.Drawing.SystemColors.Window;
-		this._TreeView.Columns.Add(_TreeColumnName);
-		this._TreeView.Columns.Add(_TreeColumnValue);
-		this._TreeView.Columns.Add(_TreeColumnType);
-		this._TreeView.Cursor = System.Windows.Forms.Cursors.Default;
-//		this._TreeView.DefaultToolTipProvider = null;
-//		this._TreeView.DragDropMarkColor = System.Drawing.Color.Black;
-		this._TreeView.FullRowSelect = true;
-		this._TreeView.GridLineStyle = ((Aga.Controls.Tree.GridLineStyle)((Aga.Controls.Tree.GridLineStyle.Horizontal | Aga.Controls.Tree.GridLineStyle.Vertical)));
-		this._TreeView.LineColor = System.Drawing.SystemColors.ControlDark;
-		this._TreeView.LoadOnDemand = true;
-		this._TreeView.Model = null;
-		this._TreeView.Name = "_TreeView";
-		this._TreeView.NodeControls.Add(this._NodeControlIcon);
-		this._TreeView.NodeControls.Add(this._NodeControlName);
-		this._TreeView.NodeControls.Add(this._NodeControlValue);
-		this._TreeView.NodeControls.Add(this._NodeControlType);
-//		this._TreeView.SelectedNode = null;
-		this._TreeView.ShowNodeToolTips = true;
-		this._TreeView.UseColumns = true;
+		_TreeView.AllowColumnReorder = true;
+		_TreeView.AutoRowHeight = true;
+//		_TreeView.BackColor = System.Drawing.SystemColors.Window;
+		_TreeView.Columns.Add(_TreeColumnName);
+		_TreeView.Columns.Add(_TreeColumnValue);
+		_TreeView.Columns.Add(_TreeColumnType);
+		_TreeView.Cursor = System.Windows.Forms.Cursors.Default;
+//		_TreeView.DefaultToolTipProvider = null;
+//		_TreeView.DragDropMarkColor = System.Drawing.Color.Black;
+		_TreeView.FullRowSelect = true;
+		_TreeView.GridLineStyle = ((Aga.Controls.Tree.GridLineStyle)((Aga.Controls.Tree.GridLineStyle.Horizontal | Aga.Controls.Tree.GridLineStyle.Vertical)));
+		_TreeView.LineColor = System.Drawing.SystemColors.ControlDark;
+		_TreeView.LoadOnDemand = true;
+		_TreeView.Model = null;
+		_TreeView.Name = "_TreeView";
+		_TreeView.NodeControls.Add(this._NodeControlIcon);
+		_TreeView.NodeControls.Add(this._NodeControlName);
+		_TreeView.NodeControls.Add(this._NodeControlValue);
+		_TreeView.NodeControls.Add(this._NodeControlType);
+//		_TreeView.SelectedNode = null;
+		_TreeView.ShowNodeToolTips = true;
+		_TreeView.UseColumns = true;
 		_TreeView.AllowDrop = true;
 		_TreeView.ItemDrag += OnItemDrag;
 		_TreeView.DragOver += OnDragOver;
 		_TreeView.DragDrop += OnDragDrop;
 		_TreeView.SelectionChanged += OnSelectionChanged;
-//		this._TreeView.NodeMouseDoubleClick += new System.EventHandler<Aga.Controls.Tree.TreeNodeAdvMouseEventArgs>(this._treeView_NodeMouseDoubleClick);
-//		this._TreeView.ColumnClicked += new System.EventHandler<Aga.Controls.Tree.TreeColumnEventArgs>(this._treeView_ColumnClicked);
-//		this._TreeView.MouseClick += new System.Windows.Forms.MouseEventHandler(this._treeView_MouseClick);
+//		_TreeView.NodeMouseDoubleClick += new System.EventHandler<Aga.Controls.Tree.TreeNodeAdvMouseEventArgs>(this._treeView_NodeMouseDoubleClick);
+//		_TreeView.ColumnClicked += new System.EventHandler<Aga.Controls.Tree.TreeColumnEventArgs>(this._treeView_ColumnClicked);
+//		_TreeView.MouseClick += new System.Windows.Forms.MouseEventHandler(this._treeView_MouseClick);
 		
 		_NodeControlIcon.DataPropertyName = "Icon";
 		_NodeControlIcon.ParentColumn = _TreeColumnName;
@@ -202,19 +202,6 @@ class StructurePanel : Panel
 		_TreeView.Dock = DockStyle.Fill;
 		Controls.Add(_TreeView);
 		
-//		Tree.LabelEdit = true;
-//		Tree.AllowDrop = true;
-//		Tree.Columns.Add("Name");
-//		Tree.Columns.Add("Value");
-//		Tree.Columns.Add("Type");
-//		Tree.FullRowSelect = true;
-//		Tree.GridLines = true;
-//
-//		Tree.ItemDrag += new ItemDragEventHandler(OnItemDrag);
-//		Tree.DragEnter += new DragEventHandler(OnDragEnter);
-//		Tree.DragOver += new DragEventHandler(OnDragOver);
-//		Tree.DragDrop += new DragEventHandler(OnDragDrop);
-		
 		ToolBar = new ToolStrip();
 		ToolBar.Dock = DockStyle.Top;
 		ToolBar.GripStyle = ToolStripGripStyle.Hidden;
@@ -224,56 +211,16 @@ class StructurePanel : Panel
 	}
 
 	
-	protected void AddRecords(TreeListViewChildItemCollection nodes, Record record, ref int count)
-	{
-		/*
-		TreeListViewItem node;
-		
-		if(record.ArrayLength > 1)
-		{
-			node = nodes.Add(record.Name + "[" + record.ArrayLength + "]");
-			if(record.ArrayElements != null)
-			{
-				int i = 0;
-				foreach(Record r in record.ArrayElements)
-				{
-					TreeListViewItem n = node.ChildItems.Add(record.Name + "[" + (i++) + "]");
-					n.Tag = r;
-					for(int j = 0; j < r._Children.Count; ++j)
-						AddRecords(n.ChildItems, r._Children[j], ref count);
-				}
-			}
-		}
-		else
-			node = nodes.Add(record.Name);
-		node.BackColor = record.BackColor;
-		node.SubItems.Add(record.ToString());
-		node.SubItems.Add(record.GetType().ToString());
-//		if((count++ & 1) == 1 && record.BackColor == Color.Transparent)
-//			node.BackColor = Color.Gainsboro;
-		node.Tag = record;
-		for(int i = 0; i < record._Children.Count; ++i)
-			AddRecords(node.ChildItems, record._Children[i], ref count);
-		*/
-	}
 	
 	protected void OnOpenStructureDef(object sender, EventArgs e)
 	{
 		FileDialog dlg = new OpenFileDialog();
 		
-		
 		dlg.Title = "Open Structure Definition";
 		if(dlg.ShowDialog() == DialogResult.OK)
 		{
-//			Tree.Items.Clear();
-			
 			Host.ActiveView.Document.ApplyStructureDefinition(dlg.FileName);
 			_TreeView.Model = new StructureTreeModel(Host);
-			
-			int count = 1;
-//			TreeListViewItem item = Tree.Items.Add("Root");
-//			for(int i = 0; i < Host.ActiveView.Document.Structure._Children.Count; ++i)
-//				AddRecords(item.ChildItems, Host.ActiveView.Document.Structure._Children[i], ref count);
 		}
 	}
 

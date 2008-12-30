@@ -427,12 +427,8 @@ class HexEdApp : Form, IPluginHost
 		label.TextAlign = ContentAlignment.MiddleLeft;
 		StatusBar.Items.Add(label);
 		label = new ToolStripStatusLabel("Addr: 00000000");
-		//label.BorderSides = ToolStripStatusLabelBorderSides.All;
-		//label.BorderStyle = Border3DStyle.SunkenOuter;
 		StatusBar.Items.Add(label);
 		label = new ToolStripStatusLabel("OVR");
-		//label.BorderSides = ToolStripStatusLabelBorderSides.All;
-		//label.BorderStyle = Border3DStyle.SunkenOuter;
 		StatusBar.Items.Add(label);
 		
 		Controls.Add(StatusBar);
@@ -472,7 +468,6 @@ class HexEdApp : Form, IPluginHost
 		mi.DropDownItems.Add(new RadixMenu("Data Radix", "ViewDataRadix", OnUiCommand));
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi2 = new ToolStripMenuItem("Go To", null, null, "ViewGoTo");
-//		mi.DropDownItems.Add(mi2);
 		mi2.DropDownItems.Add(CreateMenuItem("Top", null, "ViewGoToTop", Keys.Control | Keys.Home));
 		mi2.DropDownItems.Add(CreateMenuItem("Bottom", null, "ViewGoToBottom", Keys.Control | Keys.End));
 		mi2.DropDownItems.Add(new ToolStripMenuItem("Selection Start", null, OnUiCommand, "ViewGoToSelectionStart"));
@@ -497,7 +492,6 @@ class HexEdApp : Form, IPluginHost
 		MainMenuStrip.Items.Add(mi);
 		
 
-//		ToolStripMenuItem mi;
 		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Cu&t");
 		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("&Copy");
 		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("&Paste");

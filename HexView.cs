@@ -112,11 +112,6 @@ public class HexView : Control
 			if(Length <= 0 || Length > 64)
 				throw new InvalidCastException();
 
-//			long a = 0;
-//			for(int i = 0; i < Length / 8; ++i)
-//				a |= (long)View.Document.Buffer[Start/8 + i] << (i*8);
-
-//			return a;
 			return (long)View.Document.GetInteger(Start, (int)Length, View.Endian);
 		}
 
@@ -213,7 +208,7 @@ public class HexView : Control
 	}
 
 	public delegate void ContextMenuEventHandler(object sender, ContextMenuEventArgs e);
-	public event ContextMenuEventHandler ContextMenu;
+	public new event ContextMenuEventHandler ContextMenu;
 
 	
 	private class Dimensions
@@ -951,7 +946,6 @@ public class HexView : Control
 
 		if(hit.Type == HexViewHit.HitType.Data)
 		{
-			//Selection.Start = hit.Address;
 			Capture = true;
 			Selection.Set(hit.Address, hit.Address);
 		}
@@ -1091,6 +1085,7 @@ public class HexView : Control
 						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
 						break;
 					case EditMode.Insert:
+						Document.Buffer.Insert((byte)x);
 						break;
 				}
 			}
@@ -1287,10 +1282,7 @@ public class HexView : Control
 
 			p = CreateRoundedSelectionPath(Selection.Start, Selection.End, (float)0, AddressToClientPointAscii);
 			e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 200, 255, 200)), p);
-			e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);
-			
-		//	e.Graphics.FillPath(new SolidBrush(Color.FromKnownColor(KnownColor.Highlight)), p);
-		// 	e.Graphics.DrawPath(new Pen(Color.FromKnownColor(KnownColor.Highlight)), p);
+			e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);			
 		}
 
 		string str;
@@ -1298,7 +1290,7 @@ public class HexView : Control
 		{
 			str = IntToRadixString((ulong)dataOffset, _AddressRadix, LayoutDimensions.NumAddressDigits);
 			RectangleF rect = new RectangleF(LayoutDimensions.AddressRect.Left, (float)drawingOffset + line * LayoutDimensions.WordSize.Height, LayoutDimensions.AddressRect.Width, LayoutDimensions.WordSize.Height);
-			e.Graphics.DrawString(str, _Font, _Brush, rect.Location); //rect);
+			e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
 
 
 			str = "";
@@ -1311,43 +1303,16 @@ public class HexView : Control
 			int off = 0;
 			foreach(RectangleF wordRect in LayoutDimensions.WordRects)
 			{
-//				long x = 0;
-//				for(int j = 0; j < _BytesPerWord; ++j)
-//					x |= (long)Document.Buffer[dataOffset + off + j] << (j*8);
-//
-//				str = IntToRadixString(x, _DataRadix, LayoutDimensions.NumWordDigits);
 				str = IntToRadixString(GetWord((dataOffset + off) * 8), _DataRadix, LayoutDimensions.NumWordDigits);
-
 				e.Graphics.DrawString(str, _Font, _Brush, wordRect.Left, rect.Top);
 				off += _BytesPerWord;
 			}
-				
-/*			int off = 0;
-			for(int group = 0; group < LayoutDimensions.GroupsPerRow; ++group)
-			{
-				for(int i = 0; i < _WordsPerGroup; ++i)
-				{
-					long x = 0;
-					for(int j = 0; j < _BytesPerWord; ++j)
-						x |= (long)Document.Buffer[dataOffset + off + (j * _BytesPerWord)] << (j*8);
-
-					//str = DataRadixString[Document.Buffer[dataOffset + i]];
-					str = IntToRadixString(x, _DataRadix, LayoutDimensions.NumWordDigits);
-
-					e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
-					rect.Location = new PointF(rect.Location.X + LayoutDimensions.WordSize.Width + LayoutDimensions.WordSpacing, rect.Location.Y);
-					off += _BytesPerWord;
-				}
-				
-				rect.Location = new PointF(rect.Location.X + LayoutDimensions.WordGroupSpacing, rect.Location.Y);
-			}*/
 
 			str = "";
 			for(long i = 0; i < LayoutDimensions.BitsPerRow / 8; ++i)
 				str += AsciiChar[Document.Buffer[dataOffset + i]];
 			rect = new RectangleF(LayoutDimensions.AsciiRect.Left, (float)drawingOffset + line * LayoutDimensions.WordSize.Height, LayoutDimensions.AsciiRect.Width, LayoutDimensions.WordSize.Height);
 			e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
-//			e.Graphics.DrawRectangle(new Pen(Color.Red), rect.Left, rect.Top, rect.Width, rect.Height);
 
 			dataOffset += LayoutDimensions.BitsPerRow / 8;
 		}
@@ -1355,6 +1320,7 @@ public class HexView : Control
 
 
 
+#if !MONO
 	[StructLayout(LayoutKind.Sequential)]
 	public class RECT
 	{
@@ -1376,7 +1342,6 @@ public class HexView : Control
 		}
 	}
 
-#if !MONO
 	[DllImport("user32.dll")]
 	private static extern int ScrollWindowEx(	System.IntPtr hWnd, 
 												int dx, 

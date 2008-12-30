@@ -94,7 +94,6 @@ class HexViewForm : Form
 				menu.Items.Add(HexEdApp.CreateMenuItem("Define Field", null, "SelectionDefineField", Keys.None));
 				menu.Items.Add(HexEdApp.CreateMenuItem("Go To Selection As Address", null, "ViewGoToSelectionAsAddress", Keys.None));
 				menu.Show(this, e.Position);
-//				mi.Click += new EventHandler(OnSelectionContextMenuDefineField);
 				break;
 		}
 	}
@@ -136,14 +135,12 @@ class HexViewForm : Form
 	{
 		View.Selection.Set((Document.Buffer.Length - 1) * 8, (Document.Buffer.Length - 1) * 8);
 		View.EnsureVisible(View.Selection.Start);
-//		View.ScrollToAddress(Document.Buffer.Length - 1);
 	}
 
 	protected void OnViewGoToSelectionStart(object sender, EventArgs e)
 	{
 		View.Selection.Set(0, 0);
 		View.EnsureVisible(0);
-//		View.ScrollToAddress(View.Selection.Start);
 	}
 
 	protected void OnViewGoToSelectionEnd(object sender, EventArgs e)
