@@ -209,6 +209,7 @@ public class HexView : Control
 
 	public delegate void ContextMenuEventHandler(object sender, ContextMenuEventArgs e);
 	public new event ContextMenuEventHandler ContextMenu;
+	public event EventHandler EditModeChanged;
 
 	
 	private class Dimensions
@@ -269,7 +270,7 @@ public class HexView : Control
 	public EditMode EditMode
 	{
 		get { return _EditMode; }
-		set { _EditMode = value; }
+		set { _EditMode = value; if(EditModeChanged != null) EditModeChanged(this, new EventArgs()); }
 	}
 	
 	public Endian Endian
@@ -511,7 +512,8 @@ public class HexView : Control
 		ScrollToPixel(NewPosition);
 	}
 
-	protected string IntToRadixString(ulong x, uint radix, int minLength)
+	// TODO: Move IntToRadixString to a utility class
+	public string IntToRadixString(ulong x, uint radix, int minLength)
 	{
 		string str = "";
 		const string digit		= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -555,6 +557,56 @@ public class HexView : Control
 		}
 		
 		return x;
+	}
+	
+	private void UpdateWord(long address, int newDigitVal)
+	{
+		ulong word = GetWord(address);
+		
+		// Work out which digit of the word we're changing
+		long digit = address - (address / LayoutDimensions.BitsPerRow) * LayoutDimensions.BitsPerRow;
+		int wordAddr = (int)(digit / 8) / _BytesPerWord;
+		digit -= wordAddr * _BytesPerWord * 8;
+		digit /= (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits;
+		
+		digit = LayoutDimensions.NumWordDigits - digit - 1;
+
+		// Find the old value of the digit
+		ulong oldDigitVal = word;
+		oldDigitVal /= (ulong)Math.Pow(_DataRadix, digit);
+		oldDigitVal %= _DataRadix;
+		
+		// Update the word to reflect the digit's new value
+		word -= oldDigitVal * (ulong)Math.Pow(_DataRadix, digit);
+		word += (ulong)newDigitVal * (ulong)Math.Pow(_DataRadix, digit);
+		
+		// Update the buffer
+		byte[] data = new byte[_BytesPerWord];
+		if(_Endian == Endian.Little)
+		{
+			for(int i = 0; i < _BytesPerWord; ++i)
+			{
+				data[i] = (byte)(word & 0xFF);
+				word >>= 8;
+			}
+		}
+		else
+		{
+			for(int i = 0; i < _BytesPerWord; ++i)
+			{
+				data[_BytesPerWord - i - 1] = (byte)(word & 0xFF);
+				word >>= 8;
+			}
+		}
+		
+		address /= 8;
+		address = (address / _BytesPerWord) * _BytesPerWord;
+		
+		PieceBuffer.Mark a = Document.Buffer.CreateMarkAbsolute(address);
+		PieceBuffer.Mark b = Document.Buffer.CreateMarkAbsolute(address + _BytesPerWord);
+		Document.Buffer.Insert(a, b, data, _BytesPerWord);
+		Document.Buffer.DestroyMark(a);
+		Document.Buffer.DestroyMark(b);
 	}
 	
 	private RectangleF MeasureSubString(Graphics graphics, string text, int start, int length, Font font)
@@ -1045,6 +1097,12 @@ public class HexView : Control
 					              Selection.Start - LayoutDimensions.VisibleLines * LayoutDimensions.BitsPerRow);
 				EnsureVisible(Selection.End);
 				break;
+			case Keys.Insert:
+				if(_EditMode == EditMode.OverWrite)
+					EditMode = EditMode.Insert;
+				else
+					EditMode = EditMode.OverWrite;
+				break;
 			default:
 				break;
 		}
@@ -1078,10 +1136,7 @@ public class HexView : Control
 				switch(_EditMode)
 				{
 					case EditMode.OverWrite:
-						byte oldX = Document.Buffer[Selection.Start / 8];
-						PieceBuffer.Mark a = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
-						PieceBuffer.Mark b = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8 + 1);
-						Document.Buffer.Insert(a, b, (byte)x);
+						UpdateWord(Selection.Start, x);
 						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
 						break;
 					case EditMode.Insert:

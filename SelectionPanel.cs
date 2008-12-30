@@ -5,6 +5,7 @@ using System.Windows.Forms;
 
 class SelectionPanel : ListView
 {
+	private ListViewItem.ListViewSubItem	lengthItem = null;
 	private ListViewItem.ListViewSubItem	integerItem = null;
 	private ListViewItem.ListViewSubItem	floatItem = null;
 	private ListViewItem.ListViewSubItem	asciiItem = null;
@@ -25,6 +26,10 @@ class SelectionPanel : ListView
 
 		ListViewItem i;
 
+		i = Items.Add("Length");
+		i.UseItemStyleForSubItems = false;
+		lengthItem = i.SubItems.Add("");
+		
 		i = Items.Add("Integer");
 		i.UseItemStyleForSubItems = false;
 		integerItem = i.SubItems.Add("");
@@ -48,6 +53,8 @@ class SelectionPanel : ListView
 
 	public void Update(HexView view)
 	{
+		lengthItem.Text = (view.Selection.Length / 8).ToString() + "." + (view.Selection.Length % 8).ToString();
+		
 		try
 		{
 			integerItem.Text = view.Selection.AsInteger().ToString();

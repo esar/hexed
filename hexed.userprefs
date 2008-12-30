@@ -2,14 +2,16 @@
   <Files>
     <File name="Welcome" />
     <File name="../../mono-2.0.1/mcs/class/Managed.Windows.Forms/System.Windows.Forms/Form.cs" line="1604" column="23" />
-    <File name="HexEd.cs" line="475" column="3" />
-    <File name="HexView.cs" line="343" column="1" />
-    <File name="StructureDefinitionCompiler.cs" line="102" column="39" />
-    <File name="StructurePanel.cs" line="137" column="47" />
-    <File name="HexViewForm.cs" line="173" column="1" />
+    <File name="HexEd.cs" line="757" column="1" />
+    <File name="HexView.cs" line="1316" column="1" />
+    <File name="StructureDefinitionCompiler.cs" line="464" column="1" />
+    <File name="StructurePanel.cs" line="49" column="1" />
+    <File name="HexViewForm.cs" line="144" column="1" />
     <File name="ManagedCaret.cs" line="75" column="1" />
     <File name="PieceBuffer.cs" line="1346" column="42" />
-    <File name="PieceBufferTest.cs" line="725" column="60" />
+    <File name="PieceBufferTest.cs" line="286" column="34" />
+    <File name="Settings.cs" line="30" column="49" />
+    <File name="TreeListView.cs" line="217" column="1" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
@@ -18,14 +20,23 @@
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
-      <Node expanded="True" />
+      <Node expanded="True">
+        <Node name="hexed" expanded="True" selected="True">
+          <Node name="HexView" expanded="True" />
+          <Node name="PieceBuffer" expanded="True" />
+        </Node>
+      </Node>
     </ViewMemento>
     <ViewMemento id="MonoDevelop.NUnit.TestPad">
-      <Node expanded="True" />
+      <Node expanded="True">
+        <Node name="hexed" expanded="True">
+          <Node name="PieceBufferTest" selected="True" />
+        </Node>
+      </Node>
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PieceBuffer.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/TreeListView.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

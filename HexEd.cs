@@ -317,6 +317,9 @@ class HexEdApp : Form, IPluginHost
 	private SelectionPanel		selectionPanel = new SelectionPanel();
 	private StructurePanel		structurePanel;
 	private BookmarkPanel		bookmarkPanel = new BookmarkPanel();
+	
+	private ToolStripStatusLabel	EditModeLabel;
+	private ToolStripStatusLabel	AddressLabel;
 
 	private static CommandSet	Commands = new CommandSet();
 	
@@ -426,10 +429,10 @@ class HexEdApp : Form, IPluginHost
 		label.Spring = true;
 		label.TextAlign = ContentAlignment.MiddleLeft;
 		StatusBar.Items.Add(label);
-		label = new ToolStripStatusLabel("Addr: 00000000");
-		StatusBar.Items.Add(label);
-		label = new ToolStripStatusLabel("OVR");
-		StatusBar.Items.Add(label);
+		AddressLabel = new ToolStripStatusLabel("Addr: ");
+		StatusBar.Items.Add(AddressLabel);
+		EditModeLabel = new ToolStripStatusLabel("OVR");
+		StatusBar.Items.Add(EditModeLabel);
 		
 		Controls.Add(StatusBar);
 
@@ -645,10 +648,36 @@ class HexEdApp : Form, IPluginHost
 	protected void OnSelectionChanged(object sender, EventArgs e)
 	{
 		if(ActiveMdiChild != null)
-			if(((HexViewForm)ActiveMdiChild).View.Selection == sender)
-				selectionPanel.Update(((HexViewForm)ActiveMdiChild).View);
+		{
+			HexView view = ((HexViewForm)ActiveMdiChild).View;
+			if(view.Selection == sender)
+			{
+				selectionPanel.Update(view);
+				if(view.Selection.Length == 0)
+					AddressLabel.Text = "Addr: " + view.IntToRadixString((ulong)(view.Selection.Start / 8), view.AddressRadix, 0);
+				else
+					AddressLabel.Text = "Addr: " + 
+										view.IntToRadixString((ulong)(view.Selection.Start / 8), view.AddressRadix, 0) + 
+										" -> " + 
+										view.IntToRadixString((ulong)(view.Selection.End / 8), view.AddressRadix, 0);
+			}
+		}
 	}
 
+	protected void OnEditModeChanged(object sender, EventArgs e)
+	{
+		if(ActiveMdiChild != null)
+		{
+			if(((HexViewForm)ActiveMdiChild).View == sender)
+			{
+				if(((HexViewForm)ActiveMdiChild).View.EditMode == EditMode.Insert)
+					EditModeLabel.Text = "INS";
+				else
+					EditModeLabel.Text = "OVR";
+			}
+		}		
+	}
+	
 	protected override void OnMdiChildActivate(EventArgs e)
 	{
 		base.OnMdiChildActivate(e);
@@ -686,6 +715,7 @@ class HexEdApp : Form, IPluginHost
 			form.Text = ofd.FileName;
 			form.MdiParent = this;
 			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
+			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
 			form.Show();
 		}
 	}
@@ -696,6 +726,7 @@ class HexEdApp : Form, IPluginHost
 		form.Text = ActiveMdiChild.Text;
 		form.MdiParent= this;
 		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
+		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
 		form.Show();
 	}
 	
