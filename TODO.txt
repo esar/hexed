@@ -1,0 +1,21 @@
+
+HexView
+	ManagedCaret
+		+ Fix doubled caret when moving
+
+	Input
+		+ Implement selection in ascii pane
+		+ Implement overwrite mode
+		+ Implement insert mode
+
+		Keys
+			+ Arrows
+			+ PageUp / PageDown
+			+ Backspace / Delete
+			+ Shift selection
+			+ Home (beginning of line)
+			+ End (end of line)
+			+ Ctrl+Home (beginning of file)
+			+ Ctrl+End (end of file)
+			+ Insert
+

@@ -20,6 +20,7 @@ using System.Drawing;
 
 	public class RecordCollection
 	{
+		Record _Owner;
 		List<Record> Records = new List<Record>();
 		
 		public int Count
@@ -54,9 +55,16 @@ using System.Drawing;
 				return Records[index];
 			}
 		}
-		
+	
+		public RecordCollection(Record owner)
+		{
+			_Owner = owner;
+		}
+	
 		public void Add(Record record)
 		{
+			record.Parent = _Owner;
+		
 			foreach(Record r in Records)
 			{
 				if(r.Name == record.Name)
@@ -68,7 +76,7 @@ using System.Drawing;
 						copy.Position = r.Position;
 						copy.Length = r.Length;
 						copy._Children = r._Children;
-						r._Children = new RecordCollection();
+						r._Children = new RecordCollection(r);
 						r.ArrayLength = 2;
 						r.ArrayElements = new List<Record>();
 						r.ArrayElements.Add(copy);
@@ -90,7 +98,8 @@ using System.Drawing;
 
     public class Record
     {
-    	public RecordCollection _Children = new RecordCollection();
+		public Record Parent;
+    	public RecordCollection _Children;
     	public List<Record> ArrayElements;
     	public Document Document;
     	public string Name;
@@ -102,9 +111,12 @@ using System.Drawing;
     	
     	public Record()
     	{
+			_Children = new RecordCollection(this);
     	}
     	public Record(string name, ulong pos, ulong length, uint arrayLength)
     	{
+			_Children = new RecordCollection(this);
+		
     		Name = name;
     		Position = pos;
     		Length = length;
@@ -227,18 +239,20 @@ using System.Drawing;
     	                  uint arrayLength) : base(name, pos, length, arrayLength) {}
     	public static implicit operator uint(UintRecord r)
     	{
-    		uint x = 0;    		
-    		for(ulong i = 0; i < r.Length / 8; ++i)
-    			x |= (uint)r.Document.Buffer[(long)(r.Position/8 + i)] << (int)(i * 8);
-    		return x;
+//    		uint x = 0;    		
+//    		for(ulong i = 0; i < r.Length / 8; ++i)
+//    			x |= (uint)r.Document.Buffer[(long)(r.Position/8 + i)] << (int)(i * 8);
+//    		return x;
+			return (uint)r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
     	}
 
     	public static implicit operator ulong(UintRecord r)
     	{
-    		ulong x = 0;
-    		for(ulong i = 0; i < r.Length / 8; ++i)
-    			x |= (ulong)r.Document.Buffer[(long)(r.Position/8 + i)] << (int)(i * 8);
-    		return x;
+//    		ulong x = 0;
+//    		for(ulong i = 0; i < r.Length / 8; ++i)
+//    			x |= (ulong)r.Document.Buffer[(long)(r.Position/8 + i)] << (int)(i * 8);
+//    		return x;
+			return r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
     	}
 
     	public override string ToString()
@@ -644,11 +658,11 @@ using System.Drawing;
 			CSharpCodeProvider c = new CSharpCodeProvider();
 			CompilerParameters cp = new CompilerParameters();
 			
-			cp.ReferencedAssemblies.Add("system.dll");
-			cp.ReferencedAssemblies.Add("system.xml.dll");
-			cp.ReferencedAssemblies.Add("system.data.dll");
-			cp.ReferencedAssemblies.Add("system.windows.forms.dll");
-			cp.ReferencedAssemblies.Add("system.drawing.dll");
+			cp.ReferencedAssemblies.Add("System.dll");
+			cp.ReferencedAssemblies.Add("System.Xml.dll");
+			cp.ReferencedAssemblies.Add("System.Data.dll");
+			cp.ReferencedAssemblies.Add("System.Windows.Forms.dll");
+			cp.ReferencedAssemblies.Add("System.Drawing.dll");
 			cp.ReferencedAssemblies.Add(System.Reflection.Assembly.GetExecutingAssembly().Location);
 			
 			cp.CompilerOptions = "/t:library";

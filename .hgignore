@@ -1,0 +1,13 @@
+syntax: glob
+
+*~
+*.pidb
+*.pdb
+Thumbs.db
+bin/Debug/*
+bin/Release/*
+obj/Debug/*
+obj/Release/*
+test-results/*
+*.FileList.txt
+NCover/*

@@ -1,33 +1,219 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
+class StructureTreeModel : Aga.Controls.Tree.ITreeModel
+{
+	private IPluginHost _Host;
+		
+	public StructureTreeModel(IPluginHost host)
+	{
+		_Host = host;
+	}
+
+	public System.Collections.IEnumerable GetChildren(Aga.Controls.Tree.TreePath treePath)
+	{
+		List<StructureTreeItem> items = new List<StructureTreeItem>();
+		
+		if(treePath.IsEmpty())
+		{
+			for(int i = 0; i < _Host.ActiveView.Document.Structure._Children.Count; ++i)
+			{
+				Record r = _Host.ActiveView.Document.Structure._Children[i];
+				items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
+			}
+		}
+		else
+		{
+			for(int i = 0; i < ((StructureTreeItem)treePath.LastNode).Record._Children.Count; ++i)
+			{
+				Record r = ((StructureTreeItem)treePath.LastNode).Record._Children[i];
+				items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
+			}
+		}
+		
+		return items;
+	}
+	
+	public bool IsLeaf(Aga.Controls.Tree.TreePath treePath)
+	{
+		return ((StructureTreeItem)treePath.LastNode).Record._Children.Count == 0 &&
+			   ((StructureTreeItem)treePath.LastNode).Record.ArrayLength <= 1;
+	}
+	
+	public event EventHandler<Aga.Controls.Tree.TreeModelEventArgs> NodesChanged;
+	internal void OnNodesChanged(StructureTreeItem item)
+	{
+//		if (NodesChanged != null)
+//		{
+//			TreePath path = GetPath(item.Parent);
+//			NodesChanged(this, new TreeModelEventArgs(path, new object[] { item }));
+//		}
+	}
+
+	public event EventHandler<Aga.Controls.Tree.TreeModelEventArgs> NodesInserted;
+	public event EventHandler<Aga.Controls.Tree.TreeModelEventArgs> NodesRemoved;
+	public event EventHandler<Aga.Controls.Tree.TreePathEventArgs> StructureChanged;
+	public void OnStructureChanged()
+	{
+//		if (StructureChanged != null)
+//			StructureChanged(this, new TreePathEventArgs());
+	}
+}
+
+class StructureTreeItem
+{
+	private Image _Icon;
+	private string _Name;
+	private string _Value;
+	private string _Type;
+	private StructureTreeModel _Model;
+	private Record _Record;
+	
+	public Image Icon
+	{
+		get { return _Icon; }
+		set { _Icon = value; }
+	}
+	
+	public string Name
+	{
+		get { return _Name; }
+		set { _Name = value; }
+	}
+	
+	public string Value
+	{
+		get { return _Value; }
+		set { _Value = value; }
+	}
+	
+	public string Type
+	{
+		get { return _Type; }
+		set { _Type = value; }
+	}
+	
+	public Record Record
+	{
+		get { return _Record; }
+	}
+	
+	public StructureTreeItem(string name, string value, string type, Record record, StructureTreeModel model)
+	{
+		_Name = name;
+		_Value = value;
+		_Type = type;
+		_Model = model;
+		_Record = record;
+	}
+}
 
 class StructurePanel : Panel
 {
-	public TreeListView	Tree;
+	private Aga.Controls.Tree.TreeViewAdv _TreeView;
+	private Aga.Controls.Tree.NodeControls.NodeStateIcon _NodeControlIcon;
+	private Aga.Controls.Tree.NodeControls.NodeTextBox _NodeControlName;
+	private Aga.Controls.Tree.NodeControls.NodeTextBox _NodeControlValue;
+	private Aga.Controls.Tree.NodeControls.NodeTextBox _NodeControlType;
+	private Aga.Controls.Tree.TreeColumn _TreeColumnName;
+	private Aga.Controls.Tree.TreeColumn _TreeColumnValue;
+	private Aga.Controls.Tree.TreeColumn _TreeColumnType;
+
 	protected ToolStrip ToolBar;
 	protected IPluginHost Host;
+
+	public event EventHandler SelectionChanged;
+	
+	public List<Record> SelectedRecords
+	{
+		get 
+		{
+			List<Record> list = new List<Record>();
+			
+			foreach(Aga.Controls.Tree.TreeNodeAdv n in _TreeView.SelectedNodes)
+				list.Add(((StructureTreeItem)n.Tag).Record);
+			return list; 
+		}
+	}
+
 	
 	public StructurePanel(IPluginHost host)
 	{
 		Host = host;
 		
-		Tree = new TreeListView();
-		Tree.Dock = DockStyle.Fill;
-		Controls.Add(Tree);
-		Tree.LabelEdit = true;
-		Tree.AllowDrop = true;
-		Tree.Columns.Add("Name");
-		Tree.Columns.Add("Value");
-		Tree.Columns.Add("Type");
-		Tree.FullRowSelect = true;
-		Tree.GridLines = true;
+		_TreeView = new Aga.Controls.Tree.TreeViewAdv();
+		_TreeColumnName = new Aga.Controls.Tree.TreeColumn("Name", 100);
+		_TreeColumnValue = new Aga.Controls.Tree.TreeColumn("Value", 50);
+		_TreeColumnType = new Aga.Controls.Tree.TreeColumn("Type", 50);
+		_NodeControlIcon = new Aga.Controls.Tree.NodeControls.NodeStateIcon();
+		_NodeControlName = new Aga.Controls.Tree.NodeControls.NodeTextBox();
+		_NodeControlValue = new Aga.Controls.Tree.NodeControls.NodeTextBox();
+		_NodeControlType = new Aga.Controls.Tree.NodeControls.NodeTextBox();
 
-		Tree.ItemDrag += new ItemDragEventHandler(OnItemDrag);
-		Tree.DragEnter += new DragEventHandler(OnDragEnter);
-		Tree.DragOver += new DragEventHandler(OnDragOver);
-		Tree.DragDrop += new DragEventHandler(OnDragDrop);
+	
+		this._TreeView.AllowColumnReorder = true;
+		this._TreeView.AutoRowHeight = true;
+//		this._TreeView.BackColor = System.Drawing.SystemColors.Window;
+		this._TreeView.Columns.Add(_TreeColumnName);
+		this._TreeView.Columns.Add(_TreeColumnValue);
+		this._TreeView.Columns.Add(_TreeColumnType);
+		this._TreeView.Cursor = System.Windows.Forms.Cursors.Default;
+//		this._TreeView.DefaultToolTipProvider = null;
+//		this._TreeView.DragDropMarkColor = System.Drawing.Color.Black;
+		this._TreeView.FullRowSelect = true;
+		this._TreeView.GridLineStyle = ((Aga.Controls.Tree.GridLineStyle)((Aga.Controls.Tree.GridLineStyle.Horizontal | Aga.Controls.Tree.GridLineStyle.Vertical)));
+		this._TreeView.LineColor = System.Drawing.SystemColors.ControlDark;
+		this._TreeView.LoadOnDemand = true;
+		this._TreeView.Model = null;
+		this._TreeView.Name = "_TreeView";
+		this._TreeView.NodeControls.Add(this._NodeControlIcon);
+		this._TreeView.NodeControls.Add(this._NodeControlName);
+		this._TreeView.NodeControls.Add(this._NodeControlValue);
+		this._TreeView.NodeControls.Add(this._NodeControlType);
+//		this._TreeView.SelectedNode = null;
+		this._TreeView.ShowNodeToolTips = true;
+		this._TreeView.UseColumns = true;
+		_TreeView.AllowDrop = true;
+		_TreeView.ItemDrag += OnItemDrag;
+		_TreeView.DragOver += OnDragOver;
+		_TreeView.DragDrop += OnDragDrop;
+		_TreeView.SelectionChanged += OnSelectionChanged;
+//		this._TreeView.NodeMouseDoubleClick += new System.EventHandler<Aga.Controls.Tree.TreeNodeAdvMouseEventArgs>(this._treeView_NodeMouseDoubleClick);
+//		this._TreeView.ColumnClicked += new System.EventHandler<Aga.Controls.Tree.TreeColumnEventArgs>(this._treeView_ColumnClicked);
+//		this._TreeView.MouseClick += new System.Windows.Forms.MouseEventHandler(this._treeView_MouseClick);
+		
+		_NodeControlIcon.DataPropertyName = "Icon";
+		_NodeControlIcon.ParentColumn = _TreeColumnName;
+		
+		_NodeControlName.DataPropertyName = "Name";
+		_NodeControlName.ParentColumn = _TreeColumnName;
+		_NodeControlName.Trimming = System.Drawing.StringTrimming.EllipsisCharacter;
+		_NodeControlName.UseCompatibleTextRendering = true;
+
+		_NodeControlValue.DataPropertyName = "Value";
+		_NodeControlValue.ParentColumn = _TreeColumnValue;
+		
+		_NodeControlType.DataPropertyName = "Type";
+		_NodeControlType.ParentColumn = _TreeColumnType;
+		
+		_TreeView.Dock = DockStyle.Fill;
+		Controls.Add(_TreeView);
+		
+//		Tree.LabelEdit = true;
+//		Tree.AllowDrop = true;
+//		Tree.Columns.Add("Name");
+//		Tree.Columns.Add("Value");
+//		Tree.Columns.Add("Type");
+//		Tree.FullRowSelect = true;
+//		Tree.GridLines = true;
+//
+//		Tree.ItemDrag += new ItemDragEventHandler(OnItemDrag);
+//		Tree.DragEnter += new DragEventHandler(OnDragEnter);
+//		Tree.DragOver += new DragEventHandler(OnDragOver);
+//		Tree.DragDrop += new DragEventHandler(OnDragDrop);
 		
 		ToolBar = new ToolStrip();
 		ToolBar.Dock = DockStyle.Top;
@@ -37,8 +223,10 @@ class StructurePanel : Panel
 		ToolBar.Items.Add(Settings.Instance.Image("open_16.png")).Click += new EventHandler(OnOpenStructureDef);
 	}
 
+	
 	protected void AddRecords(TreeListViewChildItemCollection nodes, Record record, ref int count)
 	{
+		/*
 		TreeListViewItem node;
 		
 		if(record.ArrayLength > 1)
@@ -66,6 +254,7 @@ class StructurePanel : Panel
 		node.Tag = record;
 		for(int i = 0; i < record._Children.Count; ++i)
 			AddRecords(node.ChildItems, record._Children[i], ref count);
+		*/
 	}
 	
 	protected void OnOpenStructureDef(object sender, EventArgs e)
@@ -76,44 +265,59 @@ class StructurePanel : Panel
 		dlg.Title = "Open Structure Definition";
 		if(dlg.ShowDialog() == DialogResult.OK)
 		{
-			Tree.Items.Clear();
+//			Tree.Items.Clear();
 			
 			Host.ActiveView.Document.ApplyStructureDefinition(dlg.FileName);
+			_TreeView.Model = new StructureTreeModel(Host);
 			
 			int count = 1;
-			TreeListViewItem item = Tree.Items.Add("Root");
-			for(int i = 0; i < Host.ActiveView.Document.Structure._Children.Count; ++i)
-				AddRecords(item.ChildItems, Host.ActiveView.Document.Structure._Children[i], ref count);
+//			TreeListViewItem item = Tree.Items.Add("Root");
+//			for(int i = 0; i < Host.ActiveView.Document.Structure._Children.Count; ++i)
+//				AddRecords(item.ChildItems, Host.ActiveView.Document.Structure._Children[i], ref count);
 		}
+	}
+
+	protected void OnSelectionChanged(object sender, EventArgs e)
+	{
+		if(SelectionChanged != null)
+			SelectionChanged(this, new EventArgs());
 	}
 	
 	protected void OnItemDrag(object sender, ItemDragEventArgs e)
 	{
-		Tree.DoDragDrop((ListViewItem)e.Item, DragDropEffects.All);
+		_TreeView.DoDragDropSelectedNodes(DragDropEffects.Move);
 	}
 
 	protected void OnDragEnter(object sender, DragEventArgs e)
 	{
-		e.Effect = DragDropEffects.All;
+//		e.Effect = DragDropEffects.All;
 	}
 
 	protected void OnDragOver(object sender, DragEventArgs e)
 	{
-		Point p = Tree.PointToClient(new Point(e.X, e.Y));
-		ListViewItem node = Tree.GetItemAt(p.X, p.Y);
-
-		if(node != null)
+		if(e.Data.GetDataPresent(typeof(Aga.Controls.Tree.TreeNodeAdv[])) && _TreeView.DropPosition.Node != null)
 		{
-			Tree.SelectedItems.Clear();
-			node.Selected = true;
-			e.Effect = DragDropEffects.All;
+			Aga.Controls.Tree.TreeNodeAdv[] nodes = e.Data.GetData(typeof(Aga.Controls.Tree.TreeNodeAdv[])) as Aga.Controls.Tree.TreeNodeAdv[];
+			Aga.Controls.Tree.TreeNodeAdv parent = _TreeView.DropPosition.Node;
+			if(_TreeView.DropPosition.Position != Aga.Controls.Tree.NodePosition.Inside)
+				parent = parent.Parent;
+
+			foreach(Aga.Controls.Tree.TreeNodeAdv node in nodes)
+			{
+//				if(!CheckNodeParent(parent, node))
+//				{
+//					e.Effect = DragDropEffects.None;
+//					return;
+//				}
+			}
+
+			e.Effect = e.AllowedEffect;
 		}
-		else
-			e.Effect = 0;
 	}
 
 	protected void OnDragDrop(object sender, DragEventArgs e)
 	{
+		/*
 		Point p = Tree.PointToClient(new Point(e.X, e.Y));
 		TreeListViewItem node = (TreeListViewItem)Tree.GetItemAt(p.X, p.Y);
 		
@@ -124,5 +328,6 @@ class StructurePanel : Panel
 			newNode.Tag = draggedNode.Tag;
 			draggedNode.Remove();
 		}
+		*/
 	}
 }

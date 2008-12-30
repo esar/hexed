@@ -33,6 +33,8 @@ class HexViewForm : Form
 		Commands.Add("ViewWords", OnViewWords);
 		Commands.Add("ViewDwords", OnViewDwords);
 		Commands.Add("ViewQwords", OnViewQwords);
+		Commands.Add("ViewLittleEndian", OnViewLittleEndian);
+		Commands.Add("ViewBigEndian", OnViewBigEndian);
 		
 		View = new HexView(doc);
 		View.Dock = DockStyle.Fill;
@@ -44,6 +46,17 @@ class HexViewForm : Form
 		Document = doc;
 	}
 
+	protected override void OnActivated(EventArgs e)
+	{
+		// TODO: MONO: Why does mono not call Activate() itself. Without calling activate
+		//             the parent window doesn't get a call to ActivateMdiChild() and as a
+		//             result we don't merge the commandset so none of the command handlers
+		//             ever get called
+		Activate();
+		
+		base.OnActivated(e);
+	}
+	
 	public void Split()
 	{
 		if(SplitView != null)
@@ -106,12 +119,12 @@ class HexViewForm : Form
 
 	protected void OnViewAddressRadix(object sender, CommandEventArgs args)
 	{
-		View.AddressRadix = (int)args.Arg;
+		View.AddressRadix = (uint)(int)args.Arg;
 	}
 
 	protected void OnViewDataRadix(object sender, CommandEventArgs args)
 	{
-		View.DataRadix = (int)args.Arg;
+		View.DataRadix = (uint)(int)args.Arg;
 	}
 
 	protected void OnViewGoToTop(object sender, EventArgs e)
@@ -153,7 +166,6 @@ class HexViewForm : Form
 	protected void OnViewBytes(object sender, EventArgs e)
 	{
 		View.BytesPerWord = 1;
-		((CommandSet.Command)sender).Checked = true;
 	}
 	
 	protected void OnViewWords(object sender, EventArgs e)
@@ -169,5 +181,15 @@ class HexViewForm : Form
 	protected void OnViewQwords(object sender, EventArgs e)
 	{
 		View.BytesPerWord = 8;
+	}
+	
+	protected void OnViewLittleEndian(object sender, EventArgs e)
+	{
+		View.Endian = Endian.Little;
+	}
+
+	protected void OnViewBigEndian(object sender, EventArgs e)
+	{
+		View.Endian = Endian.Big;
 	}
 }

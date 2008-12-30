@@ -49,7 +49,7 @@ public class Win32Caret
 	public Point Position 
 	{
 		get { return _Position; }
-		set { _Position = value; SetCaretPos(_Position.X, _Position.Y - _Size.Height); }
+		set { _Position = value; /*SetCaretPos(_Position.X, _Position.Y - _Size.Height);*/ }
 	}
 
 	public bool Visible 
@@ -60,10 +60,10 @@ public class Win32Caret
 			if(value != _Visible)
 			{
 				_Visible = value; 
-				if(_Visible)
-					ShowCaret(Control.Handle);
-				else
-					HideCaret(Control.Handle);
+//				if(_Visible)
+//					ShowCaret(Control.Handle);
+//				else
+//					HideCaret(Control.Handle);
 			}
 		}
 	}
@@ -78,14 +78,14 @@ public class Win32Caret
 
 	private void OnGotFocus(object sender, EventArgs e) 
 	{
-		CreateCaret(_Control.Handle, IntPtr.Zero, _Size.Width, _Size.Height);
-		SetCaretPos(_Position.X, _Position.Y);
+//		CreateCaret(_Control.Handle, IntPtr.Zero, _Size.Width, _Size.Height);
+//		SetCaretPos(_Position.X, _Position.Y);
 		Visible = true;
 	}
 
 	private void OnLostFocus(object sender, EventArgs e) 
 	{
 		Visible = false;
-		DestroyCaret();
+//		DestroyCaret();
 	}
 }

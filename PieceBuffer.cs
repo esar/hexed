@@ -680,7 +680,12 @@ public class PieceBuffer
 			AddHistory(empty, empty);
 		}
 		else
-			AddHistory(curStart.Piece, curEnd.Piece.Prev);
+		{
+			if(curEnd.Piece == curStart.Piece)
+				AddHistory(curStart.Piece, curEnd.Piece);
+			else
+				AddHistory(curStart.Piece, curEnd.Piece.Prev);
+		}
 		
 		// Ensure the marks are on a piece boundaries
 		SplitPiece(curStart, curEnd);
@@ -1273,6 +1278,37 @@ public class PieceBuffer
 		return true;
 	}
 	
+	public void DebugDumpPieceText(string label, Piece head, Piece tail, bool between)
+	{
+		Console.Write(label);
+		Piece p = head;
+		int c = 0;
+		
+		if(between)
+			p = p.Next;
+		
+		while((!between || p == tail) && c < 10)
+		{
+			if(p == Pieces)
+				Console.Write("* ");
+			else if(p.Start == Int64.MaxValue || p.End == Int64.MaxValue)
+				Console.Write("E ");
+			else
+			{
+				byte[] tmp = new byte[p.End - p.Start];
+				p.Block.GetBytes(p.Start, p.End - p.Start, tmp, 0);
+						
+				Console.Write("\"" + System.Text.ASCIIEncoding.ASCII.GetString(tmp) + "\" ");
+			}
+			
+			if(!between && p == tail)
+				break;
+			p = p.Next;
+			++c;
+		}
+		Console.Write("\n");
+	}
+	
 	public void DebugDumpHistory(HistoryItem item, int indent)
 	{
 		const string padding = "                                                                                ";
@@ -1296,6 +1332,9 @@ public class PieceBuffer
 				Console.Write(", RTail: " + (item.Tail.Next.Start == Int64.MaxValue ? -1 : item.Tail.Next.Start));
 				Console.Write(" => " + (item.Tail.Next.End == Int64.MaxValue ? -1 : item.Tail.Next.End));
 				Console.Write("\n");
+
+				//DebugDumpPieceText(pad, item.Head, item.Tail, false);
+				//DebugDumpPieceText(pad, item.Head.Prev, item.Tail.Next, false);				
 			}
 			else
 				Console.Write("HistoryHead\n");

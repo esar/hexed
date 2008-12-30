@@ -21,6 +21,7 @@ class TreeListViewChildItemCollection : ArrayList
 			_owner.CheckState = CheckState.Unchecked;
 
 		TreeListViewItem item = new TreeListViewItem(name);
+		item.Parent = _owner;
 		item.Indent = _owner.Indent + 1;
 		base.Add(item);
 		return item;
@@ -47,6 +48,7 @@ class TreeListViewItem : ListViewItem
 	TreeListViewChildItemCollection _ChildItems;
 	CheckState _CheckState;
 	int _Indent;
+	TreeListViewItem _Parent;
 
 	public TreeListViewItem(string name) : base(name)
 	{
@@ -79,6 +81,12 @@ class TreeListViewItem : ListViewItem
 	{
 		get		{ return _Indent; }
 		set		{ _Indent = value; }
+	}
+	
+	public TreeListViewItem Parent
+	{
+		get { return _Parent; }
+		set { _Parent = value; }
 	}
 }
 

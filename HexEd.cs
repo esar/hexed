@@ -4,8 +4,6 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
-
 using System.Collections.Generic;
 
 using Crownwood.DotNetMagic.Docking;
@@ -338,7 +336,6 @@ class HexEdApp : Form, IPluginHost
 		IsMdiContainer = true;
 
 		structurePanel = new StructurePanel(this);
-			
 		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
 		_dockingManager.Contents.Add(selectionPanel, "Selection");
 		_dockingManager.Contents.Add(structurePanel, "Structure");
@@ -411,13 +408,13 @@ class HexEdApp : Form, IPluginHost
 		EditToolStrip.Items.Add(CreateToolButton(null, "paste_16.png", "EditPaste", "Paste"));
 		EditToolStrip.Items.Add(CreateToolButton(null, "delete_16.png", "EditDelete", "Delete"));
 		
-		ViewToolStrip.Items.Add(new ToolStripButton("B", null, OnUiCommand, "ViewBytes"));
-		ViewToolStrip.Items.Add(new ToolStripButton("W", null, OnUiCommand, "ViewWords"));
-		ViewToolStrip.Items.Add(new ToolStripButton("D", null, OnUiCommand, "ViewDwords"));
-		ViewToolStrip.Items.Add(new ToolStripButton("Q", null, OnUiCommand, "ViewQwords"));
+		ViewToolStrip.Items.Add(CreateToolButton("B", null, "ViewBytes", "Bytes"));
+		ViewToolStrip.Items.Add(CreateToolButton("W", null, "ViewWords", "Words"));
+		ViewToolStrip.Items.Add(CreateToolButton("D", null, "ViewDwords", "Double Words"));
+		ViewToolStrip.Items.Add(CreateToolButton("Q", null, "ViewQwords", "Quad Words"));
 		ViewToolStrip.Items.Add(new ToolStripSeparator());
-		ViewToolStrip.Items.Add(new ToolStripButton("LE", null, OnUiCommand, "ViewLittleEndian"));
-		ViewToolStrip.Items.Add(new ToolStripButton("BE", null, OnUiCommand, "ViewBigEndian"));
+		ViewToolStrip.Items.Add(CreateToolButton("LE", null, "ViewLittleEndian", "Little Endian"));
+		ViewToolStrip.Items.Add(CreateToolButton("BE", null, "ViewBigEndian", "Big Endian"));
 		
 		ToolStripPanel.Join(ViewToolStrip, 1);
 		ToolStripPanel.Join(EditToolStrip, 1);
@@ -475,7 +472,7 @@ class HexEdApp : Form, IPluginHost
 		mi.DropDownItems.Add(new RadixMenu("Data Radix", "ViewDataRadix", OnUiCommand));
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi2 = new ToolStripMenuItem("Go To", null, null, "ViewGoTo");
-		mi.DropDownItems.Add(mi2);
+//		mi.DropDownItems.Add(mi2);
 		mi2.DropDownItems.Add(CreateMenuItem("Top", null, "ViewGoToTop", Keys.Control | Keys.Home));
 		mi2.DropDownItems.Add(CreateMenuItem("Bottom", null, "ViewGoToBottom", Keys.Control | Keys.End));
 		mi2.DropDownItems.Add(new ToolStripMenuItem("Selection Start", null, OnUiCommand, "ViewGoToSelectionStart"));
@@ -510,7 +507,7 @@ class HexEdApp : Form, IPluginHost
 		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Go To Selection As Address");
 
 
-		structurePanel.Tree.SelectedIndexChanged += OnStructureSelect;
+		structurePanel.SelectionChanged += OnStructureSelectionChanged;
 
 		Application.Idle += OnIdle;
 		
@@ -530,37 +527,62 @@ class HexEdApp : Form, IPluginHost
 	
 	public static ToolStripButton CreateToolButton(string text, string image, string name, string tooltip)
 	{
-		ToolStripButton i = new ToolStripButton(text, Settings.Instance.Image(image), OnUiCommand, name);
+		ToolStripButton i = new ToolStripButton(text);
+		if(image != null)
+			i.Image = Settings.Instance.Image(image);
+		i.Click += OnUiCommand;
+		i.Name = name;
 		i.ToolTipText = tooltip;
 		return i;
+	}
+	
+	// TODO: MONO: mono ToolStripItemCollection.Find() is currently broken
+	//             this function is a replacement
+	ToolStripItem[] FindToolStripItems(ToolStripItemCollection items, string name, bool recurse)
+	{
+		List<ToolStripItem> list = new List<ToolStripItem>();
+		
+		foreach(ToolStripItem i in items)
+		{
+			if(i.Name == name)
+				list.Add(i);
+			else if(recurse && i is ToolStripMenuItem && ((ToolStripMenuItem)i).HasDropDownItems)
+			{
+				ToolStripItem[] found = FindToolStripItems(((ToolStripMenuItem)i).DropDownItems, name, recurse);
+				if(found != null)
+					list.AddRange(found);
+			}
+		}
+		
+		return list.ToArray();
 	}
 	
 	protected void OnUpdateUiElement(object sender, EventArgs e)
 	{
 		CommandSet.Command cmd = (CommandSet.Command)sender;
 		
-		ToolStripItem[] items = MainMenuStrip.Items.Find(cmd.Name, true);
+		ToolStripItem[] items = FindToolStripItems(MainMenuStrip.Items, cmd.Name, true); // TODO: MONO: mono Find() doesn't work: MainMenuStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripMenuItem i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
 		
-		items = FileToolStrip.Items.Find(cmd.Name, true);
+		items = FindToolStripItems(FileToolStrip.Items, cmd.Name, true); // FileToolStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
 
-		items = EditToolStrip.Items.Find(cmd.Name, true);
+		items = FindToolStripItems(EditToolStrip.Items, cmd.Name, true); //EditToolStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
 		
-		items = ViewToolStrip.Items.Find(cmd.Name, true);
+		items = FindToolStripItems(ViewToolStrip.Items, cmd.Name, true); //ViewToolStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
@@ -601,7 +623,19 @@ class HexEdApp : Form, IPluginHost
 		Commands["ViewGoToSelectionEnd"].Enabled = haveChild;
 		Commands["ViewGoToAddress"].Enabled = haveChild;
 		Commands["ViewGoToSelectionAsAddress"].Enabled = haveChild;
-				
+		Commands["ViewBytes"].Enabled = haveChild;
+		Commands["ViewBytes"].Checked = (haveChild && ActiveView.BytesPerWord == 1);
+		Commands["ViewWords"].Enabled = haveChild;
+		Commands["ViewWords"].Checked = (haveChild && ActiveView.BytesPerWord == 2);
+		Commands["ViewDwords"].Enabled = haveChild;
+		Commands["ViewDwords"].Checked = (haveChild && ActiveView.BytesPerWord == 4);
+		Commands["ViewQwords"].Enabled = haveChild;
+		Commands["ViewQwords"].Checked = (haveChild && ActiveView.BytesPerWord == 8);
+		Commands["ViewLittleEndian"].Enabled = haveChild;
+		Commands["ViewLittleEndian"].Checked = (haveChild && ActiveView.Endian == Endian.Little);
+		Commands["ViewBigEndian"].Enabled = haveChild;
+		Commands["ViewBigEndian"].Checked = (haveChild && ActiveView.Endian == Endian.Big);
+		
 		Commands["WindowSplit"].Enabled = (ActiveMdiChild != null);		
 		Commands["WindowDuplicate"].Enabled = (ActiveMdiChild != null);
 		Commands["WindowTileHorizontally"].Enabled = (MdiChildren.Length > 1);
@@ -679,23 +713,53 @@ class HexEdApp : Form, IPluginHost
 
 	protected void OnSelectionContextMenuDefineField(object sender, EventArgs e)
 	{
-		TreeListViewItem n = structurePanel.Tree.Items.Add("New Field");
-		n.Tag = new Record("New Field", (ulong)((HexViewForm)ActiveMdiChild).View.Selection.Start * 8,
-		                   (ulong)(((HexViewForm)ActiveMdiChild).View.Selection.End - ((HexViewForm)ActiveMdiChild).View.Selection.Start) / 8, 1);
-		n.BeginEdit();
+		// TODO: StructureTree:
+		
+//		TreeListViewItem n = structurePanel.Tree.Items.Add("New Field");
+//		n.Tag = new Record("New Field", (ulong)((HexViewForm)ActiveMdiChild).View.Selection.Start * 8,
+//		                   (ulong)(((HexViewForm)ActiveMdiChild).View.Selection.End - ((HexViewForm)ActiveMdiChild).View.Selection.Start) / 8, 1);
+//		n.BeginEdit();
 	}
 
-	protected void OnStructureSelect(object sender, EventArgs e)
+	protected void OnStructureSelectionChanged(object sender, EventArgs e)
 	{
-		ListView.SelectedListViewItemCollection items = structurePanel.Tree.SelectedItems;
-		if(items.Count == 0)
+		List<Record> records = structurePanel.SelectedRecords;
+		if(records.Count == 0)
 			return;
-		if(ActiveMdiChild != null && items[0].Tag != null)
+		
+		((HexViewForm)ActiveMdiChild).View.ClearHighlights();
+		
+		if(ActiveMdiChild != null)
 		{
-			Record r = (Record)items[0].Tag;
-			((HexViewForm)ActiveMdiChild).View.Selection.Set(	(long)r.Position,
-			                                               (long)( r.Position + (r.Length * r.ArrayLength)));
-			((HexViewForm)ActiveMdiChild).View.EnsureVisible((long)r.Position);
+			Record record = records[0];
+
+			int level = 0;
+			while(record != null)
+			{
+				HexView.SelectionRange sel = new HexView.SelectionRange(((HexViewForm)ActiveMdiChild).View);
+				sel.Set((long)record.Position, (long)(record.Position + (record.Length * record.ArrayLength)));
+					
+				if(level++ == 0)
+				{
+					sel.BackColor = Color.FromArgb(255, 200, 255, 200);
+					sel.BorderColor = Color.LightGreen;
+					sel.BorderWidth = 1;
+				}
+				else
+				{
+					sel.BackColor = Color.FromArgb(64, 192,192,192);
+					sel.BorderColor = Color.FromArgb(128, 192,192,192);
+					sel.BorderWidth = 1;
+				}
+					
+				((HexViewForm)ActiveMdiChild).View.AddHighlight(sel);
+					
+//				((HexViewForm)ActiveMdiChild).View.Selection.Set(	(long)record.Position,
+//				                                               (long)( record.Position + (record.Length * record.ArrayLength)));
+				((HexViewForm)ActiveMdiChild).View.EnsureVisible((long)record.Position);
+				
+				record = record.Parent;
+			}
 		}
 	}
 
@@ -790,7 +854,7 @@ class HexEdApp : Form, IPluginHost
 		ToolStripItemCollection m = MainMenuStrip.Items;
 		for(i = 0; i < parts.Length; ++i)
 		{
-			ToolStripItem[] items = m.Find(parts[i], false);
+			ToolStripItem[] items = FindToolStripItems(m, parts[i], false); //m.Find(parts[i], false);
 			if(items.Length == 1)
 				m = ((ToolStripMenuItem)items[0]).DropDownItems;
 			else
