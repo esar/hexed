@@ -1345,6 +1345,8 @@ public class PieceBuffer
 	}
 	public void DebugDumpHistory(string msg)
 	{
+		return;
+		
 		Console.WriteLine("\n" + msg + "\n========\n");
 	
 		HistoryItem i = History;

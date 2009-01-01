@@ -16,6 +16,8 @@ public interface IPlugin
 
 public interface IPluginHost
 {
+	event EventHandler ActiveViewChanged;
+	
 	HexView ActiveView { get; }
 	
 	ToolStripMenuItem AddMenuItem(string path);

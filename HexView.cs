@@ -240,7 +240,7 @@ public class HexView : Control
 
 
 
-	private Font		_Font				= new Font(FontFamily.GenericMonospace, 12);
+	private Font		_Font				= new Font(FontFamily.GenericMonospace, 10);
 	private Brush		_Brush				= new SolidBrush(Color.Black);
 	private uint		_AddressRadix		= 16;
 	private uint		_DataRadix			= 16;
@@ -380,9 +380,11 @@ public class HexView : Control
 
 	public HexView(Document doc)
 	{
-		this.SetStyle ( ControlStyles.AllPaintingInWmPaint, true);
-		this.SetStyle ( ControlStyles.DoubleBuffer, true);
-		this.SetStyle ( ControlStyles.UserPaint, true);
+		this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+		this.SetStyle(ControlStyles.DoubleBuffer, true);
+		this.SetStyle(ControlStyles.UserPaint, true);
+		this.SetStyle(ControlStyles.Selectable, true);
+
 		BackColor = Color.White;
 		Document = doc;
 		BuildDataRadixStringTable(_DataRadix);
@@ -1039,6 +1041,24 @@ public class HexView : Control
 		return true;
 	}
 	
+	protected override bool IsInputChar(char c)
+	{
+		return true;
+	}
+	
+	protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+	{
+		// If the Delete key is used as an accelerator it won't be passed to OnKeyDown, etc.
+		// Here we intercept it and pass it to OnKeyDown so we can process it as a normal key.
+		if(keyData == Keys.Delete)
+		{
+			OnKeyDown(new KeyEventArgs(keyData));
+			return true;
+		}
+		
+		return base.ProcessCmdKey(ref msg, keyData);
+	}
+	
 	protected override void OnKeyDown(KeyEventArgs e)
 	{
 		switch(e.KeyCode)
@@ -1097,11 +1117,53 @@ public class HexView : Control
 					              Selection.Start - LayoutDimensions.VisibleLines * LayoutDimensions.BitsPerRow);
 				EnsureVisible(Selection.End);
 				break;
+			case Keys.Home:
+			{
+				long addr;
+				if(e.Modifiers == Keys.Control)
+					addr = 0;
+				else
+					addr = (Selection.Start / LayoutDimensions.BitsPerRow) * LayoutDimensions.BitsPerRow;
+				Selection.Set(addr, addr);
+				EnsureVisible(addr);
+				break;
+			}
+			case Keys.End:
+			{
+				long addr;
+				if(e.Modifiers == Keys.Control)
+					addr = Document.Buffer.Length * 8;
+				else
+					addr = (((Selection.Start / LayoutDimensions.BitsPerRow) + 1) * LayoutDimensions.BitsPerRow) - LayoutDimensions.BitsPerDigit;
+				Selection.Set(addr, addr);
+				EnsureVisible(addr);		
+				break;
+			}
 			case Keys.Insert:
 				if(_EditMode == EditMode.OverWrite)
 					EditMode = EditMode.Insert;
 				else
 					EditMode = EditMode.OverWrite;
+				break;
+			case Keys.Delete:
+			case Keys.Back:
+				if(Selection.Length > 0)
+				{
+					PieceBuffer.Mark a;
+					PieceBuffer.Mark b;
+					a = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
+					b = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
+					Document.Buffer.Remove(a, b);
+					Document.Buffer.DestroyMark(a);
+					Document.Buffer.DestroyMark(b);
+				}
+				else
+				{
+					if(e.KeyCode == Keys.Delete)
+						Document.Buffer.Remove(1);
+					else
+						Document.Buffer.Remove(-1);
+				}
 				break;
 			default:
 				break;

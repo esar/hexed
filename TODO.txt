@@ -5,7 +5,6 @@ HexView
 
 	Input
 		+ Implement selection in ascii pane
-		+ Implement overwrite mode
 		+ Implement insert mode
 
 		Keys
@@ -18,4 +17,15 @@ HexView
 			+ Ctrl+Home (beginning of file)
 			+ Ctrl+End (end of file)
 			+ Insert
+
+StructurePanel
+	+ Implement arrays
+	+ Implement foreground/background colours
+	+ Refresh when buffer changes
+	+ Implement editing of string values (char arrays)
+
+Python
+	+ Fix text display
+	+ Add command history
+	+ Refresh 'Struct' global when structure refreshed
 

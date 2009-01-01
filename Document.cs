@@ -9,8 +9,18 @@ using System.Collections.Generic;
 	
 public class Document
 {
-	public PieceBuffer		Buffer;
-	public Record			Structure;
+	private PieceBuffer		_Buffer;
+	private Record			_Structure;
+	
+	public PieceBuffer Buffer
+	{
+		get { return _Buffer; }
+	}
+	
+	public Record Structure
+	{
+		get { return _Structure; }
+	}
 	
 	public Document()
 	{
@@ -18,7 +28,8 @@ public class Document
 	
 	public void Open(string filename)
 	{
-		Buffer = new PieceBuffer(filename);
+		_Buffer = new PieceBuffer(filename);
+		_Buffer.Changed += OnBufferChanged;
 	}
 	
 	public void Close()
@@ -29,11 +40,11 @@ public class Document
 	public void ApplyStructureDefinition(string filename)
 	{
 		StructureDefinitionCompiler compiler = new StructureDefinitionCompiler();
-		Structure = compiler.Parse(filename);
+		_Structure = compiler.Parse(filename);
 		
 		ulong pos = 0;
-		Structure.ApplyStructure(this, ref pos);
-		Structure.Dump();
+		_Structure.ApplyStructure(this, ref pos);
+		_Structure.Dump();
 	}
 	
 	public ulong GetInteger(long offset, int length, Endian endian)
@@ -92,5 +103,14 @@ public class Document
 		
 		return x;
 	}
-	
+
+	protected void OnBufferChanged(object sender, PieceBuffer.BufferChangedEventArgs e)
+	{
+		if(_Structure != null)
+		{
+//			foreach(Record r in _Structure._Children)
+//			{
+//			}
+		}
+	}
 }

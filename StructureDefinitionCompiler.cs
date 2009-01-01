@@ -128,7 +128,11 @@ using System.Drawing;
 			Document = doc;
 			pos += Length * ArrayLength;
 		}
-		
+
+		public virtual void SetValue(string s)
+		{
+		}
+	
 		public override string ToString()
 		{
 			return "[unknown]";
@@ -251,7 +255,25 @@ using System.Drawing;
     	{
     		return ((ulong)this).ToString();
     	}
-    }
+
+	
+		public override void SetValue(string s)
+		{
+			ulong x = Convert.ToUInt64(s);
+			byte[] data = new byte[this.Length / 8];
+			for(uint i = 0; i < Length/8; ++i)
+			{
+				data[i] = (byte)(x & 0xFF);
+				x >>= 8;
+			}
+		
+			PieceBuffer.Mark a = Document.Buffer.CreateMarkAbsolute((long)(Position/8));
+			PieceBuffer.Mark b = Document.Buffer.CreateMarkAbsolute((long)((Position+Length)/8));
+			Document.Buffer.Insert(a, b, data, (long)Length/8);
+			Document.Buffer.DestroyMark(a);
+			Document.Buffer.DestroyMark(b);
+		}
+	}
 
 
 

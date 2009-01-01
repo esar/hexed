@@ -17,6 +17,7 @@ namespace PythonConsolePlugin
 		public PythonConsole(IPluginHost host)
 		{
 			Host = host;
+			Host.ActiveViewChanged += OnActiveViewChanged;
 
 			Multiline = true;
 			Font = new Font("Courier New", 10);
@@ -28,8 +29,18 @@ namespace PythonConsolePlugin
 			Python.AddToPath(Environment.CurrentDirectory);
 			Python.Globals.Add("Host", host);
 			Python.Globals.Add("View", Host.ActiveView);
+			Python.Globals.Add("Doc", Host.ActiveView != null ? Host.ActiveView.Document : null);
+			Python.Globals.Add("Struct", Host.ActiveView != null ? Host.ActiveView.Document.Structure : null);
+			Python.Globals["View"] = Host.ActiveView;
 			Python.SetStandardError(StdoutStream);
 			Python.SetStandardOutput(StdoutStream);
+		}
+
+		protected void OnActiveViewChanged(object sender, EventArgs e)
+		{
+			Python.Globals["View"] = Host.ActiveView;
+			Python.Globals["Doc"] = Host.ActiveView.Document;
+			Python.Globals["Struct"] = Host.ActiveView.Document.Structure;
 		}
 		
 		protected override void OnKeyUp(KeyEventArgs e)

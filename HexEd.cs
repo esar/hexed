@@ -325,6 +325,7 @@ class HexEdApp : Form, IPluginHost
 	
 	protected ContextMenuStrip	SelectionContextMenu	= new ContextMenuStrip();
 
+	public event EventHandler ActiveViewChanged;
 	
 	[STAThread]
 	public static void Main()
@@ -688,6 +689,9 @@ class HexEdApp : Form, IPluginHost
 			Commands.RevertMerge();
 		
 		UpdateAllPanels();
+		
+		if(ActiveViewChanged != null)
+			ActiveViewChanged(this, new EventArgs());
 	}
 
 	protected void UpdateAllPanels()

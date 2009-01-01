@@ -27,10 +27,27 @@ class StructureTreeModel : Aga.Controls.Tree.ITreeModel
 		}
 		else
 		{
-			for(int i = 0; i < ((StructureTreeItem)treePath.LastNode).Record._Children.Count; ++i)
+			if(((StructureTreeItem)treePath.LastNode).Record.ArrayLength > 1)
 			{
-				Record r = ((StructureTreeItem)treePath.LastNode).Record._Children[i];
-				items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
+				if(((StructureTreeItem)treePath.LastNode).Record.ArrayElements != null)
+				{
+					foreach(Record r in ((StructureTreeItem)treePath.LastNode).Record.ArrayElements)
+						items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
+				}
+				else
+				{
+					Record r = ((StructureTreeItem)treePath.LastNode).Record;
+					for(int i = 0; i < (int)((StructureTreeItem)treePath.LastNode).Record.ArrayLength; ++i)
+						items.Add(new StructureTreeItem(r.Name + "[" + i + "]", r.ToString(), r.GetType().ToString(), r, this));
+				}
+			}
+			else
+			{
+				for(int i = 0; i < ((StructureTreeItem)treePath.LastNode).Record._Children.Count; ++i)
+				{
+					Record r = ((StructureTreeItem)treePath.LastNode).Record._Children[i];
+					items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
+				}
 			}
 		}
 		
@@ -87,7 +104,7 @@ class StructureTreeItem
 	public string Value
 	{
 		get { return _Value; }
-		set { _Value = value; }
+		set { _Value = value; _Record.SetValue(value); }
 	}
 	
 	public string Type
