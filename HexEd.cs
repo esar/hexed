@@ -546,17 +546,17 @@ class HexEdApp : Form, IPluginHost
 	
 	// TODO: MONO: mono ToolStripItemCollection.Find() is currently broken
 	//             this function is a replacement
-	ToolStripItem[] FindToolStripItems(ToolStripItemCollection items, string name, bool recurse)
+	ToolStripItem[] FindToolStripItems(ToolStripItemCollection items, string name, bool recurse, bool byText)
 	{
 		List<ToolStripItem> list = new List<ToolStripItem>();
 		
 		foreach(ToolStripItem i in items)
 		{
-			if(i.Name == name)
+			if((byText && i.Text == name) || (!byText && i.Name == name))
 				list.Add(i);
 			else if(recurse && i is ToolStripMenuItem && ((ToolStripMenuItem)i).HasDropDownItems)
 			{
-				ToolStripItem[] found = FindToolStripItems(((ToolStripMenuItem)i).DropDownItems, name, recurse);
+				ToolStripItem[] found = FindToolStripItems(((ToolStripMenuItem)i).DropDownItems, name, recurse, byText);
 				if(found != null)
 					list.AddRange(found);
 			}
@@ -569,28 +569,28 @@ class HexEdApp : Form, IPluginHost
 	{
 		CommandSet.Command cmd = (CommandSet.Command)sender;
 		
-		ToolStripItem[] items = FindToolStripItems(MainMenuStrip.Items, cmd.Name, true); // TODO: MONO: mono Find() doesn't work: MainMenuStrip.Items.Find(cmd.Name, true);
+		ToolStripItem[] items = FindToolStripItems(MainMenuStrip.Items, cmd.Name, true, false); // TODO: MONO: mono Find() doesn't work: MainMenuStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripMenuItem i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
 		
-		items = FindToolStripItems(FileToolStrip.Items, cmd.Name, true); // FileToolStrip.Items.Find(cmd.Name, true);
+		items = FindToolStripItems(FileToolStrip.Items, cmd.Name, true, false); // FileToolStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
 
-		items = FindToolStripItems(EditToolStrip.Items, cmd.Name, true); //EditToolStrip.Items.Find(cmd.Name, true);
+		items = FindToolStripItems(EditToolStrip.Items, cmd.Name, true, false); //EditToolStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
 		
-		items = FindToolStripItems(ViewToolStrip.Items, cmd.Name, true); //ViewToolStrip.Items.Find(cmd.Name, true);
+		items = FindToolStripItems(ViewToolStrip.Items, cmd.Name, true, false); //ViewToolStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
@@ -900,11 +900,17 @@ class HexEdApp : Form, IPluginHost
 		ToolStripItemCollection m = MainMenuStrip.Items;
 		for(i = 0; i < parts.Length; ++i)
 		{
-			ToolStripItem[] items = FindToolStripItems(m, parts[i], false); //m.Find(parts[i], false);
+			ToolStripItem[] items = FindToolStripItems(m, parts[i], false, true); //m.Find(parts[i], false);
 			if(items.Length == 1)
+			{
+				Console.WriteLine("Found 1");
 				m = ((ToolStripMenuItem)items[0]).DropDownItems;
+			}
 			else
+			{
+				Console.WriteLine("Found: " + items.Length);
 				break;
+			}
 		}
 		
 		for(; i < parts.Length; ++i)
