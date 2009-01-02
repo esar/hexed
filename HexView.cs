@@ -561,7 +561,7 @@ public class HexView : Control
 	{
 		string str = "";
 		const string digit		= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		const string padding	= "000000000000000000000000000000000000";
+		const string padding	= "00000000000000000000000000000000000000000000000000000000000000000";
 
 		if(radix < 2 || radix > 36)
 			return null;
@@ -574,7 +574,7 @@ public class HexView : Control
 		}
 
 		if(str.Length < minLength)
-			str = padding.Substring(0, minLength - str.Length < 36 ? minLength - str.Length : 36) + str;
+			str = padding.Substring(0, minLength - str.Length <= 64 ? minLength - str.Length : 64) + str;
 
 		return str;
 	}
@@ -765,10 +765,15 @@ public class HexView : Control
 	protected void RecalcDimensions()
 	{
 		Graphics g = CreateGraphics();
-		const string digits = "00000000000000000000000000000000000000000000000000000000000000000";
+		const string digits = "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 
-		ulong maxWordValue = ((ulong)1 << (_BytesPerWord * 8)) - 1;
-		LayoutDimensions.NumWordDigits = (int)(Math.Log(maxWordValue) / Math.Log(_DataRadix)) + 1;
+		if(_BytesPerWord < 8)
+		{
+			ulong maxWordValue = ((ulong)1 << (_BytesPerWord * 8)) - 1;
+			LayoutDimensions.NumWordDigits = (int)Math.Log(maxWordValue, _DataRadix) + 1; //(int)(Math.Log(maxWordValue) / Math.Log(_DataRadix)) + 1;
+		}
+		else
+			LayoutDimensions.NumWordDigits = (int)Math.Log(UInt64.MaxValue, _DataRadix); //(int)(Math.Log(maxWordValue) / Math.Log(_DataRadix)) + 1;
 		LayoutDimensions.BitsPerDigit = (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits;
 		LayoutDimensions.WordSize = MeasureSubString(g, digits, 0, LayoutDimensions.NumWordDigits, _Font).Size; //g.MeasureString(digits.Substring(0, LayoutDimensions.NumWordDigits), _Font);
 
