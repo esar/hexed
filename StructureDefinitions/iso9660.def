@@ -1,0 +1,21 @@
+
+record ISO9660
+{
+    record uint8 Empty[0x8000];
+    record PrimaryVolumeDescriptor
+    {
+        record uint8 Type;
+        record char  ID[5];
+        record uint8 Version;
+        record uint8 Unused;
+        record char  SystemID[32];
+        record char  VolumeID[32];
+        record uint8 Unused2[8];
+        record uint32 VolumeSpaceSizeLE;
+        record uint32 VolumeSpaceSizeBE;
+
+    } PrimaryVolumeDescriptor;
+
+} ISO9660;
+
+
