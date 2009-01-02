@@ -317,10 +317,12 @@ public class PieceBuffer
 	public byte this[long index]
 	{
 		get
-		{
+		{			
 			if(index < IndexCacheStartOffset ||
 			   index >= IndexCacheStartOffset + IndexCacheSize)
 			{
+				if(index < 0)
+					index = 0;				
 				IndexCacheStartOffset = index;
 				GetBytes(index, IndexCacheBytes, IndexCacheSize);
 			}
