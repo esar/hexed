@@ -1,11 +1,14 @@
 using System.Reflection;
 using System.Text;
+using System.Collections.Generic;
 using NUnit.Framework;
+
 
 [TestFixture()]
 public class PieceBufferTest
 {
 	PieceBuffer b;
+	List<PieceBuffer.BufferChangedEventArgs> Changes;
 	
 	public PieceBufferTest()
 	{
@@ -14,15 +17,34 @@ public class PieceBufferTest
 	[SetUp()]
 	public void Setup()
 	{
+		Changes = new List<PieceBuffer.BufferChangedEventArgs>();
 		b = new PieceBuffer();
+		b.Changed += OnBufferChanged;
 	}
 	
 	[TearDown()]
 	public void Cleanup()
 	{
 		b = null;
+		Changes = null;
 	}
 		
+	protected void OnBufferChanged(object sender, PieceBuffer.BufferChangedEventArgs e)
+	{
+		Changes.Add(e);
+	}
+
+	public string GetChanges()
+	{
+		StringBuilder tmp = new StringBuilder();
+		
+		foreach(PieceBuffer.BufferChangedEventArgs change in Changes)
+			tmp.AppendFormat("{{{0},{1}}}", change.StartOffset, change.EndOffset);
+		Changes.Clear();
+		
+		return tmp.ToString();
+	}
+	
 	public string GetMarks()
 	{
 		StringBuilder tmp = new StringBuilder();
@@ -76,12 +98,14 @@ public class PieceBufferTest
 		Assert.AreEqual(GetMarks(), "{0,0}{0,1}{0,1}");
 		Assert.AreEqual(GetPieces(), "{0,1}");
 		Assert.AreEqual(GetText(), "a");
+		Assert.AreEqual(GetChanges(), "{0,0}");
 		
 		// insert a second character
 		b.Insert((byte)'b');
 		Assert.AreEqual(GetMarks(), "{0,0}{0,2}{0,2}");
 		Assert.AreEqual(GetPieces(), "{0,1}{1,2}");
 		Assert.AreEqual(GetText(), "ab");
+		Assert.AreEqual(GetChanges(), "{1,1}");
 		
 		// seek back one char, insert another
 		b.MoveMark(-1);
@@ -89,6 +113,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetMarks(), "{0,0}{0,2}{0,3}");
 		Assert.AreEqual(GetPieces(), "{0,1}{2,3}{1,2}");
 		Assert.AreEqual(GetText(), "acb");
+		Assert.AreEqual(GetChanges(), "{1,1}");
 		
 		// seek forward one char, insert another
 		b.MoveMark(1);
@@ -96,6 +121,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetMarks(), "{0,0}{0,4}{0,4}");
 		Assert.AreEqual(GetPieces(), "{0,1}{2,3}{1,2}{3,4}");
 		Assert.AreEqual(GetText(), "acbd");
+		Assert.AreEqual(GetChanges(), "{3,3}");
 		
 		// seek back past beginning, insert another
 		b.MoveMark(-100);
@@ -103,12 +129,15 @@ public class PieceBufferTest
 		Assert.AreEqual(GetMarks(), "{0,0}{0,1}{0,5}");
 		Assert.AreEqual(GetPieces(), "{4,5}{0,1}{2,3}{1,2}{3,4}");
 		Assert.AreEqual(GetText(), "eacbd");
+		Assert.AreEqual(GetChanges(), "{0,0}");
 		
 		// seek forward past end, insert another
 		b.MoveMark(100);
 		b.Insert((byte)'f');
 		Assert.AreEqual(GetMarks(), "{0,0}{0,6}{0,6}");
 		Assert.AreEqual(GetPieces(), "{4,5}{0,1}{2,3}{1,2}{3,4}{5,6}");
+		Assert.AreEqual(GetText(), "eacbdf");
+		Assert.AreEqual(GetChanges(), "{5,5}");
 	}
 
 	[Test]
@@ -450,6 +479,65 @@ public class PieceBufferTest
 	}
 
 	[Test]
+	public void Copy()
+	{
+		// Add some text
+		b.Insert("the quick brown fox jumps over the lazy dog.");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,44}{0,44}");
+		Assert.AreEqual(GetPieces(), "{0,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
+
+		// Copy the word 'brown'
+		PieceBuffer.Mark srcStart = b.CreateMarkAbsolute(10);
+		PieceBuffer.Mark srcEnd = b.CreateMarkAbsolute(16);
+		PieceBuffer.Mark dstStart = b.CreateMarkAbsolute(40);
+		PieceBuffer.Mark dstEnd = b.CreateMarkAbsolute(40);
+		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
+		Assert.AreEqual(GetMarks(), "{0,0}{10,10}{16,16}{0,46}{0,46}{0,46}{0,50}");
+		Assert.AreEqual(GetPieces(), "{0,40}{10,16}{40,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.");
+		
+		// Copy the whole buffer (including previous copy)
+		b.MoveMarkAbsolute(srcStart, 0);
+		b.MoveMarkAbsolute(srcEnd, 1000);
+		b.MoveMarkAbsolute(dstStart, 1000);
+		b.MoveMarkAbsolute(dstEnd, 1000);
+		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
+		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,100}{0,100}{0,100}{0,100}{0,100}");
+		Assert.AreEqual(GetPieces(), "{0,40}{10,16}{40,44}{0,40}{10,16}{40,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
+		
+		// Copy last 'lazy' over first 'quick'
+		b.MoveMarkAbsolute(srcStart, 85);
+		b.MoveMarkAbsolute(srcEnd, 89);
+		b.MoveMarkAbsolute(dstStart, 4);
+		b.MoveMarkAbsolute(dstEnd, 9);
+		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
+		System.Console.WriteLine(GetText());
+		Assert.AreEqual(GetText(), "the lazy brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
+	}
+	
+	[Test]
+	public void Move()
+	{
+		// Add some text
+		b.Insert("the quick brown fox jumps over the lazy dog.");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,44}{0,44}");
+		Assert.AreEqual(GetPieces(), "{0,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
+
+		// Move 'brown'
+		PieceBuffer.Mark srcStart = b.CreateMarkAbsolute(10);
+		PieceBuffer.Mark srcEnd = b.CreateMarkAbsolute(16);
+		PieceBuffer.Mark dstStart = b.CreateMarkAbsolute(40);
+		PieceBuffer.Mark dstEnd = b.CreateMarkAbsolute(40);
+		b.Move(dstStart, dstEnd, srcStart, srcEnd);
+		Assert.AreEqual(GetMarks(), "{0,0}{0,10}{0,10}{0,10}{0,40}{0,40}{0,44}");
+		Assert.AreEqual(GetPieces(), "{0,10}{16,40}{10,16}{40,44}");
+		Assert.AreEqual(GetText(), "the quick fox jumps over the lazy brown dog.");
+	}
+	
+	[Test]
 	public void UndoInsert()
 	{
 		// Add some text
@@ -561,6 +649,19 @@ public class PieceBufferTest
 	[Test]
 	public void UndoReplace()
 	{
+		Assert.Fail("Test needs writing");
+	}
+	
+	[Test]
+	public void UndoCopy()
+	{
+		Assert.Fail("Test needs writing");
+	}
+	
+	[Test]
+	public void UndoMove()
+	{
+		Assert.Fail("Test needs writing");
 	}
 	
 	[Test]
@@ -733,5 +834,23 @@ public class PieceBufferTest
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
 		Assert.AreEqual(GetPieces(), "");
 		Assert.AreEqual(GetText(), "");
+	}
+	
+	[Test]
+	public void RedoReplace()
+	{
+		Assert.Fail("Test needs writing");
+	}
+	
+	[Test]
+	public void RedoCopy()
+	{
+		Assert.Fail("Test needs writing");
+	}
+	
+	[Test]
+	public void RedoMove()
+	{
+		Assert.Fail("Test needs writing");
 	}
 }

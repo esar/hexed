@@ -929,7 +929,38 @@ public class PieceBuffer
 	//	
 	public void Copy(Mark destStart, Mark destEnd, Mark srcStart, Mark srcEnd)
 	{
+		Piece head = null;
+		Piece tail = null;
+		Piece newPiece;
+			
+		if(srcEnd.Piece != srcStart.Piece)
+		{
+			head = new Piece(srcStart.Piece.Block, srcStart.Piece.Start + srcStart.Offset, srcStart.Piece.End);
+			tail = head;
+			
+			Piece p = srcStart.Piece.Next;
+			while(p != srcEnd.Piece)
+			{
+				newPiece = new Piece(p.Block, p.Start, p.End);
+				Piece.ListInsert(tail, newPiece);
+				tail = newPiece;
+				p = p.Next;
+			}
+			
+			if(srcEnd.Piece != Pieces)
+			{
+				newPiece = new Piece(srcEnd.Piece.Block, srcEnd.Piece.Start, srcEnd.Piece.Start + srcEnd.Offset);
+				Piece.ListInsert(tail, newPiece);
+				tail = newPiece;
+			}
+		}
+		else
+		{
+			head = new Piece(srcStart.Piece.Block, srcStart.Piece.Start + srcStart.Offset, srcStart.Piece.Start + srcEnd.Offset);
+			tail = head;
+		}
 		
+		Replace(destStart, destEnd, head, tail, srcEnd.Position - srcStart.Position);
 	}
 	
 	public void Copy(Mark start, Mark end)
