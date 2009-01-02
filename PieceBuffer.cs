@@ -672,7 +672,7 @@ public class PieceBuffer
 			curEnd = tmp;
 		}
 		
-		if(curStart.Position == curEnd.Position)
+		if(curStart.Position == curEnd.Position && curStart.Offset == 0)
 		{
 			Piece empty = new Piece();
 			empty.Prev = curStart.Piece.Prev;
@@ -1078,7 +1078,7 @@ public class PieceBuffer
 			long editPosition = 0;
 			Mark editStartMark;
 			Mark editEndMark;
-			
+				
 			// Find the position of the change and create a mark there
 			p = Pieces;
 			while((p = p.Next) != Pieces && p != removeHead)
@@ -1364,8 +1364,8 @@ public class PieceBuffer
 				Console.Write(" => " + (item.Tail.Next.End == Int64.MaxValue ? -1 : item.Tail.Next.End));
 				Console.Write("\n");
 
-				//DebugDumpPieceText(pad, item.Head, item.Tail, false);
-				//DebugDumpPieceText(pad, item.Head.Prev, item.Tail.Next, false);				
+				DebugDumpPieceText(pad, item.Head, item.Tail, false);
+				DebugDumpPieceText(pad, item.Head.Prev, item.Tail.Next, false);				
 			}
 			else
 				Console.Write("HistoryHead\n");

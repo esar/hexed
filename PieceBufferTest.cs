@@ -513,7 +513,6 @@ public class PieceBufferTest
 		b.MoveMarkAbsolute(dstStart, 4);
 		b.MoveMarkAbsolute(dstEnd, 9);
 		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
-		System.Console.WriteLine(GetText());
 		Assert.AreEqual(GetText(), "the lazy brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
 	}
 	
@@ -574,6 +573,35 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "");
 		
 		// Undo with no history should silently do nothing
+		b.Undo();
+		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
+		Assert.AreEqual(GetPieces(), "");
+		Assert.AreEqual(GetText(), "");
+	}
+	
+	[Test]
+	public void UndoInsertMidPiece()
+	{
+		// Insert some text
+		b.Insert("this is a test");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,14}{0,14}");
+		Assert.AreEqual(GetPieces(), "{0,14}");
+		Assert.AreEqual(GetText(), "this is a test");
+		
+		// Insert some more text in the middle of the previous piece
+		b.MoveMark(-4);
+		b.Insert("small ");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,16}{0,20}");
+		Assert.AreEqual(GetPieces(), "{0,10}{14,20}{10,14}");
+		Assert.AreEqual(GetText(), "this is a small test");
+		
+		// Undo should return the original piece
+		b.Undo();
+		Assert.AreEqual(GetMarks(), "{0,0}{0,10}{0,14}");
+		Assert.AreEqual(GetPieces(), "{0,14}");
+		Assert.AreEqual(GetText(), "this is a test");
+		
+		// Another undo should return us to an empty buffer
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
 		Assert.AreEqual(GetPieces(), "");
@@ -655,7 +683,51 @@ public class PieceBufferTest
 	[Test]
 	public void UndoCopy()
 	{
-		Assert.Fail("Test needs writing");
+		// Add some text
+		b.Insert("the quick brown fox jumps over the lazy dog.");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,44}{0,44}");
+		Assert.AreEqual(GetPieces(), "{0,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
+
+		// Copy the word 'brown'
+		PieceBuffer.Mark srcStart = b.CreateMarkAbsolute(10);
+		PieceBuffer.Mark srcEnd = b.CreateMarkAbsolute(16);
+		PieceBuffer.Mark dstStart = b.CreateMarkAbsolute(40);
+		PieceBuffer.Mark dstEnd = b.CreateMarkAbsolute(40);
+		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
+		Assert.AreEqual(GetMarks(), "{0,0}{10,10}{16,16}{0,46}{0,46}{0,46}{0,50}");
+		Assert.AreEqual(GetPieces(), "{0,40}{10,16}{40,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.");
+		
+		// Copy the whole buffer (including previous copy)
+		b.MoveMarkAbsolute(srcStart, 0);
+		b.MoveMarkAbsolute(srcEnd, 1000);
+		b.MoveMarkAbsolute(dstStart, 1000);
+		b.MoveMarkAbsolute(dstEnd, 1000);
+		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
+		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,100}{0,100}{0,100}{0,100}{0,100}");
+		Assert.AreEqual(GetPieces(), "{0,40}{10,16}{40,44}{0,40}{10,16}{40,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
+		
+		// Copy last 'lazy' over first 'quick'
+		b.MoveMarkAbsolute(srcStart, 85);
+		b.MoveMarkAbsolute(srcEnd, 89);
+		b.MoveMarkAbsolute(dstStart, 4);
+		b.MoveMarkAbsolute(dstEnd, 9);
+		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
+		Assert.AreEqual(GetText(), "the lazy brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
+
+		b.Undo();
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
+		
+		b.Undo();
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.");
+
+		b.Undo();
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
+		
+		b.Undo();
+		Assert.AreEqual(GetText(), "");
 	}
 	
 	[Test]
