@@ -11,3 +11,4 @@ obj/Release/*
 test-results/*
 *.FileList.txt
 NCover/*
+*.orig

@@ -5,18 +5,7 @@ HexView
 
 	Input
 		+ Implement selection in ascii pane
-		+ Implement insert mode
 
-		Keys
-			+ Arrows
-			+ PageUp / PageDown
-			+ Backspace / Delete
-			+ Shift selection
-			+ Home (beginning of line)
-			+ End (end of line)
-			+ Ctrl+Home (beginning of file)
-			+ Ctrl+End (end of file)
-			+ Insert
 
 StructurePanel
 	+ Implement arrays

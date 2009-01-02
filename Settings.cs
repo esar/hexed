@@ -33,4 +33,9 @@ public class Settings
 	{
 		return System.Drawing.Image.FromFile(string.Format("{0}/icons/{1}", BasePath, name));
 	}
+	
+	public System.Drawing.Icon Icon(string name)
+	{
+		return new Icon(string.Format("{0}/icons/{1}", BasePath, name));
+	}
 }

@@ -368,7 +368,9 @@ class HexEdApp : Form, IPluginHost
 		Commands.Add("EditPaste", null, OnUpdateUiElement);
 		Commands.Add("EditDelete", null, OnUpdateUiElement);
 		Commands.Add("EditSelectAll", null, OnUpdateUiElement);
-		Commands.Add("EditOptions", null, OnUpdateUiElement);
+		Commands.Add("EditInsertFile", null, OnUpdateUiElement);
+		Commands.Add("EditInsertPattern", null, OnUpdateUiElement);
+		Commands.Add("EditPreferences", OnEditPreferences, OnUpdateUiElement);
 		
 		Commands.Add("ViewAddressRadix", null, OnUpdateUiElement);
 		Commands.Add("ViewDataRadix", null, OnUpdateUiElement);
@@ -467,7 +469,12 @@ class HexEdApp : Form, IPluginHost
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi.DropDownItems.Add(CreateMenuItem("Select &All", null, "EditSelectAll", Keys.Control | Keys.A));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(CreateMenuItem("&Options", "options_16.png", "EditOptions", Keys.None));
+		mi2 = new ToolStripMenuItem("&Insert", null, null, "EditInsert");
+		mi2.DropDownItems.Add(CreateMenuItem("&File...", null, "EditInsertFile", Keys.None));
+		mi2.DropDownItems.Add(CreateMenuItem("&Pattern...", null, "EditInsertPattern", Keys.None));
+		mi.DropDownItems.Add(mi2);
+		mi.DropDownItems.Add(new ToolStripSeparator());
+		mi.DropDownItems.Add(CreateMenuItem("&Preferences...", "options_16.png", "EditPreferences", Keys.None));
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&View");
@@ -728,6 +735,12 @@ class HexEdApp : Form, IPluginHost
 		}
 	}
 
+	private void OnEditPreferences(object sender, EventArgs e)
+	{
+		SettingsDialog dlg = new SettingsDialog();
+		dlg.ShowDialog();
+	}
+	
 	private void OnWindowDuplicate(object sender, EventArgs e)
 	{
 		HexViewForm form = new HexViewForm(ActiveView.Document);

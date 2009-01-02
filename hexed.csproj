@@ -64,6 +64,10 @@
     <Compile Include="Win32Caret.cs" />
     <EmbeddedResource Include="treelistview.resources" />
     <Compile Include="ManagedCaret.cs" />
+    <Compile Include="CommandDialog.cs" />
+    <Compile Include="HorzRule.cs" />
+    <Compile Include="SettingsDialog.cs" />
+    <Compile Include="TitleLabel.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
