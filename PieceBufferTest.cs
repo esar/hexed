@@ -537,6 +537,72 @@ public class PieceBufferTest
 	}
 	
 	[Test]
+	public void ClipboardCopy()
+	{
+		// Add some text
+		b.Insert("the quick brown fox jumps over the lazy dog.");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,44}{0,44}");
+		Assert.AreEqual(GetPieces(), "{0,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
+		
+		// Create a clipboard range covering the word 'fox'
+		PieceBuffer.Mark m1 = b.CreateMarkAbsolute(16);
+		PieceBuffer.Mark m2 = b.CreateMarkAbsolute(19);
+		PieceBuffer.ClipboardRange foxRange = b.ClipboardCopy(m1, m2);
+		
+		// Create a 2nd clipboard range covering the word 'dog'
+		b.MoveMarkAbsolute(m1, 40);
+		b.MoveMarkAbsolute(m2, 43);
+		PieceBuffer.ClipboardRange dogRange = b.ClipboardCopy(m1, m2);
+		
+		// Paste the 'dog' clipboard range over the word 'fox'
+		b.MoveMarkAbsolute(m1, 16);
+		b.MoveMarkAbsolute(m2, 19);
+		b.ClipboardPaste(m1, m2, dogRange);
+		Assert.AreEqual(GetText(), "the quick brown dog jumps over the lazy dog.");
+		
+		// Paste the 'fox' clipboard range (that doesn't exist in the buffer anymore) over the word 'dog' 
+		b.MoveMarkAbsolute(m1, 40);
+		b.MoveMarkAbsolute(m2, 43);
+		b.ClipboardPaste(m1, m2, foxRange);
+		Assert.AreEqual(GetText(), "the quick brown dog jumps over the lazy fox.");
+	}
+
+	[Test]
+	public void ClipboardCut()
+	{
+		// Add some text
+		b.Insert("the quick brown fox jumps over the lazy dog.");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,44}{0,44}");
+		Assert.AreEqual(GetPieces(), "{0,44}");
+		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
+		
+		// Create a clipboard range covering 'quick brown fox'
+		PieceBuffer.Mark m1 = b.CreateMarkAbsolute(4);
+		PieceBuffer.Mark m2 = b.CreateMarkAbsolute(19);
+		PieceBuffer.ClipboardRange foxRange = b.ClipboardCut(m1, m2);
+		Assert.AreEqual(GetText(), "the  jumps over the lazy dog.");
+		
+		// Create a 2nd clipboard range covering 'lazy dog'
+		b.MoveMarkAbsolute(m1, 20);
+		b.MoveMarkAbsolute(m2, 28);
+		PieceBuffer.ClipboardRange dogRange = b.ClipboardCut(m1, m2);
+		Assert.AreEqual(GetText(), "the  jumps over the .");
+		
+		// Paste the 'lazy dog' clipboard range where 'quick brown fox' used to be
+		b.MoveMarkAbsolute(m1, 4);
+		b.MoveMarkAbsolute(m2, 4);
+		b.ClipboardPaste(m1, m2, dogRange);
+		Assert.AreEqual(GetText(), "the lazy dog jumps over the .");
+		
+		// Paste the 'quick brown fox' clipboard range where 'lazy dog' used to be 
+		b.MoveMarkAbsolute(m1, 28);
+		b.MoveMarkAbsolute(m2, 28);
+		b.ClipboardPaste(m1, m2, foxRange);
+		Assert.AreEqual(GetText(), "the lazy dog jumps over the quick brown fox.");
+	}
+	
+	[Test]
 	public void UndoInsert()
 	{
 		// Add some text
