@@ -87,6 +87,15 @@ public class PieceBuffer
 		}		
 	}
 	
+	public class ClipboardRange
+	{
+		public Piece StartPiece;
+		public long StartOffset;
+		public Piece EndPiece;
+		public long EndOffset;
+		public long Length;
+	}
+	
 	public class Range
 	{
 		public Mark Start;
@@ -927,19 +936,19 @@ public class PieceBuffer
 	//
 	// Copy
 	//	
-	public void Copy(Mark destStart, Mark destEnd, Mark srcStart, Mark srcEnd)
+	public void Copy(Mark destStart, Mark destEnd, Piece srcStartPiece, long srcStartOffset, Piece srcEndPiece, long srcEndOffset, long length)
 	{
 		Piece head = null;
 		Piece tail = null;
 		Piece newPiece;
 			
-		if(srcEnd.Piece != srcStart.Piece)
+		if(srcEndPiece != srcStartPiece)
 		{
-			head = new Piece(srcStart.Piece.Block, srcStart.Piece.Start + srcStart.Offset, srcStart.Piece.End);
+			head = new Piece(srcStartPiece.Block, srcStartPiece.Start + srcStartOffset, srcStartPiece.End);
 			tail = head;
 			
-			Piece p = srcStart.Piece.Next;
-			while(p != srcEnd.Piece)
+			Piece p = srcStartPiece.Next;
+			while(p != srcEndPiece)
 			{
 				newPiece = new Piece(p.Block, p.Start, p.End);
 				Piece.ListInsert(tail, newPiece);
@@ -947,20 +956,25 @@ public class PieceBuffer
 				p = p.Next;
 			}
 			
-			if(srcEnd.Piece != Pieces)
+			if(srcEndPiece != Pieces)
 			{
-				newPiece = new Piece(srcEnd.Piece.Block, srcEnd.Piece.Start, srcEnd.Piece.Start + srcEnd.Offset);
+				newPiece = new Piece(srcEndPiece.Block, srcEndPiece.Start, srcEndPiece.Start + srcEndOffset);
 				Piece.ListInsert(tail, newPiece);
 				tail = newPiece;
 			}
 		}
 		else
 		{
-			head = new Piece(srcStart.Piece.Block, srcStart.Piece.Start + srcStart.Offset, srcStart.Piece.Start + srcEnd.Offset);
+			head = new Piece(srcStartPiece.Block, srcStartPiece.Start + srcStartOffset, srcStartPiece.Start + srcEndOffset);
 			tail = head;
 		}
 		
-		Replace(destStart, destEnd, head, tail, srcEnd.Position - srcStart.Position);
+		Replace(destStart, destEnd, head, tail, length);
+	}
+	
+	public void Copy(Mark destStart, Mark destEnd, Mark srcStart, Mark srcEnd)
+	{
+		Copy(destStart, destEnd, srcStart.Piece, srcStart.Offset, srcEnd.Piece, srcEnd.Offset, srcEnd.Position - srcStart.Position);
 	}
 	
 	public void Copy(Mark start, Mark end)
@@ -1046,7 +1060,39 @@ public class PieceBuffer
 	}
 	
 	
+	//
+	// Clipboard Operations
+	//
+	public ClipboardRange ClipboardCopy(Mark start, Mark end)
+	{
+		ClipboardRange range = new ClipboardRange();
+		
+		range.StartPiece = start.Piece;
+		range.StartOffset = start.Offset;
+		range.EndPiece = end.Piece;
+		range.EndOffset = end.Offset;
+		range.Length = end.Position - start.Position;
+		
+		return range;
+	}
 	
+	public ClipboardRange ClipboardCut(Mark start, Mark end)
+	{
+		ClipboardRange range = ClipboardCopy(start, end);
+		Remove(start, end);
+		return range;
+	}
+	
+	public void ClipboardPaste(Mark dstStart, Mark dstEnd, ClipboardRange range)
+	{
+		Copy(dstStart, dstEnd, range.StartPiece, range.StartOffset, range.EndPiece, range.EndOffset, range.Length);
+	}
+	
+	
+	
+	//
+	// History
+	//
 	
 	public void BeginHistoryGroup() { ++HistoryGroupLevel; }
 	public void EndHistoryGroup() { --HistoryGroupLevel; }

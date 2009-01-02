@@ -367,6 +367,7 @@ class HexEdApp : Form, IPluginHost
 		Commands.Add("EditCopy", null, OnUpdateUiElement);
 		Commands.Add("EditPaste", null, OnUpdateUiElement);
 		Commands.Add("EditDelete", null, OnUpdateUiElement);
+		Commands.Add("EditSelectAll", null, OnUpdateUiElement);
 		Commands.Add("EditOptions", null, OnUpdateUiElement);
 		
 		Commands.Add("ViewAddressRadix", null, OnUpdateUiElement);
@@ -463,6 +464,8 @@ class HexEdApp : Form, IPluginHost
 		mi.DropDownItems.Add(CreateMenuItem("&Copy", "copy_16.png", "EditCopy", Keys.Control | Keys.C));
 		mi.DropDownItems.Add(CreateMenuItem("&Paste", "paste_16.png", "EditPaste", Keys.Control | Keys.V));
 		mi.DropDownItems.Add(CreateMenuItem("&Delete", "delete_16.png", "EditDelete", Keys.Delete));
+		mi.DropDownItems.Add(new ToolStripSeparator());
+		mi.DropDownItems.Add(CreateMenuItem("Select &All", null, "EditSelectAll", Keys.Control | Keys.A));
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi.DropDownItems.Add(CreateMenuItem("&Options", "options_16.png", "EditOptions", Keys.None));
 		MainMenuStrip.Items.Add(mi);
@@ -611,6 +614,7 @@ class HexEdApp : Form, IPluginHost
 		Commands["EditCopy"].Enabled = haveChild;
 		Commands["EditPaste"].Enabled = haveChild;
 		Commands["EditDelete"].Enabled = haveChild;
+		Commands["EditSelectAll"].Enabled = haveChild;
 
 		Commands["ViewAddressRadix"].Enabled = haveChild;
 		Commands["ViewDataRadix"].Enabled = haveChild;

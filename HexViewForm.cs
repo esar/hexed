@@ -20,6 +20,10 @@ class HexViewForm : Form
 	{
 		Commands.Add("EditUndo", OnEditUndo);
 		Commands.Add("EditRedo", OnEditRedo);
+		Commands.Add("EditCut", OnEditCut);
+		Commands.Add("EditCopy", OnEditCopy);
+		Commands.Add("EditPaste", OnEditPaste);
+		Commands.Add("EditSelectAll", OnEditSelectAll);
 		Commands.Add("SelectionDefineField", OnSelectionDefineField);
 		Commands.Add("ViewAddressRadix", OnViewAddressRadix);
 		Commands.Add("ViewDataRadix", OnViewDataRadix);
@@ -108,6 +112,26 @@ class HexViewForm : Form
 		Document.Buffer.Redo();
 	}
 
+	protected void OnEditCopy(object sender, EventArgs e)
+	{
+		View.Copy();
+	}
+	
+	protected void OnEditCut(object sender, EventArgs e)
+	{
+		View.Cut();
+	}
+	
+	protected void OnEditPaste(object sender, EventArgs e)
+	{
+		View.Paste();
+	}
+	
+	protected void OnEditSelectAll(object sender, EventArgs e)
+	{
+		View.Selection.Set(0, View.Document.Buffer.Length * 8);
+	}
+	
 	protected void OnSelectionDefineField(object sender, EventArgs e)
 	{
 //		TreeListViewItem n = structurePanel.Tree.Items.Add("New Field");

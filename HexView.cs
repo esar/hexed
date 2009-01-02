@@ -264,13 +264,25 @@ public class HexView : Control
 	public SelectionRange		Selection;
 	private List<SelectionRange>	Highlights = new List<SelectionRange>();
 	
+	private PieceBuffer.ClipboardRange	ClipboardRange = null;
+	
 	private ManagedCaret		InsertCaret			= null;
 
 	
 	public EditMode EditMode
 	{
 		get { return _EditMode; }
-		set { _EditMode = value; if(EditModeChanged != null) EditModeChanged(this, new EventArgs()); }
+		set 
+		{ 
+			_EditMode = value;
+			if(_EditMode == EditMode.Insert)
+				InsertCaret.Size = new Size(2, (int)LayoutDimensions.WordSize.Height);
+			else
+				InsertCaret.Size = new Size((int)(LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits) + 1, 
+		                            		(int)LayoutDimensions.WordSize.Height);
+			if(EditModeChanged != null) 
+				EditModeChanged(this, new EventArgs()); 
+		}
 	}
 	
 	public Endian Endian
@@ -410,6 +422,36 @@ public class HexView : Control
 		base.Dispose(disposing);
 	}
 
+	public void Copy()
+	{
+		PieceBuffer.Mark start = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
+		PieceBuffer.Mark end = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
+		ClipboardRange = Document.Buffer.ClipboardCopy(start, end);
+		Document.Buffer.DestroyMark(start);
+		Document.Buffer.DestroyMark(end);
+	}
+	
+	public void Cut()
+	{
+		PieceBuffer.Mark start = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
+		PieceBuffer.Mark end = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
+		ClipboardRange = Document.Buffer.ClipboardCut(start, end);
+		Document.Buffer.DestroyMark(start);
+		Document.Buffer.DestroyMark(end);
+	}
+	
+	public void Paste()
+	{
+		if(ClipboardRange != null)
+		{
+			PieceBuffer.Mark dstStart = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
+			PieceBuffer.Mark dstEnd = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
+			Document.Buffer.ClipboardPaste(dstStart, dstEnd, ClipboardRange);
+			Document.Buffer.DestroyMark(dstStart);
+			Document.Buffer.DestroyMark(dstEnd);
+		}
+	}
+	
 	public void AddHighlight(SelectionRange s)
 	{
 		Highlights.Insert(0, s);
@@ -891,6 +933,7 @@ public class HexView : Control
 	protected void OnSelectionChanged(object sender, EventArgs e)
 	{
 		Invalidate();
+		
 		if(Selection.Length != 0)
 		{
 			InsertCaret.Visible = false;
@@ -928,7 +971,7 @@ public class HexView : Control
 		{
 			DragStartHit = hit;
 			DragStartPos = new Point(e.X, e.Y);
-			if(hit.Type == HexViewHit.HitType.Data)
+			if(hit.Type == HexViewHit.HitType.Data || hit.Type == HexViewHit.HitType.DataSelection)
 			{
 				if((ModifierKeys & Keys.Shift) == Keys.Shift)
 					Selection.End = hit.Address;
@@ -1202,7 +1245,11 @@ public class HexView : Control
 						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
 						break;
 					case EditMode.Insert:
-						Document.Buffer.Insert((byte)x);
+						if(Selection.Start % (_BytesPerWord * 8) == 0)
+							Document.Buffer.Insert((byte)(x << (_BytesPerWord * 8 - LayoutDimensions.BitsPerDigit)));
+						else
+							UpdateWord(Selection.Start, x);
+						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
 						break;
 				}
 			}

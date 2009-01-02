@@ -11,6 +11,7 @@ public class ManagedCaret
 	bool	_Visible;
 	bool	_Drawn;
 	Timer	_Timer;
+	bool	_Skip;
 
 	public ManagedCaret(Control control) 
 	{
@@ -37,7 +38,13 @@ public class ManagedCaret
 	public Size Size 
 	{
 		get { return _Size; }
-		set { _Size = value; }
+		set 
+		{
+			if(_Drawn)
+				ToggleCaret();
+			_Size = value; 
+			ToggleCaret();
+		}
 	}
 
 	public Point Position 
@@ -88,9 +95,16 @@ public class ManagedCaret
 	
 	private void ToggleCaret()
 	{
-		Rectangle r = new Rectangle(_Position.X, _Position.Y - _Size.Height, _Size.Width, _Size.Height);
-		r.Intersect(_Control.ClientRectangle);
-		ControlPaint.FillReversibleRectangle(_Control.RectangleToScreen(r), Color.Black);
+		if(_Drawn)
+		{
+			_Control.Invalidate(new Rectangle(_Position.X, _Position.Y - _Size.Height, _Size.Width, _Size.Height));
+		}
+		else
+		{
+			Rectangle r = new Rectangle(_Position.X, _Position.Y - _Size.Height, _Size.Width, _Size.Height);
+			r.Intersect(_Control.ClientRectangle);
+			ControlPaint.FillReversibleRectangle(_Control.RectangleToScreen(r), Color.Black);
+		}
 
 		_Drawn = !_Drawn;
 	}
