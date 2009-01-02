@@ -20,15 +20,13 @@ public class Settings
 	
 	public Settings()
 	{
-//		BasePath = Application.StartupPath;
-//		if(BasePath.EndsWith("\\bin\\debug", true, null) || BasePath.EndsWith("\\bin\\release", true, null))
-//		{
-//			BasePath = BasePath.Substring(0, BasePath.LastIndexOf('\\'));
-//			BasePath = BasePath.Substring(0, BasePath.LastIndexOf('\\'));
-//		}
-		
-		// TODO: Fix this hard coded path (mono bodge)
-		BasePath = "/home/stephen/projects/dotnet/hexed";
+		BasePath = Application.StartupPath;
+		if(	BasePath.EndsWith(String.Format("{0}bin{0}debug", System.IO.Path.DirectorySeparatorChar), true, null) ||
+			BasePath.EndsWith(String.Format("{0}bin{0}release", System.IO.Path.DirectorySeparatorChar), true, null))
+		{
+			BasePath = BasePath.Substring(0, BasePath.LastIndexOf(System.IO.Path.DirectorySeparatorChar));
+			BasePath = BasePath.Substring(0, BasePath.LastIndexOf(System.IO.Path.DirectorySeparatorChar));
+		}
 	}
 	
 	public System.Drawing.Image Image(string name)
