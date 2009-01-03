@@ -18,3 +18,12 @@ Python
 	+ Add command history
 	+ Refresh 'Struct' global when structure refreshed
 
+PieceBuffer
+	+ Add extra Block types (useful for fast fills)
+		+ PatternBlock: returns data generated on the fly to pattern
+spec
+		+ ConstantBlock: always returns the same constant value
+
+	+ Is it possible to put a filter between a piece and a block so that
+	  basic operations can transform the data before it's displayed or
+	  written to the output file (XOR, AND, OR, INVERT, etc).

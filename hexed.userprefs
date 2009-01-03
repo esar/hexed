@@ -4,34 +4,39 @@
     <File name="StructureDefinitionCompiler.cs" line="116" column="5" />
     <File name="StructurePanel.cs" line="41" column="88" />
     <File name="Document.cs" line="113" column="3" />
-    <File name="ManagedCaret.cs" line="49" column="1" />
-    <File name="HexView.cs" line="465" column="22" />
-    <File name="HexEd.cs" line="1" column="1" />
-    <File name="PieceBuffer.cs" line="937" column="4" />
-    <File name="HexViewForm.cs" line="116" column="3" />
-    <File name="PieceBufferTest.cs" line="856" column="1" />
+    <File name="HexEd.cs" line="555" column="56" />
+    <File name="PieceBuffer.cs" line="314" column="42" />
+    <File name="HexViewForm.cs" line="30" column="46" />
+    <File name="PieceBufferTest.cs" line="467" column="33" />
+    <File name="SettingsDialog.cs" line="41" column="1" />
+    <File name="HexView.cs" line="790" column="1" />
+    <File name="ChecksumPlugin/Checksum.cs" line="54" column="57" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="hexed" expanded="True" selected="True" />
+        <Node name="ChecksumPlugin" expanded="True">
+          <Node name="References" expanded="True" />
+        </Node>
+        <Node name="hexed" expanded="True">
+          <Node name="PieceBuffer.cs" selected="True" />
+        </Node>
+        <Node name="HistogramPlugin" expanded="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
-      <Node expanded="True" />
-    </ViewMemento>
-    <ViewMemento id="MonoDevelop.NUnit.TestPad">
       <Node expanded="True">
         <Node name="hexed" expanded="True">
-          <Node name="PieceBufferTest" expanded="True">
-            <Node name="Copy" selected="True" />
-          </Node>
+          <Node name="Settings" expanded="True" />
         </Node>
       </Node>
     </ViewMemento>
+    <ViewMemento id="MonoDevelop.NUnit.TestPad">
+      <Node expanded="True" />
+    </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PieceBufferTest.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PieceBuffer.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
