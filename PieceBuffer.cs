@@ -957,6 +957,17 @@ public class PieceBuffer
 
 	
 	//
+	// Insert File
+	//
+	
+	public void InsertFile(Mark destStart, Mark destEnd, string filename, long offset, long length)
+	{
+		Block block = FileBlock.Create(filename);
+		Piece piece = new Piece(block, offset, offset + length);
+		Replace(destStart, destEnd, piece, piece, length);
+	}
+	
+	//
 	// Fill Constant
 	//
 	public void FillConstant(Mark destStart, Mark destEnd, byte constant, long length)
@@ -968,8 +979,9 @@ public class PieceBuffer
 		
 		Replace(destStart, destEnd, piece, piece, length);
 	}
-
 	
+	
+
 	//
 	// Remove
 	//
