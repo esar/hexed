@@ -110,13 +110,54 @@ public class PieceBuffer
 	
 	public abstract class Block
 	{
+		protected static Dictionary<string, Block> OpenBlocks = new Dictionary<string,Block>(); 
+		
 		public long Length;
 		public long Used;
-		public Block Prev;
-
+		
 		public abstract byte this[long index] { get; set; }
-		public abstract void GetBytes(long start, long length, byte[] src, long srcOffset);
-		public abstract void SetBytes(long start, long length, byte[] dst, long dstOffset);
+		public abstract void GetBytes(long start, long length, byte[] dst, long dstOffset);
+		public abstract void SetBytes(long start, long length, byte[] src, long srcOffset);
+	}
+	
+	public class ConstantBlock : Block
+	{
+		byte Constant;
+		
+		public override byte this[long i]
+		{
+			get { return Constant; }
+			set { }
+		}
+
+		private ConstantBlock(byte constant)
+		{
+			Constant = constant;
+			Length = Int64.MaxValue;
+			Used = Length;
+		}
+		
+		public static Block Create(byte constant)
+		{
+			Block block;
+			if(!OpenBlocks.TryGetValue("Constant" + constant, out block))
+			{
+				block = new ConstantBlock(constant);
+				OpenBlocks.Add("Constant" + constant, block);
+			}
+			return block;
+		}
+		
+		public override void GetBytes(long start, long length, byte[] dst, long dstOffset)
+		{
+			for(int i = 0; i < length; ++i)
+				dst[dstOffset + i] = Constant;
+		}
+		
+		public override void SetBytes(long start, long length, byte[] src, long srcOffset)
+		{
+			throw new Exception("Can't SetBytes() on a ConstantBlock");
+		}
 	}
 	
 	public class FileBlock : Block
@@ -126,7 +167,7 @@ public class PieceBuffer
 		private uint		BufferedLength = 0;
 		private uint		MaxLength = 4096;
 		private long		StartAddress = 0;
-		
+				
 		public override byte this[long i]
 		{
 			get	
@@ -148,11 +189,22 @@ public class PieceBuffer
 			set	{ }
 		}
 		
-		public FileBlock(string filename)
+		private FileBlock(string filename)
 		{
 			FS = new FileStream(filename, FileMode.Open, FileAccess.Read);
 			Length = FS.Length;
 			Used = Length;
+		}
+		
+		public static Block Create(string filename)
+		{
+			Block block;
+			if(!OpenBlocks.TryGetValue("File" + filename, out block))
+			{
+				block = new FileBlock(filename);
+				OpenBlocks.Add("File" + filename, block);
+			}
+			return block;
 		}
 		
 		public override void GetBytes(long start, long length, byte[] dst, long dstOffset)
@@ -186,6 +238,7 @@ public class PieceBuffer
 	
 	public class MemoryBlock : Block
 	{
+		private static int BlockNum = 0;
 		public byte[] Buffer;
 		
 		public override byte this[long index]
@@ -199,6 +252,8 @@ public class PieceBuffer
 			Buffer = new byte[size];
 			Length = size;
 			Used = 0;
+			
+			OpenBlocks.Add("Memory" + (BlockNum++), this);
 		}
 		
 		public override void GetBytes(long start, long length, byte[] dest, long destOffset)
@@ -356,7 +411,7 @@ public class PieceBuffer
 	
 	public PieceBuffer(string filename)
 	{
-		Block block = new FileBlock(filename);
+		Block block = FileBlock.Create(filename);
 		
 		Piece piece = new Piece(block, 0, block.Length);
 		Piece.ListInsert(Pieces, piece);
@@ -369,7 +424,6 @@ public class PieceBuffer
 		Mark.ListInsert(Marks, StartMark);
 
 		CurrentBlock = new MemoryBlock(4096);
-		CurrentBlock.Prev = block;
 		
 		HistoryGroupLevel = 0;
 		
@@ -854,7 +908,6 @@ public class PieceBuffer
 			if(CurrentBlock.Used == CurrentBlock.Length)
 			{
 				Block block = new MemoryBlock(4096);
-				block.Prev = CurrentBlock;
 				CurrentBlock = block;
 			}
 		}
@@ -903,7 +956,20 @@ public class PieceBuffer
 	}
 
 	
+	//
+	// Fill Constant
+	//
+	public void FillConstant(Mark destStart, Mark destEnd, byte constant, long length)
+	{
+		Piece piece = null;
+		Block block = ConstantBlock.Create(constant);
+		
+		piece = new Piece(block, 0, length);
+		
+		Replace(destStart, destEnd, piece, piece, length);
+	}
 
+	
 	//
 	// Remove
 	//

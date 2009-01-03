@@ -1,6 +1,7 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
+    <File name="../../mono-2.0.1/mcs/class/Managed.Windows.Forms/System.Windows.Forms/Form.cs" line="1604" column="23" />
     <File name="StructureDefinitionCompiler.cs" line="116" column="5" />
     <File name="StructurePanel.cs" line="41" column="88" />
     <File name="Document.cs" line="113" column="3" />
@@ -10,33 +11,24 @@
     <File name="PieceBufferTest.cs" line="467" column="33" />
     <File name="SettingsDialog.cs" line="41" column="1" />
     <File name="HexView.cs" line="790" column="1" />
-    <File name="ChecksumPlugin/Checksum.cs" line="54" column="57" />
+    <File name="ChecksumPlugin/Checksum.cs" line="39" column="4" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="ChecksumPlugin" expanded="True">
-          <Node name="References" expanded="True" />
-        </Node>
-        <Node name="hexed" expanded="True">
-          <Node name="PieceBuffer.cs" selected="True" />
-        </Node>
-        <Node name="HistogramPlugin" expanded="True" />
+        <Node name="ChecksumPlugin" expanded="True" />
+        <Node name="hexed" expanded="True" selected="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
-      <Node expanded="True">
-        <Node name="hexed" expanded="True">
-          <Node name="Settings" expanded="True" />
-        </Node>
-      </Node>
+      <Node expanded="True" />
     </ViewMemento>
     <ViewMemento id="MonoDevelop.NUnit.TestPad">
       <Node expanded="True" />
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PieceBuffer.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/ChecksumPlugin/Checksum.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

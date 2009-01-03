@@ -23,6 +23,7 @@ class HexViewForm : Form
 		Commands.Add("EditCut", OnEditCut);
 		Commands.Add("EditCopy", OnEditCopy);
 		Commands.Add("EditPaste", OnEditPaste);
+		Commands.Add("EditInsertPattern", OnEditInsertPattern);
 		Commands.Add("EditSelectAll", OnEditSelectAll);
 		Commands.Add("SelectionDefineField", OnSelectionDefineField);
 		Commands.Add("ViewAddressRadix", OnViewAddressRadix);
@@ -125,6 +126,15 @@ class HexViewForm : Form
 	protected void OnEditPaste(object sender, EventArgs e)
 	{
 		View.Paste();
+	}
+	
+	protected void OnEditInsertPattern(object sender, EventArgs e)
+	{
+		PieceBuffer.Mark a = View.Document.Buffer.CreateMarkAbsolute(View.Selection.Start / 8);
+		PieceBuffer.Mark b = View.Document.Buffer.CreateMarkAbsolute(View.Selection.End / 8);
+		View.Document.Buffer.FillConstant(a, b, 0xFF, (View.Selection.End - View.Selection.Start) / 8);
+		View.Document.Buffer.DestroyMark(a);
+		View.Document.Buffer.DestroyMark(b);
 	}
 	
 	protected void OnEditSelectAll(object sender, EventArgs e)
