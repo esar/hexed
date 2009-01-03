@@ -51,7 +51,8 @@ namespace ChecksumPlugin
 			StatusBar.Items.Add(ProgressLabel);
 			ProgressBar.Maximum = 100;
 			ProgressBar.Value = 0;
-			ProgressBar.Dock = DockStyle.Fill;
+			ProgressBar.Alignment = ToolStripItemAlignment.Right;
+			
 			StatusBar.Items.Add(ProgressBar);
 			Controls.Add(StatusBar);
 			ProgressBar.Dock = DockStyle.Bottom;
@@ -60,6 +61,8 @@ namespace ChecksumPlugin
 		
 		public void OnCalculate(object sender, EventArgs e)
 		{
+			ResultList.Clear();
+			
 			if(Worker.IsBusy)
 			{
 				CalcButton.Enabled = false;
@@ -74,24 +77,29 @@ namespace ChecksumPlugin
 		
 		public void OnDoWork(object sender, DoWorkEventArgs e)
 		{
+			const int BLOCK_SIZE = 4096*1024;
 			
+			System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create();
+			System.Security.Cryptography.SHA1 sha1 = System.Security.Cryptography.SHA1.Create();
+			sha1.Initialize();
+
+			// TODO: Need thread safe method of accessing the buffer
+			// TODO: Need to know if the buffer changes while we're processing
+			//       maybe we could lock the buffer so it's read only until we're finished?
 			PieceBuffer buffer = Host.ActiveView.Document.Buffer;
-			long max = 0;
-			
-			
 			long total = Host.ActiveView.Document.Buffer.Length;
 			long len = Host.ActiveView.Document.Buffer.Length;
 			long offset = 0;
 			long lastReportTime = System.Environment.TickCount;
-			byte[] bytes = new byte[4096];
+			byte[] bytes = new byte[BLOCK_SIZE];
 			while(len > 0)
 			{
-				int partLen = 4096 > len ? (int)len : 4096;
+				int partLen = BLOCK_SIZE > len ? (int)len : BLOCK_SIZE;
 				buffer.GetBytes(offset, bytes, partLen);
+
+				md5.TransformBlock(bytes, 0, partLen, bytes, 0);
+				sha1.TransformBlock(bytes, 0, partLen, bytes, 0);
 				
-				for(int i = 0; i < partLen; ++i)
-				{
-				}
 				
 				len -= partLen;
 				offset += partLen;
@@ -109,35 +117,28 @@ namespace ChecksumPlugin
 				}
 			}
 			
-/*			int i = 0;
-			int lastReportTime = System.Environment.TickCount;
-			while(true)
-			{
-				
-				if(++i > 100)
-					i = 0;
-
-				if(System.Environment.TickCount > lastReportTime + 1000)
-				{
-					Worker.ReportProgress(i);
-					lastReportTime = System.Environment.TickCount;
-				}
-				
-				if(Worker.CancellationPending)
-				{
-					e.Cancel = true;
-					return;
-				}
-			} */
+			md5.TransformFinalBlock(bytes, 0, 0);
+			sha1.TransformFinalBlock(bytes, 0, 0);
+			e.Result = sha1.Hash.Clone();
 		}
 		
 		public void OnProgressChanged(object sender, ProgressChangedEventArgs e)
 		{
 			ProgressBar.Value = e.ProgressPercentage;
+			ProgressLabel.Text = "Calculating..." + e.ProgressPercentage + "%";
 		}
 		
 		public void OnCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
+			if(e.Cancelled == false)
+			{
+				StringBuilder hash = new StringBuilder();
+				foreach(byte b in (byte[])e.Result)
+					hash.Append(b.ToString("X2"));
+				ListViewItem item = ResultList.Items.Add("SHA1");
+				item.SubItems.Add(hash.ToString());
+			}
+			
 			ProgressLabel.Text = "Ready";
 			ProgressBar.Value = 0;
 			CalcButton.Text = "Calculate";
@@ -170,35 +171,6 @@ namespace ChecksumPlugin
 		{
 			if(Host.ActiveView != null)
 			{
-				/*
-				PieceBuffer buffer = Host.ActiveView.Document.Buffer;
-				long max = 0;
-				long[] buckets = new long[0x100];
-				
-				for(int i = 0; i < 0x100; ++i)
-					buckets[i] = 0;
-				
-				long len = Host.ActiveView.Document.Buffer.Length;
-				long offset = 0;
-				byte[] bytes = new byte[4096];
-				while(len > 0)
-				{
-					int partLen = 4096 > len ? (int)len : 4096;
-					buffer.GetBytes(offset, bytes, partLen);
-					
-					for(int i = 0; i < partLen; ++i)
-					{
-						buckets[bytes[i]]++;
-						if(buckets[bytes[i]] > max)
-							max = buckets[bytes[i]];
-					}
-					
-					len -= partLen;
-					offset += partLen;
-				}
-				*/
-
-
 				ResultWindow results = new ResultWindow(Host);
 				results.Show();
 			}
