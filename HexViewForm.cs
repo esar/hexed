@@ -135,21 +135,13 @@ class HexViewForm : Form
 		if(dlg.ShowDialog() == DialogResult.OK)
 		{
 			System.IO.FileInfo info = new System.IO.FileInfo(dlg.FileName);
-			PieceBuffer.Mark a = View.Document.Buffer.CreateMarkAbsolute(View.Selection.Start / 8);
-			PieceBuffer.Mark b = View.Document.Buffer.CreateMarkAbsolute(View.Selection.End / 8);
-			View.Document.Buffer.InsertFile(a, b, dlg.FileName, 0, info.Length);
-			View.Document.Buffer.DestroyMark(a);
-			View.Document.Buffer.DestroyMark(b);
+			View.Document.Buffer.InsertFile(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, dlg.FileName, 0, info.Length);
 		}
 	}
 	
 	protected void OnEditInsertPattern(object sender, EventArgs e)
 	{
-		PieceBuffer.Mark a = View.Document.Buffer.CreateMarkAbsolute(View.Selection.Start / 8);
-		PieceBuffer.Mark b = View.Document.Buffer.CreateMarkAbsolute(View.Selection.End / 8);
-		View.Document.Buffer.FillConstant(a, b, 0xFF, (View.Selection.End - View.Selection.Start) / 8);
-		View.Document.Buffer.DestroyMark(a);
-		View.Document.Buffer.DestroyMark(b);
+		View.Document.Buffer.FillConstant(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, 0xFF, View.Selection.Length / 8);
 	}
 	
 	protected void OnEditSelectAll(object sender, EventArgs e)

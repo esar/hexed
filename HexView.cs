@@ -32,18 +32,20 @@ public class HexView : Control
 
 		public event EventHandler Changed;
 
-		public long		_Start = 0;
-		public long		_End = 0;
+		private long		_Start = 0;
+		private long		_End = 0;
+		private PieceBuffer.Range	_Range;
 		
 		public int		BorderWidth = 1;
 		public Color	BorderColor = Color.Blue;
 		public Color	BackColor = Color.AliceBlue;
 
 		
-		
 		public SelectionRange(HexView view)
 		{
 			View = view;
+			_Range = new PieceBuffer.Range(view.Document.Buffer.CreateMarkAbsolute(_Start / 8), 
+			                               view.Document.Buffer.CreateMarkAbsolute(_End / 8));
 		}
 
 		public long Start
@@ -58,6 +60,7 @@ public class HexView : Control
 				if(_Start != value)
 				{
 					_Start = value;
+					View.Document.Buffer.MoveMarkAbsolute(_Range.Start, _Start / 8);
 
 					if(Changed != null)
 						Changed(this, new EventArgs());
@@ -77,6 +80,7 @@ public class HexView : Control
 				if(_End != value)
 				{
 					_End = value;
+					View.Document.Buffer.MoveMarkAbsolute(_Range.End, _End / 8);
 
 					if(Changed != null)
 						Changed(this, new EventArgs());
@@ -84,6 +88,11 @@ public class HexView : Control
 			}
 		}
 
+		public PieceBuffer.Range BufferRange
+		{
+			get { return _Range; }
+		}
+		
 		public long Length
 		{
 			get
@@ -101,6 +110,8 @@ public class HexView : Control
 
 			_Start = start;
 			_End = end;
+			View.Document.Buffer.MoveMarkAbsolute(_Range.Start, _Start / 8);
+			View.Document.Buffer.MoveMarkAbsolute(_Range.End, _End / 8);
 
 			if(hasChanged)
 				if(Changed != null)
@@ -424,32 +435,18 @@ public class HexView : Control
 
 	public void Copy()
 	{
-		PieceBuffer.Mark start = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
-		PieceBuffer.Mark end = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
-		ClipboardRange = Document.Buffer.ClipboardCopy(start, end);
-		Document.Buffer.DestroyMark(start);
-		Document.Buffer.DestroyMark(end);
+		ClipboardRange = Document.Buffer.ClipboardCopy(Selection.BufferRange.Start, Selection.BufferRange.End);
 	}
 	
 	public void Cut()
 	{
-		PieceBuffer.Mark start = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
-		PieceBuffer.Mark end = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
-		ClipboardRange = Document.Buffer.ClipboardCut(start, end);
-		Document.Buffer.DestroyMark(start);
-		Document.Buffer.DestroyMark(end);
+		ClipboardRange = Document.Buffer.ClipboardCut(Selection.BufferRange.Start, Selection.BufferRange.End);
 	}
 	
 	public void Paste()
 	{
 		if(ClipboardRange != null)
-		{
-			PieceBuffer.Mark dstStart = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
-			PieceBuffer.Mark dstEnd = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
-			Document.Buffer.ClipboardPaste(dstStart, dstEnd, ClipboardRange);
-			Document.Buffer.DestroyMark(dstStart);
-			Document.Buffer.DestroyMark(dstEnd);
-		}
+			Document.Buffer.ClipboardPaste(Selection.BufferRange.Start, Selection.BufferRange.End, ClipboardRange);
 	}
 	
 	public void AddHighlight(SelectionRange s)
@@ -948,8 +945,6 @@ public class HexView : Control
 			InsertCaret.Visible = true;
 			InsertCaret.Position = AddressToClientPoint(Selection.End);
 		}
-
-		Document.Buffer.MoveMarkAbsolute(Selection.Start / 8);
 	}
 	
 	protected void OnBufferChanged(object sender, PieceBuffer.BufferChangedEventArgs e)
@@ -1197,13 +1192,7 @@ public class HexView : Control
 			case Keys.Back:
 				if(Selection.Length > 0)
 				{
-					PieceBuffer.Mark a;
-					PieceBuffer.Mark b;
-					a = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
-					b = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
-					Document.Buffer.Remove(a, b);
-					Document.Buffer.DestroyMark(a);
-					Document.Buffer.DestroyMark(b);
+					Document.Buffer.Remove(Selection.BufferRange.Start, Selection.BufferRange.End);
 				}
 				else
 				{
@@ -1234,11 +1223,7 @@ public class HexView : Control
 			Console.WriteLine("Digit: " + x);
 			if(Selection.Length != 0)
 			{
-				PieceBuffer.Mark a = Document.Buffer.CreateMarkAbsolute(Selection.Start / 8);
-				PieceBuffer.Mark b = Document.Buffer.CreateMarkAbsolute(Selection.End / 8);
-				Document.Buffer.Insert(a, b, (byte)x);
-				Document.Buffer.DestroyMark(a);
-				Document.Buffer.DestroyMark(b);
+				Document.Buffer.Insert(Selection.BufferRange.Start, Selection.BufferRange.End, (byte)x);
 				Selection.Set(Selection.End, Selection.End);
 			}
 			else
