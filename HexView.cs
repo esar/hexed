@@ -1192,14 +1192,17 @@ public class HexView : Control
 			case Keys.Back:
 				if(Selection.Length > 0)
 				{
-					Document.Buffer.Remove(Selection.BufferRange.Start, Selection.BufferRange.End);
+					Document.Buffer.Remove(Selection.BufferRange);
 				}
 				else
 				{
 					if(e.KeyCode == Keys.Delete)
-						Document.Buffer.Remove(1);
+						Document.Buffer.Remove(Selection.BufferRange.Start.Position, Selection.BufferRange.Start.Position + 1);
 					else
-						Document.Buffer.Remove(-1);
+					{
+						Document.Buffer.Remove(Selection.BufferRange.Start.Position - 1, Selection.BufferRange.Start.Position);
+						Selection.Set(Selection.Start - 8, Selection.End - 8);
+					}
 				}
 				break;
 			default:
