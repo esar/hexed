@@ -18,6 +18,16 @@ public class PieceBuffer
 		}
 	}
 	
+	public class HistoryAddedEventArgs : EventArgs
+	{
+		public HistoryItem Item;
+		
+		public HistoryAddedEventArgs(HistoryItem item)
+		{
+			Item = item;
+		}
+	}
+	
 	public class Mark
 	{
 		public Piece	Piece;
@@ -332,8 +342,20 @@ public class PieceBuffer
 		}		
 	}
 	
+	public enum HistoryOperation
+	{
+		None,
+		Insert,
+		InsertFile,
+		FillConstant,
+		Copy,
+		Remove,
+		Replace
+	}
+	
 	public class HistoryItem
 	{
+		public HistoryOperation Operation;
 		public Piece Head;
 		public Piece Tail;
 		public int GroupLevel;
@@ -342,8 +364,9 @@ public class PieceBuffer
 		public HistoryItem FirstChild;
 		public HistoryItem NextSibling;
 		
-		public HistoryItem(Piece head, Piece tail, int groupLevel)
+		public HistoryItem(HistoryOperation op, Piece head, Piece tail, int groupLevel)
 		{
+			Operation = op;
 			Head = head;
 			Tail = tail;
 			GroupLevel = groupLevel;
@@ -356,7 +379,8 @@ public class PieceBuffer
 	public Piece		Pieces = new Piece();
 	public Mark			Marks = new Mark();
 	public Block		CurrentBlock;
-	public HistoryItem	History = new HistoryItem(null, null, 0);
+	public HistoryItem	History;
+	public HistoryItem	HistoryRoot;
 	public int			HistoryGroupLevel;
 	public Mark			InsertMark;
 	public Mark			StartMark;
@@ -368,6 +392,9 @@ public class PieceBuffer
 	
 	public delegate void BufferChangedEventHandler(object sender, BufferChangedEventArgs e);
 	public event BufferChangedEventHandler Changed;
+	
+	public delegate void HistoryAddedEventHandler(object sender, HistoryAddedEventArgs e);
+	public event HistoryAddedEventHandler HistoryAdded;
 	
 	public byte this[long index]
 	{
@@ -403,6 +430,7 @@ public class PieceBuffer
 	
 		CurrentBlock = new MemoryBlock(4096);
 		
+		HistoryRoot = History = new HistoryItem(HistoryOperation.None, null, null, 0);
 		HistoryGroupLevel = 0;
 		
 		IndexCacheBytes = new byte[IndexCacheSize];
@@ -425,6 +453,7 @@ public class PieceBuffer
 
 		CurrentBlock = new MemoryBlock(4096);
 		
+		HistoryRoot = History = new HistoryItem(HistoryOperation.None, null, null, 0);
 		HistoryGroupLevel = 0;
 		
 		IndexCacheBytes = new byte[IndexCacheSize];
@@ -719,7 +748,7 @@ public class PieceBuffer
 		Debug.Assert(DebugMarkChainIsValid(), "SplitPiece: Leave: Invalid mark chain");
 	}
 	
-	protected void Replace(Mark curStart, Mark curEnd, Piece newStart, Piece newEnd, long newLength)
+	protected void Replace(HistoryOperation operation, Mark curStart, Mark curEnd, Piece newStart, Piece newEnd, long newLength)
 	{
 		Debug.Assert(curStart != null && curEnd != null, "Replace: Enter: Invalid curStart/curEnd");
 		Debug.Assert((newStart == null && newEnd == null && newLength == 0) || (newStart != null && newEnd != null), "Replace: Enter: Invalid newStart/newEnd/newLength");
@@ -742,14 +771,14 @@ public class PieceBuffer
 			Piece empty = new Piece();
 			empty.Prev = curStart.Piece.Prev;
 			empty.Next = curStart.Piece;
-			AddHistory(empty, empty);
+			AddHistory(operation, empty, empty);
 		}
 		else
 		{
 			if(curEnd.Piece == curStart.Piece)
-				AddHistory(curStart.Piece, curEnd.Piece);
+				AddHistory(operation, curStart.Piece, curEnd.Piece);
 			else
-				AddHistory(curStart.Piece, curEnd.Piece.Prev);
+				AddHistory(operation, curStart.Piece, curEnd.Piece.Prev);
 		}
 		
 		// Ensure the marks are on a piece boundaries
@@ -912,7 +941,7 @@ public class PieceBuffer
 			}
 		}
 		
-		Replace(destStart, destEnd, head, tail, origLength);
+		Replace(HistoryOperation.Insert, destStart, destEnd, head, tail, origLength);
 	}
 
 	public void Insert(Mark dest, byte[] text, long length)
@@ -964,7 +993,7 @@ public class PieceBuffer
 	{
 		Block block = FileBlock.Create(filename);
 		Piece piece = new Piece(block, offset, offset + length);
-		Replace(destStart, destEnd, piece, piece, length);
+		Replace(HistoryOperation.InsertFile, destStart, destEnd, piece, piece, length);
 	}
 	
 	//
@@ -977,7 +1006,7 @@ public class PieceBuffer
 		
 		piece = new Piece(block, 0, length);
 		
-		Replace(destStart, destEnd, piece, piece, length);
+		Replace(HistoryOperation.FillConstant, destStart, destEnd, piece, piece, length);
 	}
 	
 	
@@ -987,26 +1016,26 @@ public class PieceBuffer
 	//
 	public void Remove(Mark start, Mark end)
 	{
-		Replace(start, end, null, null, 0);
+		Replace(HistoryOperation.Remove, start, end, null, null, 0);
 	}
 	
 	public void Remove(long length)
 	{
 		Mark end = CreateMark(length); 
-		Replace(InsertMark, end, null, null, 0); 
+		Replace(HistoryOperation.Remove, InsertMark, end, null, null, 0); 
 		DestroyMark(end);
 	}
 	
 	public void Remove(Range range)
 	{
-		Replace(range.Start, range.End, null, null, 0);
+		Replace(HistoryOperation.Remove, range.Start, range.End, null, null, 0);
 	}
 	
 	public void Remove(long start, long end)
 	{
 		Mark s = CreateMark(start - InsertMark.Position);
 		Mark e = CreateMark(end - InsertMark.Position);
-		Replace(s, e, null, null, 0);
+		Replace(HistoryOperation.Remove, s, e, null, null, 0);
 		DestroyMark(s);
 		DestroyMark(e);
 	}
@@ -1049,7 +1078,7 @@ public class PieceBuffer
 			tail = head;
 		}
 		
-		Replace(destStart, destEnd, head, tail, length);
+		Replace(HistoryOperation.Copy, destStart, destEnd, head, tail, length);
 	}
 	
 	public void Copy(Mark destStart, Mark destEnd, Mark srcStart, Mark srcEnd)
@@ -1177,13 +1206,17 @@ public class PieceBuffer
 	public void BeginHistoryGroup() { ++HistoryGroupLevel; }
 	public void EndHistoryGroup() { --HistoryGroupLevel; }
 	
-	public void AddHistory(Piece start, Piece end)
+	public void AddHistory(HistoryOperation operation, Piece start, Piece end)
 	{
-		HistoryItem i = new HistoryItem(start, end, HistoryGroupLevel);
+		HistoryItem i = new HistoryItem(operation, start, end, HistoryGroupLevel);
 		
+		i.NextSibling = History.FirstChild;
 		History.FirstChild = i;
 		i.Parent = History;
 		History = i;
+		
+		if(HistoryAdded != null)
+			HistoryAdded(this, new HistoryAddedEventArgs(i));
 		
 		DebugDumpHistory("");
 	}

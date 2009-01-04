@@ -68,6 +68,7 @@
     <Compile Include="HorzRule.cs" />
     <Compile Include="SettingsDialog.cs" />
     <Compile Include="TitleLabel.cs" />
+    <Compile Include="HistoryPanel.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
