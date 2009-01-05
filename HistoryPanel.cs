@@ -74,6 +74,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		_TreeColumnName = new Aga.Controls.Tree.TreeColumn("Name", 100);
 		_NodeControlIcon = new Aga.Controls.Tree.NodeControls.NodeStateIcon();
 		_NodeControlName = new Aga.Controls.Tree.NodeControls.NodeTextBox();
+		_NodeControlName.DrawText += OnDrawNodeText;
 
 	
 		_TreeView.AllowColumnReorder = true;
@@ -108,20 +109,56 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	public void OnActiveViewChanged(object sender, EventArgs e)
 	{
 		if(LastDocument != null)
-			LastDocument.Buffer.HistoryAdded -= OnHistoryAdded; 
-		Host.ActiveView.Document.Buffer.HistoryAdded += OnHistoryAdded;
+		{
+			LastDocument.Buffer.HistoryAdded -= OnHistoryAdded;
+			LastDocument.Buffer.HistoryUndone -= OnHistoryUndone;
+			LastDocument.Buffer.HistoryRedone -= OnHistoryRedone;
+		}
+		
 		LastDocument = Host.ActiveView.Document;
+		LastDocument.Buffer.HistoryAdded += OnHistoryAdded;
+		LastDocument.Buffer.HistoryUndone += OnHistoryUndone;
+		LastDocument.Buffer.HistoryRedone += OnHistoryRedone;
 		
 		OnStructureChanged();
 		
 		Console.WriteLine("View Changed");
 	}
 	
-	public void OnHistoryAdded(object sender, PieceBuffer.HistoryAddedEventArgs e)
+	public void OnDrawNodeText(object sender, Aga.Controls.Tree.NodeControls.DrawEventArgs e)
 	{
-		OnNodesInserted(e.Item);
+		HistoryTreeItem item = _TreeView.GetPath(e.Node).LastNode as HistoryTreeItem;
+		if(item.Item.Active == false)
+			e.TextColor = Color.Gray;
+	}
+	
+	public void OnHistoryAdded(object sender, PieceBuffer.HistoryEventArgs e)
+	{
+		OnNodesInserted(e.NewItem);
 		
 		Console.WriteLine("History Added");
+	}
+	
+	public void OnHistoryUndone(object sender, PieceBuffer.HistoryEventArgs e)
+	{
+		if(NodesChanged != null)
+		{
+			HistoryTreeItem treeItem;
+			if(TreeItemMap.TryGetValue(e.OldItem, out treeItem))
+				NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(treeItem.Parent.Path), new object[] {treeItem}));
+			_TreeView.SelectedNode = _TreeView.FindNode(new Aga.Controls.Tree.TreePath(treeItem.Parent.Path));
+		}
+	}
+	
+	public void OnHistoryRedone(object sender, PieceBuffer.HistoryEventArgs e)
+	{
+		if(NodesChanged != null)
+		{
+			HistoryTreeItem treeItem;
+			if(TreeItemMap.TryGetValue(e.NewItem, out treeItem))
+				NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(treeItem.Parent.Path), new object[] {treeItem}));
+			_TreeView.SelectedNode = _TreeView.FindNode(new Aga.Controls.Tree.TreePath(treeItem.Path));
+		}
 	}
 	
 	

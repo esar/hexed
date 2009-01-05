@@ -18,13 +18,15 @@ public class PieceBuffer
 		}
 	}
 	
-	public class HistoryAddedEventArgs : EventArgs
+	public class HistoryEventArgs : EventArgs
 	{
-		public HistoryItem Item;
+		public HistoryItem OldItem;
+		public HistoryItem NewItem;
 		
-		public HistoryAddedEventArgs(HistoryItem item)
+		public HistoryEventArgs(HistoryItem oldItem, HistoryItem newItem)
 		{
-			Item = item;
+			OldItem = oldItem;
+			NewItem = newItem;
 		}
 	}
 	
@@ -355,6 +357,7 @@ public class PieceBuffer
 	
 	public class HistoryItem
 	{
+		public bool Active;
 		public HistoryOperation Operation;
 		public Piece Head;
 		public Piece Tail;
@@ -366,6 +369,7 @@ public class PieceBuffer
 		
 		public HistoryItem(HistoryOperation op, Piece head, Piece tail, int groupLevel)
 		{
+			Active = true;
 			Operation = op;
 			Head = head;
 			Tail = tail;
@@ -393,8 +397,10 @@ public class PieceBuffer
 	public delegate void BufferChangedEventHandler(object sender, BufferChangedEventArgs e);
 	public event BufferChangedEventHandler Changed;
 	
-	public delegate void HistoryAddedEventHandler(object sender, HistoryAddedEventArgs e);
-	public event HistoryAddedEventHandler HistoryAdded;
+	public delegate void HistoryEventHandler(object sender, HistoryEventArgs e);
+	public event HistoryEventHandler HistoryAdded;
+	public event HistoryEventHandler HistoryUndone;
+	public event HistoryEventHandler HistoryRedone;
 	
 	public byte this[long index]
 	{
@@ -1208,15 +1214,16 @@ public class PieceBuffer
 	
 	public void AddHistory(HistoryOperation operation, Piece start, Piece end)
 	{
-		HistoryItem i = new HistoryItem(operation, start, end, HistoryGroupLevel);
+		HistoryItem oldItem = History;
+		HistoryItem newItem = new HistoryItem(operation, start, end, HistoryGroupLevel);
 		
-		i.NextSibling = History.FirstChild;
-		History.FirstChild = i;
-		i.Parent = History;
-		History = i;
+		newItem.NextSibling = History.FirstChild;
+		History.FirstChild = newItem;
+		newItem.Parent = History;
+		History = newItem;
 		
 		if(HistoryAdded != null)
-			HistoryAdded(this, new HistoryAddedEventArgs(i));
+			HistoryAdded(this, new HistoryEventArgs(oldItem, newItem));
 		
 		DebugDumpHistory("");
 	}
@@ -1348,8 +1355,15 @@ public class PieceBuffer
 	{
 		if(History.Parent != null)
 		{
+			HistoryItem oldItem = History;
+			HistoryItem newItem = History.Parent;
+			
 			UndoRedo();
 			History = History.Parent;
+			oldItem.Active = false;
+			
+			if(HistoryUndone != null)
+				HistoryUndone(this, new HistoryEventArgs(oldItem, newItem));
 		}
 	}
 	
@@ -1357,11 +1371,15 @@ public class PieceBuffer
 	{
 		if(History.FirstChild != null)
 		{
-			HistoryItem i = History.FirstChild;
-			while(i.NextSibling != null)
-				i = i.NextSibling;
-			History = i;
+			HistoryItem oldItem = History;
+			HistoryItem newItem = History.FirstChild;
+			
+			History = newItem;
 			UndoRedo();
+			oldItem.Active = true;
+			
+			if(HistoryRedone != null)
+				HistoryRedone(this, new HistoryEventArgs(oldItem, newItem));
 		}
 	}
 	

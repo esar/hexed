@@ -3,17 +3,21 @@
     <File name="Welcome" />
     <File name="../../mono-2.0.1/mcs/class/Managed.Windows.Forms/System.Windows.Forms/Form.cs" line="1604" column="23" />
     <File name="Document.cs" line="113" column="3" />
-    <File name="HexEd.cs" line="371" column="59" />
-    <File name="PieceBuffer.cs" line="967" column="53" />
+    <File name="HexEd.cs" line="349" column="33" />
+    <File name="PieceBuffer.cs" line="1214" column="26" />
     <File name="HexViewForm.cs" line="138" column="1" />
     <File name="PieceBufferTest.cs" line="467" column="33" />
     <File name="SettingsDialog.cs" line="41" column="1" />
     <File name="HexView.cs" line="7" column="34" />
+    <File name="StructurePanel.cs" line="1" column="1" />
+    <File name="Aga.Controls/Tree/TreeModel.cs" line="1" column="1" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="ChecksumPlugin" expanded="True" />
+        <Node name="Aga.Controls" expanded="True">
+          <Node name="Tree" expanded="True" />
+        </Node>
         <Node name="hexed" expanded="True" selected="True" />
       </Node>
     </ViewMemento>
@@ -25,7 +29,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexView.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/Aga.Controls/Tree/TreeModel.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
