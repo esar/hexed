@@ -15,6 +15,16 @@ class HistoryTreeItem
 		get { return null; }
 	}
 	
+	public string Date
+	{
+		get { return _Item.Date.ToString("G"); }
+	}
+	
+	public string Range
+	{
+		get { return String.Format("{0} - {1}", Item.StartPosition, _Item.EndPosition); }
+	}
+	
 	public string Name
 	{
 		get { return _Item.Operation.ToString(); }
@@ -59,7 +69,13 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	private Aga.Controls.Tree.TreeViewAdv _TreeView;
 	private Aga.Controls.Tree.NodeControls.NodeStateIcon _NodeControlIcon;
 	private Aga.Controls.Tree.NodeControls.NodeTextBox _NodeControlName;
+	private Aga.Controls.Tree.NodeControls.NodeTextBox _NodeControlDate;
+	private Aga.Controls.Tree.NodeControls.NodeTextBox _NodeControlRange;
 	private Aga.Controls.Tree.TreeColumn _TreeColumnName;
+	private Aga.Controls.Tree.TreeColumn _TreeColumnDate;
+	private Aga.Controls.Tree.TreeColumn _TreeColumnRange;
+	
+	private Font _BoldFont;
 
 	protected IPluginHost Host;
 	protected Document LastDocument;
@@ -72,17 +88,25 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		
 		_TreeView = new Aga.Controls.Tree.TreeViewAdv();
 		_TreeColumnName = new Aga.Controls.Tree.TreeColumn("Name", 100);
+		_TreeColumnDate = new Aga.Controls.Tree.TreeColumn("Date", 100);
+		_TreeColumnRange = new Aga.Controls.Tree.TreeColumn("Range", 100);
 		_NodeControlIcon = new Aga.Controls.Tree.NodeControls.NodeStateIcon();
 		_NodeControlName = new Aga.Controls.Tree.NodeControls.NodeTextBox();
+		_NodeControlDate = new Aga.Controls.Tree.NodeControls.NodeTextBox();
+		_NodeControlRange = new Aga.Controls.Tree.NodeControls.NodeTextBox();
 		_NodeControlName.DrawText += OnDrawNodeText;
 
+		_BoldFont = new Font(_NodeControlName.Font, FontStyle.Bold);
 	
 		_TreeView.AllowColumnReorder = true;
 		_TreeView.AutoRowHeight = true;
 //		_TreeView.BackColor = System.Drawing.SystemColors.Window;
 		_TreeView.Columns.Add(_TreeColumnName);
+		_TreeView.Columns.Add(_TreeColumnDate);
+		_TreeView.Columns.Add(_TreeColumnRange);
 		_TreeView.Cursor = System.Windows.Forms.Cursors.Default;
 		_TreeView.FullRowSelect = true;
+		_TreeView.UseColumns = true;
 		_TreeView.GridLineStyle = ((Aga.Controls.Tree.GridLineStyle)((Aga.Controls.Tree.GridLineStyle.Horizontal | Aga.Controls.Tree.GridLineStyle.Vertical)));
 		_TreeView.LineColor = System.Drawing.SystemColors.ControlDark;
 		_TreeView.LoadOnDemand = true;
@@ -90,6 +114,8 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		_TreeView.Name = "_TreeView";
 		_TreeView.NodeControls.Add(this._NodeControlIcon);
 		_TreeView.NodeControls.Add(this._NodeControlName);
+		_TreeView.NodeControls.Add(this._NodeControlDate);
+		_TreeView.NodeControls.Add(this._NodeControlRange);
 		_TreeView.ShowNodeToolTips = true;
 		
 		_NodeControlIcon.DataPropertyName = "Icon";
@@ -99,7 +125,17 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		_NodeControlName.ParentColumn = _TreeColumnName;
 		_NodeControlName.Trimming = System.Drawing.StringTrimming.EllipsisCharacter;
 		_NodeControlName.UseCompatibleTextRendering = true;
-
+		
+		_NodeControlDate.DataPropertyName = "Date";
+		_NodeControlDate.ParentColumn = _TreeColumnDate;
+		_NodeControlDate.Trimming = System.Drawing.StringTrimming.EllipsisCharacter;
+		_NodeControlDate.UseCompatibleTextRendering = true;
+		
+		_NodeControlRange.DataPropertyName = "Range";
+		_NodeControlRange.ParentColumn = _TreeColumnRange;
+		_NodeControlRange.Trimming = System.Drawing.StringTrimming.EllipsisCharacter;
+		_NodeControlRange.UseCompatibleTextRendering = true;
+		
 		_TreeView.Dock = DockStyle.Fill;
 		Controls.Add(_TreeView);
 		
@@ -130,23 +166,53 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		HistoryTreeItem item = _TreeView.GetPath(e.Node).LastNode as HistoryTreeItem;
 		if(item.Item.Active == false)
 			e.TextColor = Color.Gray;
+		if(item.Item == LastDocument.Buffer.History)
+			e.Font = _BoldFont;
 	}
 	
 	public void OnHistoryAdded(object sender, PieceBuffer.HistoryEventArgs e)
 	{
-		OnNodesInserted(e.NewItem);
+		if(NodesInserted == null || NodesRemoved == null || StructureChanged == null)
+			return;
 		
-		Console.WriteLine("History Added");
+		HistoryTreeItem oldTreeItem;
+		if(!TreeItemMap.TryGetValue(e.OldItem, out oldTreeItem))
+			return;
+		
+		if(e.NewItem.NextSibling != null)
+		{
+			Aga.Controls.Tree.TreeNodeAdv parentNode = _TreeView.FindNode(new Aga.Controls.Tree.TreePath(oldTreeItem.Path));
+			Aga.Controls.Tree.TreeNodeAdv nextNode = parentNode.NextNode;
+			List<object> removedNodes = new List<object>();
+			while(nextNode != null)
+			{
+				removedNodes.Add(_TreeView.GetPath(nextNode).LastNode);
+				nextNode = nextNode.NextNode;
+			}
+			
+			NodesRemoved(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), removedNodes.ToArray()));
+			StructureChanged(this, new Aga.Controls.Tree.TreePathEventArgs(new Aga.Controls.Tree.TreePath(oldTreeItem.Path)));
+		}
+		
+		HistoryTreeItem newTreeItem = new HistoryTreeItem(null, e.NewItem);
+		Aga.Controls.Tree.TreePath parentPath = new Aga.Controls.Tree.TreePath();
+		TreeItemMap.Add(e.NewItem, newTreeItem);
+		NodesInserted(this, new Aga.Controls.Tree.TreeModelEventArgs(parentPath, new int[] {-1}, new object[] {newTreeItem}));
+		
+		_TreeView.EnsureVisible(_TreeView.FindNode(new Aga.Controls.Tree.TreePath(newTreeItem.Path)));
 	}
 	
 	public void OnHistoryUndone(object sender, PieceBuffer.HistoryEventArgs e)
 	{
 		if(NodesChanged != null)
 		{
-			HistoryTreeItem treeItem;
-			if(TreeItemMap.TryGetValue(e.OldItem, out treeItem))
-				NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(treeItem.Parent.Path), new object[] {treeItem}));
-			_TreeView.SelectedNode = _TreeView.FindNode(new Aga.Controls.Tree.TreePath(treeItem.Parent.Path));
+			HistoryTreeItem oldTreeItem;
+			if(TreeItemMap.TryGetValue(e.OldItem, out oldTreeItem))
+			{
+				HistoryTreeItem newTreeItem;
+				if(TreeItemMap.TryGetValue(e.NewItem, out newTreeItem))
+					NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), new object[] {oldTreeItem}));
+			}
 		}
 	}
 	
@@ -154,10 +220,9 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	{
 		if(NodesChanged != null)
 		{
-			HistoryTreeItem treeItem;
-			if(TreeItemMap.TryGetValue(e.NewItem, out treeItem))
-				NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(treeItem.Parent.Path), new object[] {treeItem}));
-			_TreeView.SelectedNode = _TreeView.FindNode(new Aga.Controls.Tree.TreePath(treeItem.Path));
+			HistoryTreeItem newTreeItem;
+			if(TreeItemMap.TryGetValue(e.NewItem, out newTreeItem))
+				NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), new object[] {newTreeItem}));
 		}
 	}
 	
@@ -169,33 +234,33 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 
 		if(Host.ActiveView == null)
 			return items; 
-		
-		PieceBuffer.HistoryItem hi;		
+			
+		PieceBuffer.HistoryItem histItem;
 		if(treePath.IsEmpty())
-			hi = Host.ActiveView.Document.Buffer.HistoryRoot;
+			histItem = Host.ActiveView.Document.Buffer.HistoryRoot;
 		else
-			hi = ((HistoryTreeItem)treePath.LastNode).Item.FirstChild;
-
-		while(hi != null)
+			histItem = ((HistoryTreeItem)treePath.LastNode).Item.NextSibling;
+		
+		while(histItem != null)
 		{
-			HistoryTreeItem item;
-			if(!TreeItemMap.TryGetValue(hi, out item))
+			HistoryTreeItem treeItem;
+			if(!TreeItemMap.TryGetValue(histItem, out treeItem))
 			{
-				item = new HistoryTreeItem(null, hi);
-				TreeItemMap.Add(hi, item);
+				treeItem = new HistoryTreeItem(null, histItem);
+				TreeItemMap.Add(histItem, treeItem);
 			}
 			
-			items.Add(item);
-			hi = hi.NextSibling;
+			items.Add(treeItem);
+			histItem = histItem.FirstChild;
 		}
-		
+
 		return items;
 	}
 	
 	public bool IsLeaf(Aga.Controls.Tree.TreePath treePath)
 	{
 		Console.WriteLine("IsLeaf: " + (((HistoryTreeItem)treePath.LastNode).Item.FirstChild == null));
-		return ((HistoryTreeItem)treePath.LastNode).Item.FirstChild == null;
+		return ((HistoryTreeItem)treePath.LastNode).Item.NextSibling == null;
 	}
 	
 	public event EventHandler<Aga.Controls.Tree.TreeModelEventArgs> NodesChanged;
