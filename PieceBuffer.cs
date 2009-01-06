@@ -363,7 +363,7 @@ public class PieceBuffer
 		public DateTime Date;
 		public HistoryOperation Operation;
 		public long StartPosition;
-		public long EndPosition;
+		public long Length;
 		
 		public Piece Head;
 		public Piece Tail;
@@ -373,13 +373,13 @@ public class PieceBuffer
 		public HistoryItem FirstChild;
 		public HistoryItem NextSibling;
 		
-		public HistoryItem(DateTime date, HistoryOperation op, long startPosition, long endPosition, Piece head, Piece tail, int groupLevel)
+		public HistoryItem(DateTime date, HistoryOperation op, long startPosition, long length, Piece head, Piece tail, int groupLevel)
 		{
 			Active = true;
 			Date = date;
 			Operation = op;
 			StartPosition = startPosition;
-			EndPosition = endPosition;
+			Length = length;
 			Head = head;
 			Tail = tail;
 			GroupLevel = groupLevel;
@@ -786,14 +786,14 @@ public class PieceBuffer
 			Piece empty = new Piece();
 			empty.Prev = curStart.Piece.Prev;
 			empty.Next = curStart.Piece;
-			AddHistory(operation, curStart.Position, curEnd.Position, empty, empty);
+			AddHistory(operation, curStart.Position, curEnd.Position - curStart.Position, empty, empty);
 		}
 		else
 		{
 			if(curEnd.Piece == curStart.Piece)
-				AddHistory(operation, curStart.Position, curEnd.Position, curStart.Piece, curEnd.Piece);
+				AddHistory(operation, curStart.Position, curEnd.Position - curStart.Position, curStart.Piece, curEnd.Piece);
 			else
-				AddHistory(operation, curStart.Position, curEnd.Position, curStart.Piece, curEnd.Piece.Prev);
+				AddHistory(operation, curStart.Position, curEnd.Position - curStart.Position, curStart.Piece, curEnd.Piece.Prev);
 		}
 		
 		// Ensure the marks are on a piece boundaries
@@ -1221,10 +1221,10 @@ public class PieceBuffer
 	public void BeginHistoryGroup() { ++HistoryGroupLevel; }
 	public void EndHistoryGroup() { --HistoryGroupLevel; }
 	
-	public void AddHistory(HistoryOperation operation, long startPosition, long endPosition, Piece start, Piece end)
+	public void AddHistory(HistoryOperation operation, long startPosition, long length, Piece start, Piece end)
 	{
 		HistoryItem oldItem = History;
-		HistoryItem newItem = new HistoryItem(DateTime.Now, operation, startPosition, endPosition, start, end, HistoryGroupLevel);
+		HistoryItem newItem = new HistoryItem(DateTime.Now, operation, startPosition, length, start, end, HistoryGroupLevel);
 		
 		newItem.NextSibling = History.FirstChild;
 		History.FirstChild = newItem;
