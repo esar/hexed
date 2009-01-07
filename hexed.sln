@@ -9,9 +9,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hexed", "hexed.csproj", "{D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PythonConsolePlugin", "PythonConsolePlugin\PythonConsolePlugin.csproj", "{5B36F055-4A0C-422C-8EC6-DF099E9F2EB5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChecksumPlugin", "ChecksumPlugin\ChecksumPlugin.csproj", "{4DD6D081-0461-4035-9D98-98B6B7C91672}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HistogramPlugin", "HistogramPlugin\HistogramPlugin.csproj", "{764C2C55-0470-4015-84CC-9198298EB218}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChecksumPlugin", "ChecksumPlugin\ChecksumPlugin.csproj", "{4DD6D081-0461-4035-9D98-98B6B7C91672}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookmarkPlugin", "BookmarkPlugin\BookmarkPlugin.csproj", "{721008AD-FE79-4D38-AE9F-F8DE85169F85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,14 @@ Global
 		{5B36F055-4A0C-422C-8EC6-DF099E9F2EB5}.Release.ActiveCfg = Release
 		{5B36F055-4A0C-422C-8EC6-DF099E9F2EB5}.Release.Build.0 = Release
 		{5B36F055-4A0C-422C-8EC6-DF099E9F2EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Debug.ActiveCfg = Debug
+		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Debug.Build.0 = Debug
+		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Debug|Any CPU.ActiveCfg = Debug
+		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Debug|Any CPU.Build.0 = Debug
+		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Release.ActiveCfg = Release
+		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Release.Build.0 = Release
+		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Release|Any CPU.ActiveCfg = Debug
+		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Release|Any CPU.Build.0 = Debug
 		{764C2C55-0470-4015-84CC-9198298EB218}.Debug.ActiveCfg = Debug
 		{764C2C55-0470-4015-84CC-9198298EB218}.Debug.Build.0 = Debug
 		{764C2C55-0470-4015-84CC-9198298EB218}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

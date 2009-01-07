@@ -180,14 +180,6 @@ class CommandSet
 	}
 }
 
-class BookmarkPanel : TreeView
-{
-	public BookmarkPanel()
-	{
-		Nodes.Add("First bad node");
-	}
-}
-
 class RadixMenu : ToolStripMenuItem
 {
 	private ToolStripMenuItem	BinaryItem;
@@ -317,7 +309,6 @@ class HexEdApp : Form, IPluginHost
 	private SelectionPanel		selectionPanel = new SelectionPanel();
 	private StructurePanel		structurePanel;
 	private HistoryPanel		HistoryPanel;
-	private BookmarkPanel		bookmarkPanel = new BookmarkPanel();
 	
 	private ToolStripStatusLabel	EditModeLabel;
 	private ToolStripStatusLabel	AddressLabel;
@@ -345,11 +336,11 @@ class HexEdApp : Form, IPluginHost
 		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
 		_dockingManager.Contents.Add(selectionPanel, "Selection");
 		_dockingManager.Contents.Add(structurePanel, "Structure");
-		_dockingManager.Contents.Add(bookmarkPanel, "Bookmarks");
+//		_dockingManager.Contents.Add(bookmarkPanel, "Bookmarks");
 		_dockingManager.Contents.Add(HistoryPanel, "History");
 		_dockingManager.AddContentWithState(_dockingManager.Contents["Selection"], State.DockBottom);
 		WindowContent wc = _dockingManager.AddContentWithState(_dockingManager.Contents["Structure"], State.DockLeft);
-		_dockingManager.AddContentToWindowContent(_dockingManager.Contents["Bookmarks"], wc);
+//		_dockingManager.AddContentToWindowContent(_dockingManager.Contents["Bookmarks"], wc);
 		_dockingManager.AddContentToWindowContent(_dockingManager.Contents["History"], wc);
 		_dockingManager.ShowContent(_dockingManager.Contents["Selection"]);
 		_dockingManager.ShowContent(_dockingManager.Contents["Structure"]);
@@ -853,11 +844,14 @@ class HexEdApp : Form, IPluginHost
 					{
 						if(typeof(IPlugin).IsAssignableFrom(type))
 						{
+							Console.WriteLine("Loaded plugin: " + filename + " :: " + type);
 							IPlugin p = (IPlugin)Activator.CreateInstance(type);
 							p.Initialize(this);
 						}
 					}
 				}
+				else
+					Console.WriteLine("Failed to load plugin assembly");
 			}
 			catch(Exception ex)
 			{
