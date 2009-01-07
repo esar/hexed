@@ -1424,6 +1424,8 @@ public class HexView : Control
 		double drawingOffset = e.ClipRectangle.Top - (pixelOffset % LayoutDimensions.WordSize.Height);
 		long dataOffset = firstLine * (LayoutDimensions.BitsPerRow / 8);
 		int visibleLines = (int)Math.Ceiling((e.ClipRectangle.Bottom - drawingOffset) / LayoutDimensions.WordSize.Height) + 1;
+		if(visibleLines > ((Document.Length - dataOffset) / (LayoutDimensions.BitsPerRow / 8)) + 1)
+			visibleLines = (int)((Document.Length - dataOffset) / (LayoutDimensions.BitsPerRow / 8)) + 1;
 
 		e.Graphics.FillRectangle(new SolidBrush(Color.FromKnownColor(KnownColor.ButtonFace)), 0, 0, LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, LayoutDimensions.AddressRect.Height);
 		e.Graphics.DrawLine(new Pen(Color.FromKnownColor(KnownColor.ButtonShadow)), LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, 0, LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, LayoutDimensions.AddressRect.Height);
@@ -1468,13 +1470,16 @@ public class HexView : Control
 			int off = 0;
 			foreach(RectangleF wordRect in LayoutDimensions.WordRects)
 			{
+				if(dataOffset + off >= Document.Length)
+					break;
+				
 				str = IntToRadixString(GetWord((dataOffset + off) * 8), _DataRadix, LayoutDimensions.NumWordDigits);
 				e.Graphics.DrawString(str, _Font, _Brush, wordRect.Left, rect.Top);
 				off += _BytesPerWord;
 			}
 
 			str = "";
-			for(long i = 0; i < LayoutDimensions.BitsPerRow / 8; ++i)
+			for(long i = 0; i < LayoutDimensions.BitsPerRow / 8 && dataOffset + i < Document.Length; ++i)
 				str += AsciiChar[Document[dataOffset + i]];
 			rect = new RectangleF(LayoutDimensions.AsciiRect.Left, (float)drawingOffset + line * LayoutDimensions.WordSize.Height, LayoutDimensions.AsciiRect.Width, LayoutDimensions.WordSize.Height);
 			e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
