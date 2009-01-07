@@ -11,7 +11,6 @@ public class ManagedCaret
 	bool	_Visible;
 	bool	_Drawn;
 	Timer	_Timer;
-	bool	_Skip;
 
 	public ManagedCaret(Control control) 
 	{
@@ -40,10 +39,9 @@ public class ManagedCaret
 		get { return _Size; }
 		set 
 		{
-			if(_Drawn)
-				ToggleCaret();
-			_Size = value; 
-			ToggleCaret();
+			Hide();
+			_Size = value;
+			Show();
 		}
 	}
 
@@ -52,19 +50,23 @@ public class ManagedCaret
 		get { return _Position; }
 		set 
 		{
-			_Timer.Enabled = false;
-			if(_Drawn)
-				ToggleCaret(); 
-			_Position = value; 
-			ToggleCaret();
-			_Timer.Enabled = true;
+			Hide();
+			_Position = value;
+			Show();
 		}
 	}
 
 	public bool Visible 
 	{
 		get { return _Visible; }
-		set	{ _Visible = value;	}
+		set	
+		{ 
+			_Visible = value;
+			if(_Visible)
+				Show();
+			else
+				Hide();
+		}
 	}
 
 	public void Dispose() 
@@ -77,19 +79,33 @@ public class ManagedCaret
 
 	private void OnGotFocus(object sender, EventArgs e) 
 	{
-		_Timer.Enabled = true;
+		Show();
 	}
 
 	private void OnLostFocus(object sender, EventArgs e) 
 	{
-		_Timer.Enabled = false;
-		if(_Drawn)
-			ToggleCaret();
+		Hide();
 	}
 	
 	private void OnTimerTick(object sender, EventArgs e)
 	{
 		if(_Visible)
+			ToggleCaret();
+	}
+	
+	private void Show()
+	{
+		if(_Visible)
+		{
+			ToggleCaret();
+			_Timer.Enabled = true;
+		}
+	}
+	
+	private void Hide()
+	{
+		_Timer.Enabled = false;
+		if(_Drawn)
 			ToggleCaret();
 	}
 	
