@@ -158,7 +158,7 @@ using System.Drawing;
     	                  uint arrayLength) : base(name, pos, length, arrayLength) {}
     	public static implicit operator char(CharRecord r)
     	{
-    		return (char)r.Document.Buffer[(long)r.Position / 8];
+    		return (char)r.Document[(long)r.Position / 8];
     	}
     	
     	// TODO: Find a better home for this and the copy in HexView
@@ -201,7 +201,7 @@ using System.Drawing;
     		StringBuilder str = new StringBuilder();
     		str.Append("\"");
     		for(ulong i = 0; i < (Length * ArrayLength) / 8 && i < 32; ++i)
-    			str.Append(AsciiChar[Document.Buffer[(long)(Position/8 + i)]]);
+    			str.Append(AsciiChar[Document[(long)(Position/8 + i)]]);
     		str.Append("\"");
     		return str.ToString();
     	}
@@ -217,7 +217,7 @@ using System.Drawing;
     	{
     		int x = 0;
     		for(ulong i = 0; i < r.Length / 8; ++i)
-    			x |= (int)r.Document.Buffer[(long)(r.Position/8 + i)] << (int)(i * 8);
+    			x |= (int)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
     		return x;
     	}
 
@@ -225,7 +225,7 @@ using System.Drawing;
     	{
     		long x = 0;
     		for(ulong i = 0; i < r.Length / 8; ++i)
-    			x |= (long)r.Document.Buffer[(long)(r.Position/8 + i)] << (int)(i * 8);
+    			x |= (long)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
     		return x;
     	}
     	
@@ -267,11 +267,11 @@ using System.Drawing;
 				x >>= 8;
 			}
 		
-			PieceBuffer.Mark a = Document.Buffer.CreateMarkAbsolute((long)(Position/8));
-			PieceBuffer.Mark b = Document.Buffer.CreateMarkAbsolute((long)((Position+Length)/8));
-			Document.Buffer.Insert(a, b, data, (long)Length/8);
-			Document.Buffer.DestroyMark(a);
-			Document.Buffer.DestroyMark(b);
+			PieceBuffer.Mark a = Document.CreateMarkAbsolute((long)(Position/8));
+			PieceBuffer.Mark b = Document.CreateMarkAbsolute((long)((Position+Length)/8));
+			Document.Insert(a, b, data, (long)Length/8);
+			Document.DestroyMark(a);
+			Document.DestroyMark(b);
 		}
 	}
 

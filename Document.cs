@@ -7,15 +7,9 @@ using System.Collections.Generic;
 	
 	
 	
-public class Document
+public class Document : PieceBuffer
 {
-	private PieceBuffer		_Buffer;
 	private Record			_Structure;
-	
-	public PieceBuffer Buffer
-	{
-		get { return _Buffer; }
-	}
 	
 	public Record Structure
 	{
@@ -26,15 +20,8 @@ public class Document
 	{
 	}
 	
-	public void Open(string filename)
+	public Document(string filename) : base(filename)
 	{
-		_Buffer = new PieceBuffer(filename);
-		_Buffer.Changed += OnBufferChanged;
-	}
-	
-	public void Close()
-	{
-		
 	}
 	
 	public void ApplyStructureDefinition(string filename)
@@ -57,13 +44,13 @@ public class Document
 		// get first part byte
 		if(len < 8)
 		{
-			x = (ulong)(Buffer[byteOffset] >> ((8 - bitOffset) - len));
+			x = (ulong)(this[byteOffset] >> ((8 - bitOffset) - len));
 			x &= (ulong)((1 << len) - 1);
 			len = 0;
 		}
 		else if(len > 8 && bitOffset != 0)
 		{
-			x |= (ulong)(Buffer[byteOffset++] & ((1 << (8 - bitOffset)) - 1));
+			x |= (ulong)(this[byteOffset++] & ((1 << (8 - bitOffset)) - 1));
 			len -= 8 - bitOffset;
 		}
 		
@@ -71,7 +58,7 @@ public class Document
 		while(len >= 8)
 		{
 			x <<= 8;
-			x |= Buffer[byteOffset++];
+			x |= this[byteOffset++];
 			len -= 8;
 		}
 		
@@ -79,7 +66,7 @@ public class Document
 		if(len > 0)
 		{
 			x <<= len;
-			x |= (ulong)(Buffer[byteOffset] >> (8 - len));
+			x |= (ulong)(this[byteOffset] >> (8 - len));
 		}
 		
 		if(endian == Endian.Little)
@@ -102,15 +89,5 @@ public class Document
 		}
 		
 		return x;
-	}
-
-	protected void OnBufferChanged(object sender, PieceBuffer.BufferChangedEventArgs e)
-	{
-		if(_Structure != null)
-		{
-//			foreach(Record r in _Structure._Children)
-//			{
-//			}
-		}
 	}
 }

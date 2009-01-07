@@ -106,12 +106,12 @@ class HexViewForm : Form
 	
 	protected void OnEditUndo(object sender, EventArgs e)
 	{
-		Document.Buffer.Undo();
+		Document.Undo();
 	}
 
 	protected void OnEditRedo(object sender, EventArgs e)
 	{
-		Document.Buffer.Redo();
+		Document.Redo();
 	}
 
 	protected void OnEditCopy(object sender, EventArgs e)
@@ -135,18 +135,18 @@ class HexViewForm : Form
 		if(dlg.ShowDialog() == DialogResult.OK)
 		{
 			System.IO.FileInfo info = new System.IO.FileInfo(dlg.FileName);
-			View.Document.Buffer.InsertFile(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, dlg.FileName, 0, info.Length);
+			View.Document.InsertFile(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, dlg.FileName, 0, info.Length);
 		}
 	}
 	
 	protected void OnEditInsertPattern(object sender, EventArgs e)
 	{
-		View.Document.Buffer.FillConstant(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, 0xFF, View.Selection.Length / 8);
+		View.Document.FillConstant(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, 0xFF, View.Selection.Length / 8);
 	}
 	
 	protected void OnEditSelectAll(object sender, EventArgs e)
 	{
-		View.Selection.Set(0, View.Document.Buffer.Length * 8);
+		View.Selection.Set(0, View.Document.Length * 8);
 	}
 	
 	protected void OnSelectionDefineField(object sender, EventArgs e)
@@ -174,7 +174,7 @@ class HexViewForm : Form
 
 	protected void OnViewGoToBottom(object sender, EventArgs e)
 	{
-		View.Selection.Set((Document.Buffer.Length - 1) * 8, (Document.Buffer.Length - 1) * 8);
+		View.Selection.Set((Document.Length - 1) * 8, (Document.Length - 1) * 8);
 		View.EnsureVisible(View.Selection.Start);
 	}
 

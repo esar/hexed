@@ -727,8 +727,7 @@ class HexEdApp : Form, IPluginHost
 		
 		if(ofd.ShowDialog() == DialogResult.OK)
 		{
-			Document doc = new Document();
-			doc.Open(ofd.FileName);
+			Document doc = new Document(ofd.FileName);
 
 			HexViewForm form = new HexViewForm(doc);
 			form.Text = ofd.FileName;

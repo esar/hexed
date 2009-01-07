@@ -102,17 +102,17 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	{
 		if(LastDocument != null)
 		{
-			LastDocument.Buffer.HistoryAdded -= OnHistoryAdded;
-			LastDocument.Buffer.HistoryUndone -= OnHistoryUndone;
-			LastDocument.Buffer.HistoryRedone -= OnHistoryRedone;
-			LastDocument.Buffer.HistoryJumped -= OnHistoryJumped;
+			LastDocument.HistoryAdded -= OnHistoryAdded;
+			LastDocument.HistoryUndone -= OnHistoryUndone;
+			LastDocument.HistoryRedone -= OnHistoryRedone;
+			LastDocument.HistoryJumped -= OnHistoryJumped;
 		}
 		
 		LastDocument = Host.ActiveView.Document;
-		LastDocument.Buffer.HistoryAdded += OnHistoryAdded;
-		LastDocument.Buffer.HistoryUndone += OnHistoryUndone;
-		LastDocument.Buffer.HistoryRedone += OnHistoryRedone;
-		LastDocument.Buffer.HistoryJumped += OnHistoryJumped;
+		LastDocument.HistoryAdded += OnHistoryAdded;
+		LastDocument.HistoryUndone += OnHistoryUndone;
+		LastDocument.HistoryRedone += OnHistoryRedone;
+		LastDocument.HistoryJumped += OnHistoryJumped;
 		
 		if(StructureChanged != null)
 			StructureChanged(this, new Aga.Controls.Tree.TreePathEventArgs());
@@ -123,7 +123,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		PieceBuffer.HistoryItem item = _TreeView.GetPath(e.Node).LastNode as PieceBuffer.HistoryItem;
 		if(item.Active == false)
 			e.TextColor = Color.Gray;
-		if(item == LastDocument.Buffer.History)
+		if(item == LastDocument.History)
 			e.Font = _BoldFont;
 	}
 
@@ -151,8 +151,8 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	public void OnNodeDoubleClick(object sender, Aga.Controls.Tree.TreeNodeAdvMouseEventArgs e)
 	{
 		PieceBuffer.HistoryItem item = _TreeView.GetPath(e.Node).LastNode as PieceBuffer.HistoryItem;
-		if(item != LastDocument.Buffer.History)
-			LastDocument.Buffer.HistoryJump(item);
+		if(item != LastDocument.History)
+			LastDocument.HistoryJump(item);
 	}
 	
 	public void OnHistoryAdded(object sender, PieceBuffer.HistoryEventArgs e)
@@ -216,7 +216,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			
 		PieceBuffer.HistoryItem histItem;
 		if(treePath.IsEmpty())
-			histItem = Host.ActiveView.Document.Buffer.HistoryRoot;
+			histItem = Host.ActiveView.Document.HistoryRoot;
 		else
 			histItem = ((PieceBuffer.HistoryItem)treePath.LastNode).NextSibling;
 		

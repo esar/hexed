@@ -44,8 +44,8 @@ public class HexView : Control
 		public SelectionRange(HexView view)
 		{
 			View = view;
-			_Range = new PieceBuffer.Range(view.Document.Buffer.CreateMarkAbsolute(_Start / 8), 
-			                               view.Document.Buffer.CreateMarkAbsolute(_End / 8));
+			_Range = new PieceBuffer.Range(view.Document.CreateMarkAbsolute(_Start / 8), 
+			                               view.Document.CreateMarkAbsolute(_End / 8));
 		}
 
 		public long Start
@@ -60,7 +60,7 @@ public class HexView : Control
 				if(_Start != value)
 				{
 					_Start = value;
-					View.Document.Buffer.MoveMarkAbsolute(_Range.Start, _Start / 8);
+					View.Document.MoveMarkAbsolute(_Range.Start, _Start / 8);
 
 					if(Changed != null)
 						Changed(this, new EventArgs());
@@ -80,7 +80,7 @@ public class HexView : Control
 				if(_End != value)
 				{
 					_End = value;
-					View.Document.Buffer.MoveMarkAbsolute(_Range.End, _End / 8);
+					View.Document.MoveMarkAbsolute(_Range.End, _End / 8);
 
 					if(Changed != null)
 						Changed(this, new EventArgs());
@@ -110,8 +110,8 @@ public class HexView : Control
 
 			_Start = start;
 			_End = end;
-			View.Document.Buffer.MoveMarkAbsolute(_Range.Start, _Start / 8);
-			View.Document.Buffer.MoveMarkAbsolute(_Range.End, _End / 8);
+			View.Document.MoveMarkAbsolute(_Range.Start, _Start / 8);
+			View.Document.MoveMarkAbsolute(_Range.End, _End / 8);
 
 			if(hasChanged)
 				if(Changed != null)
@@ -139,7 +139,7 @@ public class HexView : Control
 					end = Start + (0x100 * 8);
 
 				for(long addr = Start; addr < end; addr += 8)
-					s += AsciiChar[View.Document.Buffer[addr / 8]];
+					s += AsciiChar[View.Document[addr / 8]];
 
 				return s;
 			}
@@ -157,7 +157,7 @@ public class HexView : Control
 				
 				byte[] data = new byte[len];
 				for(int i = 0; i < len; ++i)
-					data[i] = View.Document.Buffer[Start/8 + i];
+					data[i] = View.Document[Start/8 + i];
 
 				return System.Text.Encoding.Unicode.GetString(data);
 			}
@@ -175,7 +175,7 @@ public class HexView : Control
 				
 				byte[] data = new byte[len];
 				for(int i = 0; i <len; ++i)
-					data[i] = View.Document.Buffer[Start/8 + i];
+					data[i] = View.Document[Start/8 + i];
 
 				return System.Text.Encoding.UTF8.GetString(data);
 			}
@@ -189,7 +189,7 @@ public class HexView : Control
 			{
 				byte[] data = new Byte[4];
 				for(int i = 0; i < 4; ++i)
-					data[i] = View.Document.Buffer[Start/8 + i];
+					data[i] = View.Document[Start/8 + i];
 
 				return BitConverter.ToSingle(data, 0);
  			}
@@ -197,7 +197,7 @@ public class HexView : Control
 			{
 				byte[] data = new Byte[8];
 				for(int i = 0; i < 8; ++i)
-					data[i] = View.Document.Buffer[Start/8 + i];
+					data[i] = View.Document[Start/8 + i];
 
 				return BitConverter.ToSingle(data, 0);
 			}
@@ -422,10 +422,10 @@ public class HexView : Control
 		InsertCaret = new ManagedCaret(this);
 		Selection = new SelectionRange(this);
 		Selection.Changed += new EventHandler(OnSelectionChanged);
-		Document.Buffer.Changed += new PieceBuffer.BufferChangedEventHandler(OnBufferChanged);
-		Document.Buffer.HistoryJumped += OnHistoryJumped;
-		Document.Buffer.HistoryUndone += OnHistoryJumped;
-		Document.Buffer.HistoryRedone += OnHistoryJumped;
+		Document.Changed += new PieceBuffer.BufferChangedEventHandler(OnBufferChanged);
+		Document.HistoryJumped += OnHistoryJumped;
+		Document.HistoryUndone += OnHistoryJumped;
+		Document.HistoryRedone += OnHistoryJumped;
 	}
 
 	protected override void Dispose (bool disposing)
@@ -438,18 +438,18 @@ public class HexView : Control
 
 	public void Copy()
 	{
-		ClipboardRange = Document.Buffer.ClipboardCopy(Selection.BufferRange.Start, Selection.BufferRange.End);
+		ClipboardRange = Document.ClipboardCopy(Selection.BufferRange.Start, Selection.BufferRange.End);
 	}
 	
 	public void Cut()
 	{
-		ClipboardRange = Document.Buffer.ClipboardCut(Selection.BufferRange.Start, Selection.BufferRange.End);
+		ClipboardRange = Document.ClipboardCut(Selection.BufferRange.Start, Selection.BufferRange.End);
 	}
 	
 	public void Paste()
 	{
 		if(ClipboardRange != null)
-			Document.Buffer.ClipboardPaste(Selection.BufferRange.Start, Selection.BufferRange.End, ClipboardRange);
+			Document.ClipboardPaste(Selection.BufferRange.Start, Selection.BufferRange.End, ClipboardRange);
 	}
 	
 	public void AddHighlight(SelectionRange s)
@@ -484,7 +484,7 @@ public class HexView : Control
 
 	public void ScrollToAddress(long address)
 	{
-		if(address < Document.Buffer.Length && LayoutDimensions.BitsPerRow > 0)
+		if(address < Document.Length && LayoutDimensions.BitsPerRow > 0)
 			ScrollToPixel((long)((double)(address / LayoutDimensions.BitsPerRow) * (double)LayoutDimensions.WordSize.Height));
 	}
 
@@ -589,14 +589,14 @@ public class HexView : Control
 		if(_Endian == Endian.Little)
 		{
 			for(int i = 0; i < _BytesPerWord; ++i)
-				x |= (ulong)Document.Buffer[address + i] << (i*8);		
+				x |= (ulong)Document[address + i] << (i*8);		
 		}
 		else
 		{
 			for(int i = 0; i < _BytesPerWord; ++i)
 			{
 				x <<= 8;
-				x |= (ulong)Document.Buffer[address + i];
+				x |= (ulong)Document[address + i];
 			}
 		}
 		
@@ -646,11 +646,11 @@ public class HexView : Control
 		address /= 8;
 		address = (address / _BytesPerWord) * _BytesPerWord;
 		
-		PieceBuffer.Mark a = Document.Buffer.CreateMarkAbsolute(address);
-		PieceBuffer.Mark b = Document.Buffer.CreateMarkAbsolute(address + _BytesPerWord);
-		Document.Buffer.Insert(a, b, data, _BytesPerWord);
-		Document.Buffer.DestroyMark(a);
-		Document.Buffer.DestroyMark(b);
+		PieceBuffer.Mark a = Document.CreateMarkAbsolute(address);
+		PieceBuffer.Mark b = Document.CreateMarkAbsolute(address + _BytesPerWord);
+		Document.Insert(a, b, data, _BytesPerWord);
+		Document.DestroyMark(a);
+		Document.DestroyMark(b);
 	}
 	
 	private RectangleF MeasureSubString(Graphics graphics, string text, int start, int length, Font font)
@@ -781,7 +781,7 @@ public class HexView : Control
 		LayoutDimensions.VisibleLines = (int)Math.Ceiling(ClientSize.Height / LayoutDimensions.WordSize.Height);
 
 		// Calculate width of largest address
-		LayoutDimensions.NumAddressDigits = (int)(Math.Log(Document.Buffer.Length) / Math.Log(_AddressRadix)) + 1;
+		LayoutDimensions.NumAddressDigits = (int)(Math.Log(Document.Length) / Math.Log(_AddressRadix)) + 1;
 		SizeF AddressSize = MeasureSubString(g, digits, 0, LayoutDimensions.NumAddressDigits, _Font).Size;
 		LayoutDimensions.AddressRect = new RectangleF(	0,
 														0,
@@ -855,7 +855,7 @@ public class HexView : Control
 														ClientSize.Height);
 
 		const int IntMax = 0x6FFFFFFF;
-		ScrollHeight = (long)((((Document.Buffer.Length * 8) / LayoutDimensions.BitsPerRow) + 1) * LayoutDimensions.WordSize.Height);
+		ScrollHeight = (long)((((Document.Length * 8) / LayoutDimensions.BitsPerRow) + 1) * LayoutDimensions.WordSize.Height);
 
 		if(ScrollHeight <= ClientSize.Height)
 		{
@@ -1183,7 +1183,7 @@ public class HexView : Control
 			{
 				long addr;
 				if(e.Modifiers == Keys.Control)
-					addr = Document.Buffer.Length * 8;
+					addr = Document.Length * 8;
 				else
 					addr = (((Selection.Start / LayoutDimensions.BitsPerRow) + 1) * LayoutDimensions.BitsPerRow) - LayoutDimensions.BitsPerDigit;
 				Selection.Set(addr, addr);
@@ -1200,15 +1200,15 @@ public class HexView : Control
 			case Keys.Back:
 				if(Selection.Length > 0)
 				{
-					Document.Buffer.Remove(Selection.BufferRange);
+					Document.Remove(Selection.BufferRange);
 				}
 				else
 				{
 					if(e.KeyCode == Keys.Delete)
-						Document.Buffer.Remove(Selection.BufferRange.Start.Position, Selection.BufferRange.Start.Position + 1);
+						Document.Remove(Selection.BufferRange.Start.Position, Selection.BufferRange.Start.Position + 1);
 					else
 					{
-						Document.Buffer.Remove(Selection.BufferRange.Start.Position - 1, Selection.BufferRange.Start.Position);
+						Document.Remove(Selection.BufferRange.Start.Position - 1, Selection.BufferRange.Start.Position);
 						Selection.Set(Selection.Start - 8, Selection.End - 8);
 					}
 				}
@@ -1234,7 +1234,7 @@ public class HexView : Control
 			Console.WriteLine("Digit: " + x);
 			if(Selection.Length != 0)
 			{
-				Document.Buffer.Insert(Selection.BufferRange.Start, Selection.BufferRange.End, (byte)x);
+				Document.Insert(Selection.BufferRange.Start, Selection.BufferRange.End, (byte)x);
 				Selection.Set(Selection.End, Selection.End);
 			}
 			else
@@ -1247,7 +1247,7 @@ public class HexView : Control
 						break;
 					case EditMode.Insert:
 						if(Selection.Start % (_BytesPerWord * 8) == 0)
-							Document.Buffer.Insert((byte)(x << (_BytesPerWord * 8 - LayoutDimensions.BitsPerDigit)));
+							Document.Insert((byte)(x << (_BytesPerWord * 8 - LayoutDimensions.BitsPerDigit)));
 						else
 							UpdateWord(Selection.Start, x);
 						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
@@ -1475,7 +1475,7 @@ public class HexView : Control
 
 			str = "";
 			for(long i = 0; i < LayoutDimensions.BitsPerRow / 8; ++i)
-				str += AsciiChar[Document.Buffer[dataOffset + i]];
+				str += AsciiChar[Document[dataOffset + i]];
 			rect = new RectangleF(LayoutDimensions.AsciiRect.Left, (float)drawingOffset + line * LayoutDimensions.WordSize.Height, LayoutDimensions.AsciiRect.Width, LayoutDimensions.WordSize.Height);
 			e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
 
