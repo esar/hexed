@@ -60,6 +60,8 @@ public class HexView : Control
 				if(_Start != value)
 				{
 					_Start = value;
+					if(_Start >= View.Document.Length * 8)
+						_Start = View.Document.Length * 8 - 1;
 					View.Document.MoveMarkAbsolute(_Range.Start, _Start / 8);
 
 					if(Changed != null)
@@ -80,6 +82,8 @@ public class HexView : Control
 				if(_End != value)
 				{
 					_End = value;
+					if(_End >= View.Document.Length * 8)
+						_End = View.Document.Length * 8 - 1;
 					View.Document.MoveMarkAbsolute(_Range.End, _End / 8);
 
 					if(Changed != null)
@@ -109,7 +113,11 @@ public class HexView : Control
 				hasChanged = true;
 
 			_Start = start;
+			if(_Start >= View.Document.Length * 8)
+				_Start = View.Document.Length * 8 - 1;
 			_End = end;
+			if(_End >= View.Document.Length * 8)
+				_End = View.Document.Length * 8 - 1;			
 			View.Document.MoveMarkAbsolute(_Range.Start, _Start / 8);
 			View.Document.MoveMarkAbsolute(_Range.End, _End / 8);
 
