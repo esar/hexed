@@ -423,6 +423,9 @@ public class HexView : Control
 		Selection = new SelectionRange(this);
 		Selection.Changed += new EventHandler(OnSelectionChanged);
 		Document.Buffer.Changed += new PieceBuffer.BufferChangedEventHandler(OnBufferChanged);
+		Document.Buffer.HistoryJumped += OnHistoryJumped;
+		Document.Buffer.HistoryUndone += OnHistoryJumped;
+		Document.Buffer.HistoryRedone += OnHistoryJumped;
 	}
 
 	protected override void Dispose (bool disposing)
@@ -951,6 +954,11 @@ public class HexView : Control
 	{
 		// TODO: Only invalidate changed region (and only if it's on screen)
 		Invalidate();
+	}
+	
+	protected void OnHistoryJumped(object sender, PieceBuffer.HistoryEventArgs e)
+	{
+		Selection.Set(e.NewItem.StartPosition * 8, e.NewItem.StartPosition * 8);
 	}
 
 	protected override void OnMouseWheel(MouseEventArgs e)
