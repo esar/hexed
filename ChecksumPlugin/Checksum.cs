@@ -128,9 +128,9 @@ namespace ChecksumPlugin
 			// TODO: Need thread safe method of accessing the buffer
 			// TODO: Need to know if the buffer changes while we're processing
 			//       maybe we could lock the buffer so it's read only until we're finished?
-			PieceBuffer buffer = Host.ActiveView.Document.Buffer;
-			long total = Host.ActiveView.Document.Buffer.Length;
-			long len = Host.ActiveView.Document.Buffer.Length;
+			PieceBuffer buffer = Host.ActiveView.Document;
+			long total = Host.ActiveView.Document.Length;
+			long len = Host.ActiveView.Document.Length;
 			long offset = 0;
 			long lastReportTime = System.Environment.TickCount;
 			byte[] bytes = new byte[BLOCK_SIZE];

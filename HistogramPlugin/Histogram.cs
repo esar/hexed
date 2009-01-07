@@ -122,14 +122,14 @@ namespace HistogramPlugin
 		{
 			if(Host.ActiveView != null)
 			{
-				PieceBuffer buffer = Host.ActiveView.Document.Buffer;
+				PieceBuffer buffer = Host.ActiveView.Document;
 				long max = 0;
 				long[] buckets = new long[0x100];
 				
 				for(int i = 0; i < 0x100; ++i)
 					buckets[i] = 0;
 				
-				long len = Host.ActiveView.Document.Buffer.Length;
+				long len = Host.ActiveView.Document.Length;
 				long offset = 0;
 				byte[] bytes = new byte[4096];
 				while(len > 0)
