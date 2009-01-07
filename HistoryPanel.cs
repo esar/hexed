@@ -61,6 +61,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		_TreeView.NodeControls.Add(this._NodeControlDate);
 		_TreeView.NodeControls.Add(this._NodeControlRange);
 		_TreeView.ShowNodeToolTips = true;
+		_TreeView.NodeMouseDoubleClick += OnNodeDoubleClick;
 		
 		_NodeControlIcon.ParentColumn = _TreeColumnName;
 		_NodeControlIcon.VirtualMode = true;
@@ -104,12 +105,14 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			LastDocument.Buffer.HistoryAdded -= OnHistoryAdded;
 			LastDocument.Buffer.HistoryUndone -= OnHistoryUndone;
 			LastDocument.Buffer.HistoryRedone -= OnHistoryRedone;
+			LastDocument.Buffer.HistoryJumped -= OnHistoryJumped;
 		}
 		
 		LastDocument = Host.ActiveView.Document;
 		LastDocument.Buffer.HistoryAdded += OnHistoryAdded;
 		LastDocument.Buffer.HistoryUndone += OnHistoryUndone;
 		LastDocument.Buffer.HistoryRedone += OnHistoryRedone;
+		LastDocument.Buffer.HistoryJumped += OnHistoryJumped;
 		
 		if(StructureChanged != null)
 			StructureChanged(this, new Aga.Controls.Tree.TreePathEventArgs());
@@ -144,6 +147,13 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		else
 			e.Value = item.StartPosition.ToString();
 	}		
+	
+	public void OnNodeDoubleClick(object sender, Aga.Controls.Tree.TreeNodeAdvMouseEventArgs e)
+	{
+		PieceBuffer.HistoryItem item = _TreeView.GetPath(e.Node).LastNode as PieceBuffer.HistoryItem;
+		if(item != LastDocument.Buffer.History)
+			LastDocument.Buffer.HistoryJump(item);
+	}
 	
 	public void OnHistoryAdded(object sender, PieceBuffer.HistoryEventArgs e)
 	{
@@ -183,6 +193,15 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), new object[] {e.NewItem}));
 	}
 	
+	public void OnHistoryJumped(object sender, PieceBuffer.HistoryEventArgs e)
+	{
+		if(StructureChanged != null)
+		{
+			StructureChanged(this, new Aga.Controls.Tree.TreePathEventArgs());
+			//NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), new object[] {e.OldItem}));
+			//NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), new object[] {e.NewItem}));
+		}
+	}
 	
 	//
 	// ITreeModel

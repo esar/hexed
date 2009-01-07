@@ -410,6 +410,7 @@ public class PieceBuffer
 	public event HistoryEventHandler HistoryAdded;
 	public event HistoryEventHandler HistoryUndone;
 	public event HistoryEventHandler HistoryRedone;
+	public event HistoryEventHandler HistoryJumped;
 	
 	public byte this[long index]
 	{
@@ -1390,6 +1391,56 @@ public class PieceBuffer
 			if(HistoryRedone != null)
 				HistoryRedone(this, new HistoryEventArgs(oldItem, newItem));
 		}
+	}
+	
+	public void HistoryJump(HistoryItem destination)
+	{
+		HistoryItem oldItem = History;
+		Stack<HistoryItem> redoPath = new Stack<HistoryItem>();
+		
+		// Find where the destination branch joins the current branch
+		// and record the path from the join point to the destination
+		HistoryItem item = destination;
+		while(!item.Active)
+		{
+			redoPath.Push(item);
+			item = item.Parent;
+		}
+		HistoryItem commonParent = item;
+		
+		// Undo back to the point where the branches meet
+		while(History != commonParent)
+		{
+			UndoRedo();
+			History.Active = false;
+			History = History.Parent;
+		}
+		
+		// Redo to the destination
+		while(History != destination)
+		{
+			HistoryItem next = redoPath.Pop();
+			HistoryItem prev = History.FirstChild;
+			
+			item = History.FirstChild;
+			while(item != next)
+			{
+				prev = item;
+				item = item.NextSibling;
+			}
+
+			HistoryItem tmp = next.NextSibling;
+			next.NextSibling = History.FirstChild;
+			History.FirstChild = next;
+			prev.NextSibling = tmp;
+			
+			History = item;
+			UndoRedo();
+			History.Active = true;
+		}
+		
+		if(HistoryJumped != null)
+			HistoryJumped(this, new HistoryEventArgs(oldItem, destination));
 	}
 	
 	// TODO: Why does this take a length as well as start/end?
