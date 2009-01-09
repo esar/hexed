@@ -10,13 +10,10 @@ namespace ChecksumPlugin
 		protected UInt32		A;
 		protected UInt32		B;
 		
-		public override int HashSize
-		{
-			get { return 32; }
-		}
 		
 		public Adler32Managed()
 		{
+			HashSizeValue = 32;
 			Initialize();
 		}
 		
