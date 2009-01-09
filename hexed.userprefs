@@ -1,25 +1,30 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="Document.cs" line="113" column="3" />
-    <File name="HexEd.cs" line="349" column="33" />
-    <File name="PieceBuffer.cs" line="1390" column="29" />
+    <File name="Document.cs" line="94" column="1" />
+    <File name="HexEd.cs" line="343" column="1" />
+    <File name="PieceBuffer.cs" line="1390" column="1" />
     <File name="HexViewForm.cs" line="138" column="1" />
     <File name="PieceBufferTest.cs" line="467" column="33" />
     <File name="SettingsDialog.cs" line="41" column="1" />
     <File name="HexView.cs" line="7" column="34" />
-    <File name="StructurePanel.cs" line="196" column="1" />
+    <File name="StructurePanel.cs" line="225" column="1" />
     <File name="Aga.Controls/Tree/TreeModel.cs" line="1" column="1" />
-    <File name="HistoryPanel.cs" line="20" column="39" />
+    <File name="HistoryPanel.cs" line="61" column="1" />
     <File name="Aga.Controls/Tree/TreeViewAdv.cs" line="1037" column="32" />
+    <File name="BookmarkPlugin/Bookmark.cs" line="41" column="94" />
+    <File name="Aga.Controls/Tree/NodeControls/EditableControl.cs" line="77" column="5" />
+    <File name="ChecksumPlugin/Checksum.cs" line="50" column="1" />
+    <File name="ChecksumPlugin/Adler32Managed.cs" line="45" column="3" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="Aga.Controls" expanded="True">
-          <Node name="Tree" expanded="True" />
+        <Node name="BookmarkPlugin" expanded="True" />
+        <Node name="ChecksumPlugin" expanded="True">
+          <Node name="Checksum.cs" selected="True" />
         </Node>
-        <Node name="hexed" expanded="True" selected="True" />
+        <Node name="hexed" expanded="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
@@ -30,7 +35,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HistoryPanel.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/ChecksumPlugin/Checksum.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

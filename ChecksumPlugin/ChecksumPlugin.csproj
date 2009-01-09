@@ -42,6 +42,9 @@
   <ItemGroup>
     <Compile Include="Checksum.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Adler32Managed.cs" />
+    <Compile Include="MD4Managed.cs" />
+    <Compile Include="MD2Managed.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

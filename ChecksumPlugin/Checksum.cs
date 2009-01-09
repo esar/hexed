@@ -33,17 +33,26 @@ namespace ChecksumPlugin
 		ToolStripProgressBar ProgressBar = new ToolStripProgressBar();
 		ToolStripLabel ProgressLabel = new ToolStripLabel();
 
-		string[] Algorithms = { "MD5",
+		string[] Algorithms = { "ADLER32",
+			                    "MD2",
+			                    "MD4",
+			                    "MD5",
 			                    "SHA1",
 			                    "SHA256",
 			                    "SHA384",
 			                    "SHA512",
 			                    "RIPEMD160" };
 		
+		Dictionary<string, Type> LocalAlgorithms = new Dictionary<string,Type>();
+		
 		public ResultWindow(IPluginHost host)
 		{
 			Host = host;
 			
+			LocalAlgorithms.Add("ADLER32", typeof(Adler32Managed));
+			LocalAlgorithms.Add("MD2", typeof(MD2Managed));
+			LocalAlgorithms.Add("MD4", typeof(MD4Managed));
+
 			Worker = new BackgroundWorker();
 			Worker.WorkerReportsProgress = true;
 			Worker.WorkerSupportsCancellation = true;
@@ -120,7 +129,14 @@ namespace ChecksumPlugin
 			Dictionary<string, System.Security.Cryptography.HashAlgorithm> algos = new Dictionary<string, System.Security.Cryptography.HashAlgorithm>();
 			foreach(string algo in (List<string>)e.Argument)
 			{
-				System.Security.Cryptography.HashAlgorithm ha = System.Security.Cryptography.CryptoConfig.CreateFromName(algo) as System.Security.Cryptography.HashAlgorithm;
+				Type type;
+				System.Security.Cryptography.HashAlgorithm ha;
+				
+				if(LocalAlgorithms.TryGetValue(algo, out type))
+					ha = Activator.CreateInstance(type) as System.Security.Cryptography.HashAlgorithm;
+				else
+					ha = System.Security.Cryptography.CryptoConfig.CreateFromName(algo) as System.Security.Cryptography.HashAlgorithm;
+				
 				ha.Initialize();
 				algos.Add(algo, ha);
 			}
