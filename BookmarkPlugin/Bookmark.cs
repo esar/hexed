@@ -14,6 +14,8 @@ namespace BookmarkPlugin
 		private TreeModel	TreeModel;
 		private NodeStateIcon NodeControlIcon;
 		private NodeTextBox NodeControlName;
+		private ToolStrip ToolBar;
+
 		
 		public BookmarkPanel(IPluginHost host)
 		{
@@ -32,6 +34,14 @@ namespace BookmarkPlugin
 			TreeModel = new TreeModel();
 			Tree.Model = TreeModel;
 			Controls.Add(Tree);
+			
+			ToolBar = new ToolStrip();
+			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
+			ToolBar.Items.Add(Settings.Instance.Image("newfolder_16.png")).ToolTipText = "New Folder";
+			ToolBar.Items.Add(Settings.Instance.Image("unknown_op.png")).ToolTipText = "Add Bookmark";
+			ToolBar.Items.Add(new ToolStripSeparator());
+			ToolBar.Items.Add(Settings.Instance.Image("delete_16.png")).ToolTipText = "Delete";
+			Controls.Add(ToolBar);
 			
 			Tree.NodeMouseDoubleClick += OnNodeDoubleClick;
 		}
