@@ -1,25 +1,20 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="ChecksumPlugin/Checksum.cs" line="101" column="41" />
+    <File name="ChecksumPlugin/Checksum.cs" line="21" column="2" />
     <File name="ChecksumPlugin/CrcManaged.cs" line="251" column="4" />
     <File name="ChecksumPlugin/Adler32Managed.cs" line="43" column="40" />
     <File name="HexView.cs" line="1532" column="1" />
     <File name="ChecksumPlugin/SumManaged.cs" line="72" column="31" />
-    <File name="HexEd.cs" line="877" column="3" />
+    <File name="HexEd.cs" line="327" column="63" />
     <File name="PluginInterface.cs" line="21" column="28" />
+    <File name="PieceBuffer.cs" line="553" column="28" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="CalculatorPlugin" expanded="True">
-          <Node name="References" expanded="True" />
-        </Node>
         <Node name="ChecksumPlugin" expanded="True" />
         <Node name="hexed" expanded="True" selected="True" />
-        <Node name="PythonConsolePlugin" expanded="True">
-          <Node name="References" expanded="True" />
-        </Node>
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
@@ -30,7 +25,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/ChecksumPlugin/Checksum.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PieceBuffer.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

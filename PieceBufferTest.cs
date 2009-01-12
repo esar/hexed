@@ -663,7 +663,7 @@ public class PieceBufferTest
 		
 		// Undo should return the original piece
 		b.Undo();
-		Assert.AreEqual(GetMarks(), "{0,0}{0,10}{0,14}");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,14}{0,14}");
 		Assert.AreEqual(GetPieces(), "{0,14}");
 		Assert.AreEqual(GetText(), "this is a test");
 		

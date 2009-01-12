@@ -1267,6 +1267,7 @@ public class PieceBuffer
 				p = p.Next;
 				
 			} while(p != removeTail);
+			editPosition += p.End - p.Start;
 			editEndMark = CreateMarkAbsolute(editPosition);
 
 			BufferChangedEventArgs change = new BufferChangedEventArgs(editStartMark.Position, editEndMark.Position);
