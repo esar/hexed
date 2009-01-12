@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Text;
+using Aga.Controls.Tree;
+using Aga.Controls.Tree.NodeControls;
+
 
 namespace ChecksumPlugin
 {
@@ -19,12 +22,45 @@ namespace ChecksumPlugin
 		}
 	}
 	
+	public class ChecksumTreeNode : Node
+	{
+		private string _Value;
+		public string Value
+		{
+			get { return _Value; }
+			set
+			{
+				if(_Value != value)
+				{
+					_Value = value;
+					NotifyModel();
+				}
+			}
+		}
+		
+		public override bool IsLeaf
+		{
+			get { return (Nodes.Count == 0); }
+		}
+		
+		public ChecksumTreeNode(string text) : base(text)
+		{
+		}
+	}
+	
 	public class ResultWindow : Panel
 	{
 		IPluginHost Host;
 		BackgroundWorker Worker;
 
-		ListView ResultList = new ListView();
+		private TreeViewAdv TreeView;
+		private TreeModel	TreeModel;
+		private NodeCheckBox NodeControlCheckBox;
+		private NodeStateIcon NodeControlIcon;
+		private NodeTextBox NodeControlName;
+		private NodeTextBox NodeControlValue;
+		private TreeColumn NameColumn;
+		private TreeColumn ValueColumn;
 		
 		ToolStrip ToolBar = new ToolStrip();
 		ToolStripButton ConfigButton;
@@ -35,6 +71,8 @@ namespace ChecksumPlugin
 		ToolStripProgressBar ProgressBar = new ToolStripProgressBar();
 		ToolStripLabel ProgressLabel = new ToolStripLabel();
 
+		bool IgnoreCheckStateChange = false;
+		
 		List<string> Algorithms = new List<string>();
 		Dictionary<string, Type> LocalAlgorithms = new Dictionary<string,Type>();
 
@@ -42,22 +80,8 @@ namespace ChecksumPlugin
 		public ResultWindow(IPluginHost host)
 		{
 			Host = host;
-		
-			Algorithms.Add("ADLER32");
-			foreach(CrcModel m in CrcManaged.Models)
-				Algorithms.Add(m.Name);
-			Algorithms.Add("MD2");
-			Algorithms.Add("MD4");
-			Algorithms.Add("MD5");
-			Algorithms.Add("SHA1");
-			Algorithms.Add("SHA256");
-			Algorithms.Add("SHA384");
-			Algorithms.Add("SHA512");
-			foreach(SumModel m in SumManaged.Models)
-				Algorithms.Add(m.Name);
-			Algorithms.Add("RIPEMD160");
-			
-			LocalAlgorithms.Add("ADLER32", typeof(Adler32Managed));
+						
+			LocalAlgorithms.Add("ADLER-32", typeof(Adler32Managed));
 			foreach(CrcModel m in CrcManaged.Models)
 				LocalAlgorithms.Add(m.Name, typeof(CrcManaged));
 			LocalAlgorithms.Add("MD2", typeof(MD2Managed));
@@ -72,19 +96,94 @@ namespace ChecksumPlugin
 			Worker.ProgressChanged += OnProgressChanged;
 			Worker.RunWorkerCompleted += OnCompleted;
 
-			ResultList.View = View.Details;
-			ResultList.CheckBoxes = true;
-			ResultList.Columns.Add("Algorithm");
-			ResultList.Columns.Add("Result");
-			foreach(string algo in Algorithms)
+			
+			TreeView = new TreeViewAdv();
+			NameColumn = new TreeColumn("Algorithm", 100);
+			ValueColumn = new TreeColumn("Value", 100);
+			TreeView.UseColumns = true;
+			TreeView.Columns.Add(NameColumn);
+			TreeView.Columns.Add(ValueColumn);
+			NodeControlCheckBox = new NodeCheckBox();
+			NodeControlCheckBox.DataPropertyName = "CheckState";
+			NodeControlCheckBox.ParentColumn = NameColumn;
+			NodeControlCheckBox.CheckStateChanged += OnNodeControlCheckStateChanged;
+			NodeControlIcon = new NodeStateIcon();
+			NodeControlIcon.ParentColumn = NameColumn;
+			NodeControlName = new NodeTextBox();
+			NodeControlName.DataPropertyName = "Text";
+			NodeControlName.ParentColumn = NameColumn;
+			NodeControlValue = new NodeTextBox();
+			NodeControlValue.DataPropertyName = "Value";
+			NodeControlValue.ParentColumn = ValueColumn;
+			TreeView.NodeControls.Add(NodeControlCheckBox);
+			TreeView.NodeControls.Add(NodeControlIcon);
+			TreeView.NodeControls.Add(NodeControlName);
+			TreeView.NodeControls.Add(NodeControlValue);
+			TreeView.Cursor = System.Windows.Forms.Cursors.Default;
+			TreeView.FullRowSelect = true;
+			TreeView.GridLineStyle = ((Aga.Controls.Tree.GridLineStyle)((Aga.Controls.Tree.GridLineStyle.Horizontal | Aga.Controls.Tree.GridLineStyle.Vertical)));
+			TreeView.LineColor = System.Drawing.SystemColors.ControlDark;
+			
+			TreeView.Dock = DockStyle.Fill;
+			TreeModel = new TreeModel();
+			Controls.Add(TreeView);
+
+			
+
+			Node node = new ChecksumTreeNode("Checksum");
+			TreeModel.Nodes.Add(node);
+			node.Nodes.Add(new ChecksumTreeNode("ADLER-32"));
+			Node crcNode = new ChecksumTreeNode("CRC");
+			node.Nodes.Add(crcNode);
+			foreach(CrcModel m in CrcManaged.Models)
 			{
-				ListViewItem item = ResultList.Items.Add(algo);
-				item.Name = algo;
-//				item.Checked = true;
-				item.SubItems.Add(String.Empty);
+				string[] parts = m.Name.Split(new char[] {'/'}, 2);
+				Node parent = null;
+				if(parts.Length > 1)
+				{
+					List<Node> nodes = new List<Node>();
+					foreach(Node n in crcNode.Nodes)
+						if(n.Text == parts[0])
+							nodes.Add(n);
+					foreach(Node n in nodes)
+					{
+						if(n.IsLeaf)
+						{
+							crcNode.Nodes.Remove(n);
+							parent = new ChecksumTreeNode(parts[0]);
+							crcNode.Nodes.Add(parent);
+							parent.Nodes.Add(new ChecksumTreeNode(n.Text));
+						}
+						else
+							parent = n;
+					}
+				
+					if(parent == null)
+					{
+						parent = new ChecksumTreeNode(parts[0]);
+						crcNode.Nodes.Add(parent);
+					}
+
+					parent.Nodes.Add(new ChecksumTreeNode(m.Name));
+				}
+				else
+					crcNode.Nodes.Add(new ChecksumTreeNode(m.Name));
 			}
-			ResultList.Dock = DockStyle.Fill;
-			Controls.Add(ResultList);
+			
+			node = new ChecksumTreeNode("Cryptographic Hash");
+			TreeModel.Nodes.Add(node);
+			node.Nodes.Add(new ChecksumTreeNode("MD2"));
+			node.Nodes.Add(new ChecksumTreeNode("MD4"));
+			node.Nodes.Add(new ChecksumTreeNode("MD5"));
+			node.Nodes.Add(new ChecksumTreeNode("SHA1"));
+			node.Nodes.Add(new ChecksumTreeNode("SHA256"));
+			node.Nodes.Add(new ChecksumTreeNode("SHA384"));
+			node.Nodes.Add(new ChecksumTreeNode("SHA512"));
+			node.Nodes.Add(new ChecksumTreeNode("RIPEMD160"));
+//			foreach(SumModel m in SumManaged.Models)
+//				Algorithms.Add(String.Format("Checksum/SUM/{0}", m.Name));
+
+			TreeView.Model = TreeModel;
 			
 
 			ConfigButton = new ToolStripButton(Host.Settings.Image("options_16.png"));
@@ -123,11 +222,116 @@ namespace ChecksumPlugin
 			StatusBar.Hide();
 		}
 		
+		
+		void FindSelectedAlgorithms(System.Collections.ObjectModel.Collection<Node> nodes, List<string> list)
+		{
+			foreach(Node n in nodes)
+			{
+				if(!n.IsLeaf)
+					FindSelectedAlgorithms(n.Nodes, list);
+				else if(n.CheckState == CheckState.Checked)
+					list.Add(n.Text);
+			}
+		}
+		
+		CheckState UpdateCheckStates(Node node)
+		{
+			bool haveChecked = false;
+			bool haveUnchecked = false;
+			bool haveIndeterminate = false;
+			foreach(Node n in node.Nodes)
+			{
+				CheckState state;
+				if(!n.IsLeaf)
+					state = UpdateCheckStates(n);
+				else
+					state = n.CheckState;
+				if(state == CheckState.Checked)
+					haveChecked = true;
+				else if(state == CheckState.Unchecked)
+					haveUnchecked = true;
+				else
+					haveIndeterminate = true;
+			}
+			
+			if(haveIndeterminate || (haveChecked && haveUnchecked))
+				node.CheckState = CheckState.Indeterminate;
+			else if(haveChecked)
+				node.CheckState = CheckState.Checked;
+			else
+				node.CheckState = CheckState.Unchecked;
+			
+			return node.CheckState;
+		}
+
+		void SetChildCheckStates(Node node)
+		{
+			foreach(Node n in node.Nodes)
+			{
+				n.CheckState = node.CheckState;
+				if(!n.IsLeaf)
+					SetChildCheckStates(n);
+			}
+		}
+		
+		protected void OnNodeControlCheckStateChanged(object sender, TreePathEventArgs e)
+		{
+			if(IgnoreCheckStateChange)
+				return;
+			
+			IgnoreCheckStateChange = true;
+
+			Node node = e.Path.LastNode as Node;
+			if(!node.IsLeaf)
+				SetChildCheckStates(node);
+			UpdateCheckStates(e.Path.FirstNode as Node);
+			
+			IgnoreCheckStateChange = false;
+		}
+		
+		List<string> FindSelectedAlgorithms()
+		{
+			List<string> list = new List<string>();
+			FindSelectedAlgorithms(TreeModel.Nodes, list);
+			return list;
+		}
+		
+		void FindTreeNodes(System.Collections.ObjectModel.Collection<Node> nodes, List<Node> list, string name)
+		{
+			foreach(Node n in nodes)
+			{
+				if(!n.IsLeaf)
+					FindTreeNodes(n.Nodes, list, name);
+				else if(n.Text == name)
+					list.Add(n);
+			}
+		}
+		
+		List<Node> FindTreeNodes(string name)
+		{
+			List<Node> list = new List<Node>();
+			FindTreeNodes(TreeModel.Nodes, list, name);
+			return list;
+		}
+
+		void ClearValues(System.Collections.ObjectModel.Collection<Node> nodes)
+		{
+			foreach(ChecksumTreeNode n in nodes)
+			{
+				if(!n.IsLeaf)
+					ClearValues(n.Nodes);
+				else
+					n.Value = String.Empty;
+			}
+		}
+		void ClearValues()
+		{
+			ClearValues(TreeModel.Nodes);
+		}
+		
 		public void OnCalculate(object sender, EventArgs e)
 		{
-			foreach(ListViewItem i in ResultList.Items)
-				if(i.SubItems.Count > 1)
-					i.SubItems[1].Text = String.Empty;
+			ClearValues();
 			
 			if(Worker.IsBusy)
 			{
@@ -136,10 +340,8 @@ namespace ChecksumPlugin
 				return;
 			}
 			
-			List<string> enabledAlgorithms = new List<string>();
-			foreach(ListViewItem i in ResultList.Items)
-				if(i.Checked)
-					enabledAlgorithms.Add(i.Name);
+			
+			List<string> enabledAlgorithms = FindSelectedAlgorithms();
 			
 			StatusBar.Show();
 			RefreshButton.Image = Host.Settings.Image("stop_16.png");
@@ -234,9 +436,9 @@ namespace ChecksumPlugin
 					StringBuilder hash = new StringBuilder();
 					foreach(byte b in result.Checksum)
 						hash.Append(b.ToString("X2"));
-					ListViewItem[] items = ResultList.Items.Find(result.Name, false);
-					if(items.Length == 1)
-						items[0].SubItems[1].Text = hash.ToString();
+					List<Node> nodes = FindTreeNodes(result.Name);
+					if(nodes.Count == 1)
+						((ChecksumTreeNode)nodes[0]).Value = hash.ToString();
 				}
 			}
 			
@@ -260,21 +462,10 @@ namespace ChecksumPlugin
 		{
 			Host = host;
 			Host.AddWindow(new ResultWindow(Host), "Checksum");
-			
-//			ToolStripMenuItem item = host.AddMenuItem("Tools/Analyse/Checksum");
-//			item.Click += OnChecksum;		
 		}
 		
 		void IPlugin.Dispose()
 		{
 		}
-		
-		
-//		void OnChecksum(object sender, EventArgs e)
-//		{
-//			if(Host.ActiveView != null)
-//			{
-//			}
-//		}
 	}
 }
