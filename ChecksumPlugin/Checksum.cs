@@ -22,7 +22,7 @@ namespace ChecksumPlugin
 		}
 	}
 	
-	public class ChecksumTreeNode : Node
+	class ChecksumTreeNode : Node
 	{
 		private string _Value;
 		public string Value
@@ -45,6 +45,22 @@ namespace ChecksumPlugin
 		
 		public ChecksumTreeNode(string text) : base(text)
 		{
+		}
+	}
+	
+	class WorkerArgs
+	{
+		public List<string> Algorithms;
+		public Document Document;
+		public long StartPosition;
+		public long EndPosition;
+		
+		public WorkerArgs(List<string> algorithms, Document doc, long start, long end)
+		{
+			Algorithms = algorithms;
+			Document = doc;
+			StartPosition = start;
+			EndPosition = end;
 		}
 	}
 	
@@ -73,7 +89,6 @@ namespace ChecksumPlugin
 
 		bool IgnoreCheckStateChange = false;
 		
-		List<string> Algorithms = new List<string>();
 		Dictionary<string, Type> LocalAlgorithms = new Dictionary<string,Type>();
 
 		
@@ -192,8 +207,8 @@ namespace ChecksumPlugin
 			ToolBar.Items.Add(new ToolStripSeparator());
 			
 			SelectionComboBox = new ToolStripComboBox();
-			SelectionComboBox.Items.Add("Document");
 			SelectionComboBox.Items.Add("Selection");
+			SelectionComboBox.Items.Add("Document");
 			SelectionComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
 			SelectionComboBox.SelectedIndex = 0;
 			SelectionComboBox.Overflow = ToolStripItemOverflow.Never;
@@ -346,15 +361,29 @@ namespace ChecksumPlugin
 			StatusBar.Show();
 			RefreshButton.Image = Host.Settings.Image("stop_16.png");
 			ProgressLabel.Text = "Calculating...";
-			Worker.RunWorkerAsync(enabledAlgorithms);
+			if(SelectionComboBox.SelectedIndex != 0)
+			{
+				Worker.RunWorkerAsync(new WorkerArgs(enabledAlgorithms, 
+				                                     Host.ActiveView.Document,
+				                                     -1, 
+				                                     -1));
+			}
+			else
+			{
+				Worker.RunWorkerAsync(new WorkerArgs(enabledAlgorithms, 
+				                                     Host.ActiveView.Document, 
+				                                     Host.ActiveView.Selection.Start, 
+				                                     Host.ActiveView.Selection.End));
+			}
 		}
 		
 		public void OnDoWork(object sender, DoWorkEventArgs e)
 		{
 			const int BLOCK_SIZE = 4096*1024;
+			WorkerArgs args = (WorkerArgs)e.Argument;
 			
 			Dictionary<string, System.Security.Cryptography.HashAlgorithm> algos = new Dictionary<string, System.Security.Cryptography.HashAlgorithm>();
-			foreach(string algo in (List<string>)e.Argument)
+			foreach(string algo in args.Algorithms)
 			{
 				Type type;
 				System.Security.Cryptography.HashAlgorithm ha;
@@ -376,17 +405,29 @@ namespace ChecksumPlugin
 			// TODO: Need thread safe method of accessing the buffer
 			// TODO: Need to know if the buffer changes while we're processing
 			//       maybe we could lock the buffer so it's read only until we're finished?
-			PieceBuffer buffer = Host.ActiveView.Document;
-			long total = Host.ActiveView.Document.Length;
-			long len = Host.ActiveView.Document.Length;
-			long offset = 0;
+			long total;
+			long offset;
 			long lastReportTime = System.Environment.TickCount;
 			long lastReportBytes = 0;
 			byte[] bytes = new byte[BLOCK_SIZE];
+			
+			if(args.StartPosition == -1 && args.EndPosition == -1)
+			{
+				total = args.Document.Length;
+				offset = 0;
+			}
+			else
+			{
+				Console.WriteLine("Selection: S: " + args.StartPosition + ", E: " + args.EndPosition);
+				total = (args.EndPosition - args.StartPosition) / 8;
+				offset = args.StartPosition / 8;
+			}
+			
+			long len = total;			
 			while(len > 0)
 			{
 				int partLen = BLOCK_SIZE > len ? (int)len : BLOCK_SIZE;
-				buffer.GetBytes(offset, bytes, partLen);
+				args.Document.GetBytes(offset, bytes, partLen);
 
 				foreach(KeyValuePair<string, System.Security.Cryptography.HashAlgorithm> ha in algos)
 					ha.Value.TransformBlock(bytes, 0, partLen, bytes, 0);
@@ -438,7 +479,10 @@ namespace ChecksumPlugin
 						hash.Append(b.ToString("X2"));
 					List<Node> nodes = FindTreeNodes(result.Name);
 					if(nodes.Count == 1)
+					{
 						((ChecksumTreeNode)nodes[0]).Value = hash.ToString();
+						TreeView.EnsureVisible(TreeView.FindNode(TreeModel.GetPath(nodes[0])));
+					}
 				}
 			}
 			
