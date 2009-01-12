@@ -7,13 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aga.Controls", "Aga.Control
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hexed", "hexed.csproj", "{D6F74BFC-29D8-436B-9A93-B7AA58F75A32}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookmarkPlugin", "BookmarkPlugin\BookmarkPlugin.csproj", "{721008AD-FE79-4D38-AE9F-F8DE85169F85}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PythonConsolePlugin", "PythonConsolePlugin\PythonConsolePlugin.csproj", "{5B36F055-4A0C-422C-8EC6-DF099E9F2EB5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChecksumPlugin", "ChecksumPlugin\ChecksumPlugin.csproj", "{4DD6D081-0461-4035-9D98-98B6B7C91672}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HistogramPlugin", "HistogramPlugin\HistogramPlugin.csproj", "{764C2C55-0470-4015-84CC-9198298EB218}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookmarkPlugin", "BookmarkPlugin\BookmarkPlugin.csproj", "{721008AD-FE79-4D38-AE9F-F8DE85169F85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

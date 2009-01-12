@@ -23,7 +23,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputType>Library</OutputType>
     <AssemblyName>ChecksumPlugin</AssemblyName>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\bin\Release\</OutputPath>
     <DebugSymbols>false</DebugSymbols>
     <RootNamespace>
     </RootNamespace>
@@ -45,6 +45,8 @@
     <Compile Include="Adler32Managed.cs" />
     <Compile Include="MD4Managed.cs" />
     <Compile Include="MD2Managed.cs" />
+    <Compile Include="CrcManaged.cs" />
+    <Compile Include="SumManaged.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
