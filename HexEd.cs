@@ -322,6 +322,12 @@ class HexEdApp : Form, IPluginHost
 	[STAThread]
 	public static void Main()
 	{
+#if DEBUG
+#if MONO
+System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListener());
+#endif
+#endif
+		
 		Application.EnableVisualStyles();
 		Application.DoEvents();
 		Application.Run(new HexEdApp());
@@ -869,6 +875,11 @@ class HexEdApp : Form, IPluginHost
 			else
 				return null;
 		}
+	}
+	
+	Settings IPluginHost.Settings
+	{
+		get { return Settings.Instance; }
 	}
 	
 	HexView IPluginHost.ActiveView
