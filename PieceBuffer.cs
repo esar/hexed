@@ -550,7 +550,7 @@ public class PieceBuffer
 			distance = mark.Position;
 		
 		if(	distance - mark.Offset > 0 ||
-		    mark.Prev.Position < mark.Position - distance ||
+		    mark.Prev.Position >= mark.Position - distance ||
 			mark.Prev == Marks)
 		{
 			// Find nearest mark after the destination position and move the
