@@ -69,6 +69,7 @@
     <Compile Include="SettingsDialog.cs" />
     <Compile Include="TitleLabel.cs" />
     <Compile Include="HistoryPanel.cs" />
+    <Compile Include="ColourComboBox.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
