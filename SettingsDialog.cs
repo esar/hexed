@@ -47,6 +47,63 @@ class EditorLayoutSettingsPage : SettingsPage
 	}
 }
 
+class EditorAppearanceSettingsPage : SettingsPage
+{
+	TableLayoutPanel Panel = new TableLayoutPanel();
+	ListBox ElementList = new ListBox();
+	Label ForeColorLabel = new Label();
+	ComboBox ForeColorCombo = new ColourComboBox();
+	Label BackColorLabel = new Label();
+	ComboBox BackColorCombo = new ColourComboBox();
+	Label BorderLeftColorLabel = new Label();
+	ComboBox BorderLeftColorCombo = new ColourComboBox();
+	Label BorderRightColorLabel = new Label();
+	ComboBox BorderRightColorCombo = new ColourComboBox();
+	Label BorderTopColorLabel = new Label();
+	ComboBox BorderTopColorCombo = new ColourComboBox();
+	Label BorderBottomColorLabel = new Label();
+	ComboBox BorderBottomColorCombo = new ColourComboBox();
+	
+	
+	public EditorAppearanceSettingsPage()
+	{
+		Text = "Appearance";
+		
+		ElementList.Items.Add("Address");
+		ElementList.Items.Add("Address Highlight");
+		ElementList.Items.Add("Data");
+		ElementList.Items.Add("ASCII");
+		
+		ForeColorLabel.Text = "Foreground:";
+		BackColorLabel.Text = "Background:";
+		BorderLeftColorLabel.Text = "Left Border:";
+		BorderRightColorLabel.Text = "Right Border:";
+		BorderTopColorLabel.Text = "Top Border:";
+		BorderBottomColorLabel.Text = "Bottom Border:";
+		
+		Panel.ColumnCount = 3;
+		Panel.RowCount = 6;
+		Panel.Controls.Add(ElementList, 0, 0);
+		Panel.SetRowSpan(ElementList, 6);
+		Panel.Controls.Add(ForeColorLabel, 1, 0);
+		Panel.Controls.Add(ForeColorCombo, 1, 1);
+		Panel.Controls.Add(BackColorLabel, 2, 0);
+		Panel.Controls.Add(BackColorCombo, 2, 1);
+		Panel.Controls.Add(BorderLeftColorLabel, 1, 2);
+		Panel.Controls.Add(BorderLeftColorCombo, 1, 3);
+		Panel.Controls.Add(BorderRightColorLabel, 2, 2);
+		Panel.Controls.Add(BorderRightColorCombo, 2, 3);
+		Panel.Controls.Add(BorderTopColorLabel, 1, 4);
+		Panel.Controls.Add(BorderTopColorCombo, 1, 5);
+		Panel.Controls.Add(BorderBottomColorLabel, 2, 4);
+		Panel.Controls.Add(BorderBottomColorCombo, 2, 5);
+		
+		Panel.Dock = DockStyle.Fill;
+		Controls.Add(Panel);
+		
+	}
+}
+
 	class ExternalProgramsSettingsPage : SettingsPage
 	{
 		Label	Description = new Label();
@@ -149,6 +206,7 @@ class EditorLayoutSettingsPage : SettingsPage
 
 			page = AddPage(new EditorSettingsPage(), 3);
 			AddPage(page, new EditorLayoutSettingsPage(), 3);
+			AddPage(page, new EditorAppearanceSettingsPage(), 3);
 		
 			page = AddPage(new CommandsSettingsPage(), 9);
 			AddPage(page, new RevisionGraphSettingsPage(), 6);
