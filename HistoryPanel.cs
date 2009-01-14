@@ -108,14 +108,17 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			LastDocument.HistoryJumped -= OnHistoryJumped;
 		}
 		
-		LastDocument = Host.ActiveView.Document;
-		LastDocument.HistoryAdded += OnHistoryAdded;
-		LastDocument.HistoryUndone += OnHistoryUndone;
-		LastDocument.HistoryRedone += OnHistoryRedone;
-		LastDocument.HistoryJumped += OnHistoryJumped;
-		
-		if(StructureChanged != null)
-			StructureChanged(this, new Aga.Controls.Tree.TreePathEventArgs());
+		if(Host.ActiveView != null)
+		{
+			LastDocument = Host.ActiveView.Document;
+			LastDocument.HistoryAdded += OnHistoryAdded;
+			LastDocument.HistoryUndone += OnHistoryUndone;
+			LastDocument.HistoryRedone += OnHistoryRedone;
+			LastDocument.HistoryJumped += OnHistoryJumped;
+			
+			if(StructureChanged != null)
+				StructureChanged(this, new Aga.Controls.Tree.TreePathEventArgs());
+		}
 	}
 	
 	public void OnDrawNodeText(object sender, Aga.Controls.Tree.NodeControls.DrawEventArgs e)

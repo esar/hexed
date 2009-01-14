@@ -8,6 +8,7 @@ using System.Collections.Generic;
 
 using Crownwood.DotNetMagic.Docking;
 using Crownwood.DotNetMagic.Common;
+using Crownwood.DotNetMagic.Controls;
 
 
 public class CommandEventArgs : EventArgs
@@ -301,6 +302,7 @@ class RadixMenu : ToolStripMenuItem
 class HexEdApp : Form, IPluginHost
 {
 	private DockingManager		_dockingManager = null;
+	private TabbedGroups		_TabbedGroups = null;
 	private ToolStripPanel		ToolStripPanel;
 	private ToolStrip			FileToolStrip = new ToolStrip();
 	private ToolStrip			EditToolStrip = new ToolStrip();
@@ -335,14 +337,26 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 
 	public HexEdApp()
 	{
-		IsMdiContainer = true;
+		_TabbedGroups = new TabbedGroups(VisualStyle.Office2003);
+		_TabbedGroups.AllowDrop = true;
+		_TabbedGroups.AtLeastOneLeaf = true;
+		_TabbedGroups.Dock = System.Windows.Forms.DockStyle.Fill;
+		//_TabbedGroups.ImageList = this.groupTabs;
+		_TabbedGroups.Location = new System.Drawing.Point(5, 5);
+		_TabbedGroups.ResizeBarColor = System.Drawing.SystemColors.Control;
+		_TabbedGroups.Size = new System.Drawing.Size(482, 304);
+		//_TabbedGroups.TabControlCreated += new Crownwood.DotNetMagic.Controls.TabbedGroups.TabControlCreatedHandler(this.OnTabControlCreated);
+		//_TabbedGroups.ExternalDrop += new Crownwood.DotNetMagic.Controls.TabbedGroups.ExternalDropHandler(this.OnExternalDrop);
+
+		Controls.Add(_TabbedGroups);
+		
 
 		structurePanel = new StructurePanel(this);
 		HistoryPanel = new HistoryPanel(this);
 		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
+		_dockingManager.InnerControl = _TabbedGroups;
 		_dockingManager.Contents.Add(selectionPanel, "Selection");
 		_dockingManager.Contents.Add(structurePanel, "Structure");
-//		_dockingManager.Contents.Add(bookmarkPanel, "Bookmarks");
 		_dockingManager.Contents.Add(HistoryPanel, "History");
 		_dockingManager.AddContentWithState(_dockingManager.Contents["Selection"], State.DockBottom);
 		WindowContent wc = _dockingManager.AddContentWithState(_dockingManager.Contents["Structure"], State.DockLeft);
@@ -350,7 +364,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		_dockingManager.AddContentToWindowContent(_dockingManager.Contents["History"], wc);
 		_dockingManager.ShowContent(_dockingManager.Contents["Selection"]);
 		_dockingManager.ShowContent(_dockingManager.Contents["Structure"]);
-
+		
 		
 		Commands.Add("FileNew", null, OnUpdateUiElement);
 		Commands.Add("FileOpen", OnFileOpen, OnUpdateUiElement);
@@ -391,8 +405,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		Commands.Add("WindowSplit", OnWindowSplit, OnUpdateUiElement);
 		Commands.Add("WindowDuplicate", OnWindowDuplicate, OnUpdateUiElement);
-		Commands.Add("WindowTileHorizontally", OnWindowTileHorizontally, OnUpdateUiElement);
-		Commands.Add("WindowTileVertically", OnWindowTileVertically, OnUpdateUiElement);
 
 		Commands.Add("HelpAbout", OnHelpAbout, OnUpdateUiElement);
 		
@@ -495,11 +507,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi = new ToolStripMenuItem("&Window");
 		mi.DropDownItems.Add(new ToolStripMenuItem("&Split", Settings.Instance.Image("split_16.png"), OnUiCommand, "WindowSplit"));
 		mi.DropDownItems.Add(new ToolStripMenuItem("&Duplicate", Settings.Instance.Image("duplicate_16.png"), OnUiCommand, "WindowDuplicate"));
-		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(new ToolStripMenuItem("Tile Horizontally", null, OnUiCommand, "WindowTileHorizontally"));
-		mi.DropDownItems.Add(new ToolStripMenuItem("Tile Vertically", null, OnUiCommand, "WindowTileVertically"));
-		MainMenuStrip.MdiWindowListItem = new ToolStripMenuItem("Window", null, null, "WindowWindows");
-		mi.DropDownItems.Add(MainMenuStrip.MdiWindowListItem);
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&Help");
@@ -517,6 +524,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 
 
 		structurePanel.SelectionChanged += OnStructureSelectionChanged;
+		_TabbedGroups.PageChanged += OnTabbedGroupsPageChanged;
 
 		Application.Idle += OnIdle;
 		
@@ -607,7 +615,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	
 	protected void OnIdle(object sender, EventArgs e)
 	{
-		bool haveChild = (ActiveMdiChild != null);
+		bool haveChild = (_TabbedGroups.ActiveTabPage != null);
 		
 		Commands["FileSave"].Enabled = haveChild;
 		Commands["FileSaveAs"].Enabled = haveChild;
@@ -646,10 +654,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands["ViewBigEndian"].Enabled = haveChild;
 		Commands["ViewBigEndian"].Checked = (haveChild && ActiveView.Endian == Endian.Big);
 		
-		Commands["WindowSplit"].Enabled = (ActiveMdiChild != null);		
-		Commands["WindowDuplicate"].Enabled = (ActiveMdiChild != null);
-		Commands["WindowTileHorizontally"].Enabled = (MdiChildren.Length > 1);
-		Commands["WindowTileVertically"].Enabled = (MdiChildren.Length > 1);
+		Commands["WindowSplit"].Enabled = haveChild;		
+		Commands["WindowDuplicate"].Enabled = haveChild;
 	}
 	
 	protected override void OnLoad(EventArgs e)
@@ -660,9 +666,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	
 	protected void OnSelectionChanged(object sender, EventArgs e)
 	{
-		if(ActiveMdiChild != null)
+		if(_TabbedGroups.ActiveTabPage != null)
 		{
-			HexView view = ((HexViewForm)ActiveMdiChild).View;
+			HexView view = ((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View;
 			if(view.Selection == sender)
 			{
 				selectionPanel.Update(view);
@@ -679,11 +685,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 
 	protected void OnEditModeChanged(object sender, EventArgs e)
 	{
-		if(ActiveMdiChild != null)
+		if(_TabbedGroups.ActiveTabPage != null)
 		{
-			if(((HexViewForm)ActiveMdiChild).View == sender)
+			if(((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View == sender)
 			{
-				if(((HexViewForm)ActiveMdiChild).View.EditMode == EditMode.Insert)
+				if(((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.EditMode == EditMode.Insert)
 					EditModeLabel.Text = "INS";
 				else
 					EditModeLabel.Text = "OVR";
@@ -691,12 +697,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		}		
 	}
 	
-	protected override void OnMdiChildActivate(EventArgs e)
+	protected void OnTabbedGroupsPageChanged(object sender, Crownwood.DotNetMagic.Controls.TabPage e)
 	{
-		base.OnMdiChildActivate(e);
-		
-		if(ActiveMdiChild != null)
-			Commands.Merge(((HexViewForm)ActiveMdiChild).Commands);
+		if(_TabbedGroups.ActiveTabPage != null)
+			Commands.Merge(((HexViewForm)_TabbedGroups.ActiveTabPage.Control).Commands);
 		else
 			Commands.RevertMerge();
 		
@@ -710,8 +714,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		HexView view = null;
 
-		if(ActiveMdiChild != null)
-			view = ((HexViewForm)ActiveMdiChild).View;
+		if(_TabbedGroups.ActiveTabPage != null)
+			view = ((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View;
 
 		selectionPanel.Update(view);
 	}
@@ -727,11 +731,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			Document doc = new Document(ofd.FileName);
 
 			HexViewForm form = new HexViewForm(doc);
-			form.Text = ofd.FileName;
-			form.MdiParent = this;
 			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-			form.Show();
+			_TabbedGroups.ActiveLeaf.TabPages.Add(new Crownwood.DotNetMagic.Controls.TabPage(ofd.FileName, form, Settings.Instance.Image("document_16.png")));
 		}
 	}
 
@@ -742,18 +744,18 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	}
 	
 	private void OnWindowDuplicate(object sender, EventArgs e)
-	{
+	{/*
 		HexViewForm form = new HexViewForm(ActiveView.Document);
 		form.Text = ActiveMdiChild.Text;
 		form.MdiParent= this;
 		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-		form.Show();
+		form.Show();*/
 	}
 	
 	private void OnWindowSplit(object sender, EventArgs e)
 	{
-		((HexViewForm)ActiveMdiChild).Split();
+		//((HexViewForm)ActiveMdiChild).Split();
 	}
 	
 
@@ -773,16 +775,16 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		if(records.Count == 0)
 			return;
 		
-		((HexViewForm)ActiveMdiChild).View.ClearHighlights();
+		((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.ClearHighlights();
 		
-		if(ActiveMdiChild != null)
+		if(_TabbedGroups.ActiveTabPage != null)
 		{
 			Record record = records[0];
 
 			int level = 0;
 			while(record != null)
 			{
-				HexView.SelectionRange sel = new HexView.SelectionRange(((HexViewForm)ActiveMdiChild).View);
+				HexView.SelectionRange sel = new HexView.SelectionRange(((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View);
 				sel.Set((long)record.Position, (long)(record.Position + (record.Length * record.ArrayLength)));
 					
 				if(level++ == 0)
@@ -798,11 +800,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 					sel.BorderWidth = 1;
 				}
 					
-				((HexViewForm)ActiveMdiChild).View.AddHighlight(sel);
+				((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.AddHighlight(sel);
 					
-//				((HexViewForm)ActiveMdiChild).View.Selection.Set(	(long)record.Position,
+//				((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.Selection.Set(	(long)record.Position,
 //				                                               (long)( record.Position + (record.Length * record.ArrayLength)));
-				((HexViewForm)ActiveMdiChild).View.EnsureVisible((long)record.Position);
+				((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.EnsureVisible((long)record.Position);
 				
 				record = record.Parent;
 			}
@@ -812,16 +814,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	private void OnFileExit(object sender, EventArgs args)
 	{
 		Application.Exit();
-	}
-
-	private void OnWindowTileVertically(object sender, EventArgs args)
-	{
-		LayoutMdi(MdiLayout.TileVertical);
-	}
-
-	private void OnWindowTileHorizontally(object sender, EventArgs args)
-	{
-		LayoutMdi(MdiLayout.TileHorizontal);
 	}
 
 	private void OnHelpAbout(object sender, EventArgs args)
@@ -870,8 +862,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		get
 		{
-			if(ActiveMdiChild != null)
-				return ((HexViewForm)ActiveMdiChild).View;
+			if(_TabbedGroups.ActiveTabPage != null)
+				return ((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View;
 			else
 				return null;
 		}
@@ -886,8 +878,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		get
 		{
-			if(ActiveMdiChild != null)
-				return ((HexViewForm)ActiveMdiChild).View;
+			if(_TabbedGroups.ActiveTabPage != null)
+				return ((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View;
 			else
 				return null;
 		}

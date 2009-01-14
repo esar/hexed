@@ -2,10 +2,10 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
+using Crownwood.DotNetMagic.Controls;
 
 
-
-class HexViewForm : Form
+class HexViewForm : Panel
 {
 
 
@@ -52,7 +52,7 @@ class HexViewForm : Form
 		Document = doc;
 	}
 
-	protected override void OnActivated(EventArgs e)
+/*	protected override void OnActivated(EventArgs e)
 	{
 		// TODO: MONO: Why does mono not call Activate() itself. Without calling activate
 		//             the parent window doesn't get a call to ActivateMdiChild() and as a
@@ -61,7 +61,7 @@ class HexViewForm : Form
 		Activate();
 		
 		base.OnActivated(e);
-	}
+	}*/
 	
 	public void Split()
 	{

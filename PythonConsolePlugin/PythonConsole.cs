@@ -39,8 +39,16 @@ namespace PythonConsolePlugin
 		protected void OnActiveViewChanged(object sender, EventArgs e)
 		{
 			Python.Globals["View"] = Host.ActiveView;
-			Python.Globals["Doc"] = Host.ActiveView.Document;
-			Python.Globals["Struct"] = Host.ActiveView.Document.Structure;
+			if(Host.ActiveView != null)
+			{
+				Python.Globals["Doc"] = Host.ActiveView.Document;
+				Python.Globals["Struct"] = Host.ActiveView.Document.Structure;
+			}
+			else
+			{
+				Python.Globals["Doc"] = null;
+				Python.Globals["Struct"] = null;
+			}
 		}
 		
 		protected override void OnKeyUp(KeyEventArgs e)

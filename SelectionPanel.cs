@@ -53,6 +53,14 @@ class SelectionPanel : ListView
 
 	public void Update(HexView view)
 	{
+		if(view == null)
+		{
+			foreach(ListViewItem i in Items)
+				i.SubItems[1].Text = String.Empty;
+			return;
+		}
+		
+		
 		lengthItem.Text = (view.Selection.Length / 8).ToString() + "." + (view.Selection.Length % 8).ToString();
 		
 		try
