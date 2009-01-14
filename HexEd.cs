@@ -668,7 +668,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		if(_TabbedGroups.ActiveTabPage != null)
 		{
-			HexView view = ((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View;
+			HexView view = ((HexViewForm)_TabbedGroups.ActiveTabPage).View;
 			if(view.Selection == sender)
 			{
 				selectionPanel.Update(view);
@@ -687,9 +687,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		if(_TabbedGroups.ActiveTabPage != null)
 		{
-			if(((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View == sender)
+			if(((HexViewForm)_TabbedGroups.ActiveTabPage).View == sender)
 			{
-				if(((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.EditMode == EditMode.Insert)
+				if(((HexViewForm)_TabbedGroups.ActiveTabPage).View.EditMode == EditMode.Insert)
 					EditModeLabel.Text = "INS";
 				else
 					EditModeLabel.Text = "OVR";
@@ -700,7 +700,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	protected void OnTabbedGroupsPageChanged(object sender, Crownwood.DotNetMagic.Controls.TabPage e)
 	{
 		if(_TabbedGroups.ActiveTabPage != null)
-			Commands.Merge(((HexViewForm)_TabbedGroups.ActiveTabPage.Control).Commands);
+			Commands.Merge(((HexViewForm)_TabbedGroups.ActiveTabPage).Commands);
 		else
 			Commands.RevertMerge();
 		
@@ -715,7 +715,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		HexView view = null;
 
 		if(_TabbedGroups.ActiveTabPage != null)
-			view = ((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View;
+			view = ((HexViewForm)_TabbedGroups.ActiveTabPage).View;
 
 		selectionPanel.Update(view);
 	}
@@ -731,9 +731,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			Document doc = new Document(ofd.FileName);
 
 			HexViewForm form = new HexViewForm(doc);
+			form.Title = ofd.FileName;
+			form.Image = Settings.Instance.Image("document_16.png");
 			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-			_TabbedGroups.ActiveLeaf.TabPages.Add(new Crownwood.DotNetMagic.Controls.TabPage(ofd.FileName, form, Settings.Instance.Image("document_16.png")));
+			_TabbedGroups.ActiveLeaf.TabPages.Add(form);
 		}
 	}
 
@@ -775,7 +777,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		if(records.Count == 0)
 			return;
 		
-		((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.ClearHighlights();
+		((HexViewForm)_TabbedGroups.ActiveTabPage).View.ClearHighlights();
 		
 		if(_TabbedGroups.ActiveTabPage != null)
 		{
@@ -784,7 +786,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			int level = 0;
 			while(record != null)
 			{
-				HexView.SelectionRange sel = new HexView.SelectionRange(((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View);
+				HexView.SelectionRange sel = new HexView.SelectionRange(((HexViewForm)_TabbedGroups.ActiveTabPage).View);
 				sel.Set((long)record.Position, (long)(record.Position + (record.Length * record.ArrayLength)));
 					
 				if(level++ == 0)
@@ -800,11 +802,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 					sel.BorderWidth = 1;
 				}
 					
-				((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.AddHighlight(sel);
+				((HexViewForm)_TabbedGroups.ActiveTabPage).View.AddHighlight(sel);
 					
-//				((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.Selection.Set(	(long)record.Position,
+//				((HexViewForm)_TabbedGroups.ActiveTabPage).View.Selection.Set(	(long)record.Position,
 //				                                               (long)( record.Position + (record.Length * record.ArrayLength)));
-				((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View.EnsureVisible((long)record.Position);
+				((HexViewForm)_TabbedGroups.ActiveTabPage).View.EnsureVisible((long)record.Position);
 				
 				record = record.Parent;
 			}
@@ -863,7 +865,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		get
 		{
 			if(_TabbedGroups.ActiveTabPage != null)
-				return ((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View;
+				return ((HexViewForm)_TabbedGroups.ActiveTabPage).View;
 			else
 				return null;
 		}
@@ -879,7 +881,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		get
 		{
 			if(_TabbedGroups.ActiveTabPage != null)
-				return ((HexViewForm)_TabbedGroups.ActiveTabPage.Control).View;
+				return ((HexViewForm)_TabbedGroups.ActiveTabPage).View;
 			else
 				return null;
 		}

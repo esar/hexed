@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using Crownwood.DotNetMagic.Controls;
 
 
-class HexViewForm : Panel
+class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
 {
 
 
