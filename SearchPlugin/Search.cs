@@ -156,15 +156,19 @@ namespace SearchPlugin
 
 		protected void OnSearch(object sender, EventArgs e)
 		{
+			SearchDialog dlg = new SearchDialog();
+			if(dlg.ShowDialog() != DialogResult.OK)
+				return;
+			
 			ListView.Items.Clear();
 			MatchIndicator.Reset(Host.ActiveView.Document.Length, 512);
 			
-			foreach(long i in Search(Host.ActiveView.Document, "Hex"))
+			foreach(long i in Search(Host.ActiveView.Document, dlg.Pattern))
 			{
 				MatchIndicator.Matches.Add(i);
 				ListViewItem item = ListView.Items.Add(i.ToString());
 				item.SubItems.Add("0");
-				item.SubItems.Add("Hex");
+				item.SubItems.Add(dlg.Pattern);
 			}
 		}
 		

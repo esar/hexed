@@ -43,6 +43,7 @@
     <Compile Include="Search.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="PatternMatchBMH.cs" />
+    <Compile Include="SearchDialog.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
