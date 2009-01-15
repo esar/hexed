@@ -312,6 +312,8 @@ class HexEdApp : Form, IPluginHost
 	private StructurePanel		structurePanel;
 	private HistoryPanel		HistoryPanel;
 	
+	private Content[]			DefaultWindowPositionContent = new Content[4];
+	
 	private ToolStripStatusLabel	EditModeLabel;
 	private ToolStripStatusLabel	AddressLabel;
 
@@ -336,36 +338,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	}
 
 	public HexEdApp()
-	{
-		_TabbedGroups = new TabbedGroups(VisualStyle.Office2003);
-		_TabbedGroups.AllowDrop = true;
-		_TabbedGroups.AtLeastOneLeaf = true;
-		_TabbedGroups.Dock = System.Windows.Forms.DockStyle.Fill;
-		//_TabbedGroups.ImageList = this.groupTabs;
-		_TabbedGroups.Location = new System.Drawing.Point(5, 5);
-		_TabbedGroups.ResizeBarColor = System.Drawing.SystemColors.Control;
-		_TabbedGroups.Size = new System.Drawing.Size(482, 304);
-		//_TabbedGroups.TabControlCreated += new Crownwood.DotNetMagic.Controls.TabbedGroups.TabControlCreatedHandler(this.OnTabControlCreated);
-		//_TabbedGroups.ExternalDrop += new Crownwood.DotNetMagic.Controls.TabbedGroups.ExternalDropHandler(this.OnExternalDrop);
-
-		Controls.Add(_TabbedGroups);
-		
-
-		structurePanel = new StructurePanel(this);
-		HistoryPanel = new HistoryPanel(this);
-		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
-		_dockingManager.InnerControl = _TabbedGroups;
-		_dockingManager.Contents.Add(selectionPanel, "Selection");
-		_dockingManager.Contents.Add(structurePanel, "Structure");
-		_dockingManager.Contents.Add(HistoryPanel, "History");
-		_dockingManager.AddContentWithState(_dockingManager.Contents["Selection"], State.DockBottom);
-		WindowContent wc = _dockingManager.AddContentWithState(_dockingManager.Contents["Structure"], State.DockLeft);
-//		_dockingManager.AddContentToWindowContent(_dockingManager.Contents["Bookmarks"], wc);
-		_dockingManager.AddContentToWindowContent(_dockingManager.Contents["History"], wc);
-		_dockingManager.ShowContent(_dockingManager.Contents["Selection"]);
-		_dockingManager.ShowContent(_dockingManager.Contents["Structure"]);
-		
-		
+	{					
 		Commands.Add("FileNew", null, OnUpdateUiElement);
 		Commands.Add("FileOpen", OnFileOpen, OnUpdateUiElement);
 		Commands.Add("FileSave", null, OnUpdateUiElement);
@@ -407,12 +380,36 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands.Add("WindowDuplicate", OnWindowDuplicate, OnUpdateUiElement);
 
 		Commands.Add("HelpAbout", OnHelpAbout, OnUpdateUiElement);
+
 		
+		_TabbedGroups = new TabbedGroups(VisualStyle.Office2003);
+		_TabbedGroups.AllowDrop = true;
+		_TabbedGroups.AtLeastOneLeaf = true;
+		_TabbedGroups.Dock = System.Windows.Forms.DockStyle.Fill;
+		//_TabbedGroups.ImageList = this.groupTabs;
+		_TabbedGroups.Location = new System.Drawing.Point(5, 5);
+		_TabbedGroups.ResizeBarColor = System.Drawing.SystemColors.Control;
+		_TabbedGroups.Size = new System.Drawing.Size(482, 304);
+		//_TabbedGroups.TabControlCreated += new Crownwood.DotNetMagic.Controls.TabbedGroups.TabControlCreatedHandler(this.OnTabControlCreated);
+		//_TabbedGroups.ExternalDrop += new Crownwood.DotNetMagic.Controls.TabbedGroups.ExternalDropHandler(this.OnExternalDrop);
+		Controls.Add(_TabbedGroups);
+				
 		ToolStripPanel = new ToolStripPanel();
 		MainMenuStrip = new MenuStrip();
 		ToolStripPanel.Controls.Add(MainMenuStrip);
 		ToolStripPanel.Dock = DockStyle.Top;
 		Controls.Add(ToolStripPanel);
+		
+		structurePanel = new StructurePanel(this);
+		HistoryPanel = new HistoryPanel(this);
+		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
+		_dockingManager.InnerControl = _TabbedGroups;
+		_dockingManager.OuterControl = ToolStripPanel;
+
+		((IPluginHost)this).AddWindow(selectionPanel, "Selection", DefaultWindowPosition.BottomLeft, true);
+		((IPluginHost)this).AddWindow(structurePanel, "Structure", DefaultWindowPosition.Left, true);
+		((IPluginHost)this).AddWindow(HistoryPanel, "History", DefaultWindowPosition.Left, true);
+
 		
 		FileToolStrip.Items.Add(CreateToolButton(null, "new_16.png", "FileNew", "New"));
 		FileToolStrip.Items.Add(CreateToolButton(null, "open_16.png", "FileOpen", "Open"));
@@ -887,10 +884,48 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		}
 	}
 	
-	void IPluginHost.AddWindow(Control control, string name)
-	{
-		_dockingManager.Contents.Add(control, name);
-		_dockingManager.ShowContent(_dockingManager.Contents[name]);
+	
+	void IPluginHost.AddWindow(Control control, string name, DefaultWindowPosition defaultPosition, bool visibleByDefault)
+	{	
+		Content content = _dockingManager.Contents.Add(control, name);
+		content.DisplaySize = new Size(400, 240);
+		
+		if(DefaultWindowPositionContent[(int)defaultPosition] == null)
+		{
+			DefaultWindowPositionContent[(int)defaultPosition] = content;
+			
+			if(defaultPosition == DefaultWindowPosition.BottomLeft && 
+			   DefaultWindowPositionContent[(int)DefaultWindowPosition.BottomRight] != null)
+			{
+				_dockingManager.AddContentToZone(content, DefaultWindowPositionContent[(int)DefaultWindowPosition.BottomRight].ParentWindowContent.ParentZone, 0);
+			}
+			else if(defaultPosition == DefaultWindowPosition.BottomRight && 
+			   DefaultWindowPositionContent[(int)DefaultWindowPosition.BottomLeft] != null)
+			{
+				_dockingManager.AddContentToZone(content, DefaultWindowPositionContent[(int)DefaultWindowPosition.BottomLeft].ParentWindowContent.ParentZone, 1);
+			}
+			else
+			{
+				switch(defaultPosition)
+				{
+					case DefaultWindowPosition.BottomLeft:
+					case DefaultWindowPosition.BottomRight:
+						_dockingManager.AddContentWithState(content, State.DockBottom);
+						break;
+					case DefaultWindowPosition.Left:
+						_dockingManager.AddContentWithState(content, State.DockLeft);
+						break;
+					case DefaultWindowPosition.Right:
+						_dockingManager.AddContentWithState(content, State.DockRight);
+						break;
+				}
+			}
+		}
+		else
+			_dockingManager.AddContentToWindowContent(content, DefaultWindowPositionContent[(int)defaultPosition].ParentWindowContent);
+				
+		if(visibleByDefault)
+			_dockingManager.ShowContent(content);
 	}
 	
 	ToolStripMenuItem IPluginHost.AddMenuItem(string path)

@@ -29,6 +29,10 @@ namespace BookmarkPlugin
 			Tree.Name = "Tree";
 			Tree.NodeControls.Add(NodeControlIcon);
 			Tree.NodeControls.Add(NodeControlName);
+			Tree.UseColumns = true;
+			Tree.Columns.Add(new TreeColumn("Name", 100));
+			Tree.Columns.Add(new TreeColumn("Position", 100));
+			Tree.Columns.Add(new TreeColumn("Length", 100));
 
 			Tree.Dock = DockStyle.Fill;
 			TreeModel = new TreeModel();
@@ -41,6 +45,11 @@ namespace BookmarkPlugin
 			ToolBar.Items.Add(Settings.Instance.Image("unknown_op.png")).ToolTipText = "Add Bookmark";
 			ToolBar.Items.Add(new ToolStripSeparator());
 			ToolBar.Items.Add(Settings.Instance.Image("delete_16.png")).ToolTipText = "Delete";
+			ToolBar.Items.Add(new ToolStripSeparator());
+			ToolBar.Items.Add(Host.Settings.Image("first_16.png"));
+			ToolBar.Items.Add(Host.Settings.Image("prev_16.png"));
+			ToolBar.Items.Add(Host.Settings.Image("next_16.png"));
+			ToolBar.Items.Add(Host.Settings.Image("last_16.png"));
 			Controls.Add(ToolBar);
 			
 			Tree.NodeMouseDoubleClick += OnNodeDoubleClick;
@@ -72,7 +81,7 @@ namespace BookmarkPlugin
 
 		void IPlugin.Initialize(IPluginHost host)
 		{
-			host.AddWindow(new BookmarkPanel(host), "Bookmarks");
+			host.AddWindow(new BookmarkPanel(host), "Bookmarks", DefaultWindowPosition.Left, true);
 		}
 		
 		void IPlugin.Dispose()

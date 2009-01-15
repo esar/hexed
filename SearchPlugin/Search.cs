@@ -202,7 +202,7 @@ namespace SearchPlugin
 
 		void IPlugin.Initialize(IPluginHost host)
 		{
-			host.AddWindow(new SearchPanel(host), "Search");
+			host.AddWindow(new SearchPanel(host), "Search", DefaultWindowPosition.Left, true);
 		}
 		
 		void IPlugin.Dispose()

@@ -2,6 +2,14 @@ using System;
 using System.Windows.Forms;
 
 
+	public enum DefaultWindowPosition
+	{
+		Left,
+		Right,
+		BottomLeft,
+		BottomRight,
+		Floating
+	}
 
 public interface IPlugin
 {
@@ -22,5 +30,5 @@ public interface IPluginHost
 	HexView ActiveView { get; }
 	
 	ToolStripMenuItem AddMenuItem(string path);
-	void AddWindow(Control control, string name);
+	void AddWindow(Control control, string name, DefaultWindowPosition defaultPosition, bool visibleByDefault);
 }

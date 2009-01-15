@@ -1,26 +1,24 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="ChecksumPlugin/Checksum.cs" line="203" column="1" />
-    <File name="ChecksumPlugin/CrcManaged.cs" line="50" column="98" />
-    <File name="ChecksumPlugin/Adler32Managed.cs" line="43" column="40" />
-    <File name="ChecksumPlugin/SumManaged.cs" line="72" column="31" />
-    <File name="HexEd.cs" line="327" column="63" />
-    <File name="Aga.Controls/Tree/NodeControls/NodeCheckBox.cs" line="1" column="1" />
-    <File name="SettingsDialog.cs" line="99" column="50" />
-    <File name="ColourComboBox.cs" line="43" column="17" />
+    <File name="HexEd.cs" line="884" column="53" />
+    <File name="../../../../../media/disk/Program Files/Crownwood Software Ltd/DotNetMagic 5.2.2/Source/C# Samples/SampleTabbedGroups/SampleTabbedGroups.cs" line="832" column="95" />
+    <File name="HexViewForm.cs" line="53" column="1" />
+    <File name="../../../../../media/disk/Program Files/Crownwood Software Ltd/DotNetMagic 5.2.2/Source/C# Samples/SampleDocking/SampleDocking.cs" line="175" column="28" />
+    <File name="SelectionPanel.cs" line="63" column="3" />
+    <File name="HistoryPanel.cs" line="121" column="4" />
+    <File name="PythonConsolePlugin/PythonConsole.cs" line="48" column="5" />
+    <File name="SearchPlugin/SearchDialog.cs" line="49" column="1" />
+    <File name="SearchPlugin/Search.cs" line="171" column="34" />
+    <File name="../../DotNetMagic/Controls/TabControl/TabControl.cs" line="2439" column="36" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="Aga.Controls" expanded="True">
-          <Node name="Resources" expanded="True" />
-          <Node name="Tree" expanded="True">
-            <Node name="NodeControls" expanded="True" />
-          </Node>
-        </Node>
+        <Node name="BookmarkPlugin" expanded="True" />
         <Node name="ChecksumPlugin" expanded="True" />
         <Node name="hexed" expanded="True" selected="True" />
+        <Node name="SearchPlugin" expanded="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
@@ -31,7 +29,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/SettingsDialog.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
