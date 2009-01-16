@@ -116,8 +116,8 @@ namespace BookmarkPlugin
 		public void OnAddBookmark(object sender, EventArgs e)
 		{
 			BookmarkNode n = new BookmarkNode("New Bookmark");
-			n.Range = new PieceBuffer.Range(Host.ActiveView.Document.CreateMarkAbsolute(Host.ActiveView.Selection.Start/8),
-			                                Host.ActiveView.Document.CreateMarkAbsolute(Host.ActiveView.Selection.End/8));
+			n.Range = Host.ActiveView.Document.Marks.AddRange(Host.ActiveView.Selection.Start / 8,
+			                                                  Host.ActiveView.Selection.End / 8);
 			TreeModel.Nodes.Add(n);
 			Tree.SelectedNode = Tree.FindNode(new TreePath(n));
 			NodeControlName.BeginEdit();
@@ -137,8 +137,8 @@ namespace BookmarkPlugin
 			{
 				BookmarkNode node = Tree.GetPath(Tree.SelectedNode).LastNode as BookmarkNode;
 				// TODO: This might not be the same document!
-				Host.ActiveView.Document.DestroyMark(node.Range.Start);
-				Host.ActiveView.Document.DestroyMark(node.Range.End);
+				Host.ActiveView.Document.Marks.Remove(node.Range.Start);
+				Host.ActiveView.Document.Marks.Remove(node.Range.End);
 				TreeModel.Nodes.Remove(node);
 			}
 		}

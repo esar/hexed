@@ -47,13 +47,15 @@ public class PieceBufferTest
 	
 	public string GetMarks()
 	{
+		return b.Marks.ToString();
+		/*
 		StringBuilder tmp = new StringBuilder();
 		
 		PieceBuffer.Mark mark = b.Marks;
 		while((mark = mark.Next) != b.Marks)
 			tmp.AppendFormat("{{{0},{1}}}", mark.Offset, mark.Position);
 		
-		return tmp.ToString();		
+		return tmp.ToString();*/		
 	}
 	
 	public string GetPieces()
@@ -69,14 +71,8 @@ public class PieceBufferTest
 	
 	public string GetText()
 	{
-		PieceBuffer.Mark x = b.CreateMark(0 - b.InsertMark.Position);
-		PieceBuffer.Mark y = b.CreateMark(1000000);
-
-		byte[] tmp = new byte[y.Position - x.Position];
-		b.GetBytes(x, y, tmp, y.Position - x.Position);
-		b.DestroyMark(x);
-		b.DestroyMark(y);
-		
+		byte[] tmp = new byte[b.Marks.End.Position - b.Marks.Start.Position];
+		b.GetBytes(b.Marks.Start, b.Marks.End, tmp, b.Marks.End.Position - b.Marks.Start.Position);
 		return System.Text.ASCIIEncoding.ASCII.GetString(tmp);
 	}
 	
@@ -84,9 +80,9 @@ public class PieceBufferTest
 	public void MarkDestroyInternalMarks()
 	{
 		// Attempting to destroy internal marks (insert/start/end) should fail
-		b.DestroyMark(b.InsertMark);
-		b.DestroyMark(b.StartMark);
-		b.DestroyMark(b.EndMark);
+		b.Marks.Remove(b.Marks.Insert);
+		b.Marks.Remove(b.Marks.Start);
+		b.Marks.Remove(b.Marks.End);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
 	}
 	
@@ -108,7 +104,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetChanges(), "{1,1}");
 		
 		// seek back one char, insert another
-		b.MoveMark(-1);
+		b.Marks.Insert.Position -= 1;
 		b.Insert((byte)'c');
 		Assert.AreEqual(GetMarks(), "{0,0}{0,2}{0,3}");
 		Assert.AreEqual(GetPieces(), "{0,1}{2,3}{1,2}");
@@ -116,7 +112,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetChanges(), "{1,1}");
 		
 		// seek forward one char, insert another
-		b.MoveMark(1);
+		b.Marks.Insert.Position += 1;
 		b.Insert((byte)'d');
 		Assert.AreEqual(GetMarks(), "{0,0}{0,4}{0,4}");
 		Assert.AreEqual(GetPieces(), "{0,1}{2,3}{1,2}{3,4}");
@@ -124,7 +120,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetChanges(), "{3,3}");
 		
 		// seek back past beginning, insert another
-		b.MoveMark(-100);
+		b.Marks.Insert.Position -= 100;
 		b.Insert((byte)'e');
 		Assert.AreEqual(GetMarks(), "{0,0}{0,1}{0,5}");
 		Assert.AreEqual(GetPieces(), "{4,5}{0,1}{2,3}{1,2}{3,4}");
@@ -132,7 +128,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetChanges(), "{0,0}");
 		
 		// seek forward past end, insert another
-		b.MoveMark(100);
+		b.Marks.Insert.Position += 100;
 		b.Insert((byte)'f');
 		Assert.AreEqual(GetMarks(), "{0,0}{0,6}{0,6}");
 		Assert.AreEqual(GetPieces(), "{4,5}{0,1}{2,3}{1,2}{3,4}{5,6}");
@@ -156,42 +152,42 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick over the lazy dog.");
 		
 		// seek backwards to piece boundary, insert another string
-		b.MoveMark(-18);
+		b.Marks.Insert.Position -= 18;
 		b.Insert("brown fox jumps ");
 		Assert.AreEqual(GetMarks(), "{0,0}{0,26}{0,44}");
 		Assert.AreEqual(GetPieces(), "{0,10}{28,44}{10,28}");
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
 		
 		// seek forwards past the end, insert a string
-		b.MoveMark(12345);
+		b.Marks.Insert.Position += 12345;
 		b.Insert("<---{end}");
 		Assert.AreEqual(GetMarks(), "{0,0}{0,53}{0,53}");
 		Assert.AreEqual(GetPieces(), "{0,10}{28,44}{10,28}{44,53}");
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.<---{end}");
 		
 		// seek backwards past the beginning, insert a string
-		b.MoveMark(-98765);
+		b.Marks.Insert.Position -= 98765;
 		b.Insert("{begin}--->");
 		Assert.AreEqual(GetMarks(), "{0,0}{0,11}{0,64}");
 		Assert.AreEqual(GetPieces(), "{53,64}{0,10}{28,44}{10,28}{44,53}");
 		Assert.AreEqual(GetText(), "{begin}--->the quick brown fox jumps over the lazy dog.<---{end}");
 		
 		// seek forward to piece boundary, insert a string
-		b.MoveMark(10);
+		b.Marks.Insert.Position += 10;
 		b.Insert("and redish ");
 		Assert.AreEqual(GetMarks(), "{0,0}{0,32}{0,75}");
 		Assert.AreEqual(GetPieces(), "{53,64}{0,10}{64,75}{28,44}{10,28}{44,53}");
 		Assert.AreEqual(GetText(), "{begin}--->the quick and redish brown fox jumps over the lazy dog.<---{end}");
 		
 		// seek backwards to middle of piece, insert a string
-		b.MoveMark(-7);
+		b.Marks.Insert.Position -= 7;
 		b.Insert("slightly ");
 		Assert.AreEqual(GetMarks(), "{0,0}{0,34}{0,84}");
 		Assert.AreEqual(GetPieces(), "{53,64}{0,10}{64,68}{75,84}{68,75}{28,44}{10,28}{44,53}");
 		Assert.AreEqual(GetText(), "{begin}--->the quick and slightly redish brown fox jumps over the lazy dog.<---{end}");
 
 		// seek forwards to middle of piece, insert a string
-		b.MoveMark(32);
+		b.Marks.Insert.Position += 32;
 		b.Insert("big ");
 		Assert.AreEqual(GetMarks(), "{0,0}{0,70}{0,88}");
 		Assert.AreEqual(GetPieces(), "{53,64}{0,10}{64,68}{75,84}{68,75}{28,44}{10,19}{84,88}{19,28}{44,53}");
@@ -269,8 +265,8 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
 		
 		// creates marks around the third word (brown) and replace it
-		PieceBuffer.Mark m1 = b.CreateMark(-34);
-		PieceBuffer.Mark m2 = b.CreateMark(-29);
+		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position - 34);
+		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 29);
 		b.Insert(m1, m2, "red");
 		Assert.AreEqual(GetMarks(), "{0,0}{0,10}{0,13}{0,13}{0,42}");
 		Assert.AreEqual(GetPieces(), "{0,10}{44,47}{15,44}");
@@ -283,26 +279,26 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick green fox jumps over the lazy dog.");
 		
 		// replace first piece
-		b.DestroyMark(m1);
-		b.DestroyMark(m2);
-		m1 = b.CreateMarkAbsolute(0);
-		m2 = b.CreateMarkAbsolute(15);
+		b.Marks.Remove(m1);
+		b.Marks.Remove(m2);
+		m1 = b.Marks.Add(0);
+		m2 = b.Marks.Add(15);
 		b.Insert(m1, m2, "the big lazy");
 		Assert.AreEqual(GetText(), "the big lazy fox jumps over the lazy dog.");
 		
 		// replace spanning multiple partial pieces
-		b.DestroyMark(m1);
-		b.DestroyMark(m2);
-		m1 = b.CreateMarkAbsolute(4);
-		m2 = b.CreateMarkAbsolute(22);
+		b.Marks.Remove(m1);
+		b.Marks.Remove(m2);
+		m1 = b.Marks.Add(4);
+		m2 = b.Marks.Add(22);
 		b.Insert(m1, m2, "small dog runs");
 		Assert.AreEqual(GetText(), "the small dog runs over the lazy dog.");
 		
 		// replace last piece
-		b.DestroyMark(m1);
-		b.DestroyMark(m2);
-		m1 = b.CreateMarkAbsolute(19);
-		m2 = b.CreateMarkAbsolute(100);
+		b.Marks.Remove(m1);
+		b.Marks.Remove(m2);
+		m1 = b.Marks.Add(19);
+		m2 = b.Marks.Add(100);
 		b.Insert(m1, m2, "under the brown fox.");
 		Assert.AreEqual(GetText(), "the small dog runs under the brown fox.");
 	}
@@ -311,19 +307,19 @@ public class PieceBufferTest
 	public void InsertMarkPreservation()
 	{
 		b.Insert("fox jump dog");
-		PieceBuffer.Mark m1 = b.CreateMark(-12);
-		PieceBuffer.Mark m2 = b.CreateMark(-9);
-		PieceBuffer.Mark m3 = b.CreateMark(-8);
-		PieceBuffer.Mark m4 = b.CreateMark(-4);
-		PieceBuffer.Mark m5 = b.CreateMark(-3);
-		PieceBuffer.Mark m6 = b.CreateMark(0);
+		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position - 12);
+		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 9);
+		PieceBuffer.Mark m3 = b.Marks.Add(b.Marks.Insert.Position - 8);
+		PieceBuffer.Mark m4 = b.Marks.Add(b.Marks.Insert.Position - 4);
+		PieceBuffer.Mark m5 = b.Marks.Add(b.Marks.Insert.Position - 3);
+		PieceBuffer.Mark m6 = b.Marks.Add(b.Marks.Insert.Position);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{4,4}{8,8}{9,9}{0,12}{0,12}{0,12}");
 		Assert.AreEqual(GetPieces(), "{0,12}");
 		Assert.AreEqual(GetText(), "fox jump dog");
 		
 		b.Insert(m1, "the ");
-		PieceBuffer.Mark m7 = b.CreateMark(-4);
-		PieceBuffer.Mark m8 = b.CreateMark(-1);
+		PieceBuffer.Mark m7 = b.Marks.Add(b.Marks.Insert.Position - 4);
+		PieceBuffer.Mark m8 = b.Marks.Add(b.Marks.Insert.Position - 1);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{0,4}{0,4}{3,7}{4,8}{8,12}{9,13}{0,16}{0,16}");
 		Assert.AreEqual(GetPieces(), "{12,16}{0,12}");
 		Assert.AreEqual(GetText(), "the fox jump dog");
@@ -343,19 +339,19 @@ public class PieceBufferTest
 	public void InsertMarkPreservationReversed()
 	{
 		b.Insert("fox jump dog");
-		PieceBuffer.Mark m1 = b.CreateMark(0);
-		PieceBuffer.Mark m2 = b.CreateMark(-3);
-		PieceBuffer.Mark m3 = b.CreateMark(-4);
-		PieceBuffer.Mark m4 = b.CreateMark(-8);
-		PieceBuffer.Mark m5 = b.CreateMark(-9);
-		PieceBuffer.Mark m6 = b.CreateMark(-12);
+		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position);
+		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 3);
+		PieceBuffer.Mark m3 = b.Marks.Add(b.Marks.Insert.Position - 4);
+		PieceBuffer.Mark m4 = b.Marks.Add(b.Marks.Insert.Position - 8);
+		PieceBuffer.Mark m5 = b.Marks.Add(b.Marks.Insert.Position - 9);
+		PieceBuffer.Mark m6 = b.Marks.Add(b.Marks.Insert.Position - 12);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{4,4}{8,8}{9,9}{0,12}{0,12}{0,12}");
 		Assert.AreEqual(GetPieces(), "{0,12}");
 		Assert.AreEqual(GetText(), "fox jump dog");
 		
 		b.Insert(m6, "the ");
-		PieceBuffer.Mark m7 = b.CreateMark(-1);
-		PieceBuffer.Mark m8 = b.CreateMark(-4);
+		PieceBuffer.Mark m7 = b.Marks.Add(b.Marks.Insert.Position - 1);
+		PieceBuffer.Mark m8 = b.Marks.Add(b.Marks.Insert.Position - 4);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{0,4}{0,4}{3,7}{4,8}{8,12}{9,13}{0,16}{0,16}");
 		Assert.AreEqual(GetPieces(), "{12,16}{0,12}");
 		Assert.AreEqual(GetText(), "the fox jump dog");
@@ -376,14 +372,14 @@ public class PieceBufferTest
 	{
 		// add some text and mark the beginning and end of each word
 		b.Insert("the quick brown fox");
-		PieceBuffer.Mark m1 = b.CreateMark(-19);
-		PieceBuffer.Mark m2 = b.CreateMark(-16);
-		PieceBuffer.Mark m3 = b.CreateMark(-15);
-		PieceBuffer.Mark m4 = b.CreateMark(-10);
-		PieceBuffer.Mark m5 = b.CreateMark(-9);
-		PieceBuffer.Mark m6 = b.CreateMark(-4);
-		PieceBuffer.Mark m7 = b.CreateMark(-3);
-		PieceBuffer.Mark m8 = b.CreateMark(0);
+		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position - 19);
+		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 16);
+		PieceBuffer.Mark m3 = b.Marks.Add(b.Marks.Insert.Position - 15);
+		PieceBuffer.Mark m4 = b.Marks.Add(b.Marks.Insert.Position - 10);
+		PieceBuffer.Mark m5 = b.Marks.Add(b.Marks.Insert.Position - 9);
+		PieceBuffer.Mark m6 = b.Marks.Add(b.Marks.Insert.Position - 4);
+		PieceBuffer.Mark m7 = b.Marks.Add(b.Marks.Insert.Position - 3);
+		PieceBuffer.Mark m8 = b.Marks.Add(b.Marks.Insert.Position);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{4,4}{9,9}{10,10}{15,15}{16,16}{0,19}{0,19}{0,19}");
 		Assert.AreEqual(GetPieces(), "{0,19}");
 		Assert.AreEqual(GetText(), "the quick brown fox");
@@ -421,14 +417,14 @@ public class PieceBufferTest
 	{
 		// add some text and mark the beginning and end of each word
 		b.Insert("the quick brown fox");
-		PieceBuffer.Mark m1 = b.CreateMark(0);
-		PieceBuffer.Mark m2 = b.CreateMark(-3);
-		PieceBuffer.Mark m3 = b.CreateMark(-4);
-		PieceBuffer.Mark m4 = b.CreateMark(-9);
-		PieceBuffer.Mark m5 = b.CreateMark(-10);
-		PieceBuffer.Mark m6 = b.CreateMark(-15);
-		PieceBuffer.Mark m7 = b.CreateMark(-16);
-		PieceBuffer.Mark m8 = b.CreateMark(-19);
+		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position);
+		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 3);
+		PieceBuffer.Mark m3 = b.Marks.Add(b.Marks.Insert.Position - 4);
+		PieceBuffer.Mark m4 = b.Marks.Add(b.Marks.Insert.Position - 9);
+		PieceBuffer.Mark m5 = b.Marks.Add(b.Marks.Insert.Position - 10);
+		PieceBuffer.Mark m6 = b.Marks.Add(b.Marks.Insert.Position - 15);
+		PieceBuffer.Mark m7 = b.Marks.Add(b.Marks.Insert.Position - 16);
+		PieceBuffer.Mark m8 = b.Marks.Add(b.Marks.Insert.Position - 19);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{4,4}{9,9}{10,10}{15,15}{16,16}{0,19}{0,19}{0,19}");
 		Assert.AreEqual(GetPieces(), "{0,19}");
 		Assert.AreEqual(GetText(), "the quick brown fox");
@@ -488,30 +484,30 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
 
 		// Copy the word 'brown'
-		PieceBuffer.Mark srcStart = b.CreateMarkAbsolute(10);
-		PieceBuffer.Mark srcEnd = b.CreateMarkAbsolute(16);
-		PieceBuffer.Mark dstStart = b.CreateMarkAbsolute(40);
-		PieceBuffer.Mark dstEnd = b.CreateMarkAbsolute(40);
+		PieceBuffer.Mark srcStart = b.Marks.Add(10);
+		PieceBuffer.Mark srcEnd = b.Marks.Add(16);
+		PieceBuffer.Mark dstStart = b.Marks.Add(40);
+		PieceBuffer.Mark dstEnd = b.Marks.Add(40);
 		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
 		Assert.AreEqual(GetMarks(), "{0,0}{10,10}{16,16}{0,46}{0,46}{0,46}{0,50}");
 		Assert.AreEqual(GetPieces(), "{0,40}{10,16}{40,44}");
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.");
 		
 		// Copy the whole buffer (including previous copy)
-		b.MoveMarkAbsolute(srcStart, 0);
-		b.MoveMarkAbsolute(srcEnd, 1000);
-		b.MoveMarkAbsolute(dstStart, 1000);
-		b.MoveMarkAbsolute(dstEnd, 1000);
+		srcStart.Position = 0;
+		srcEnd.Position = 1000;
+		dstStart.Position = 1000;
+		dstEnd.Position = 1000;
 		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,100}{0,100}{0,100}{0,100}{0,100}");
 		Assert.AreEqual(GetPieces(), "{0,40}{10,16}{40,44}{0,40}{10,16}{40,44}");
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
 		
 		// Copy last 'lazy' over first 'quick'
-		b.MoveMarkAbsolute(srcStart, 85);
-		b.MoveMarkAbsolute(srcEnd, 89);
-		b.MoveMarkAbsolute(dstStart, 4);
-		b.MoveMarkAbsolute(dstEnd, 9);
+		srcStart.Position = 85;
+		srcEnd.Position = 89;
+		dstStart.Position = 4;
+		dstEnd.Position = 9;
 		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
 		Assert.AreEqual(GetText(), "the lazy brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
 	}
@@ -526,10 +522,10 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
 
 		// Move 'brown'
-		PieceBuffer.Mark srcStart = b.CreateMarkAbsolute(10);
-		PieceBuffer.Mark srcEnd = b.CreateMarkAbsolute(16);
-		PieceBuffer.Mark dstStart = b.CreateMarkAbsolute(40);
-		PieceBuffer.Mark dstEnd = b.CreateMarkAbsolute(40);
+		PieceBuffer.Mark srcStart = b.Marks.Add(10);
+		PieceBuffer.Mark srcEnd = b.Marks.Add(16);
+		PieceBuffer.Mark dstStart = b.Marks.Add(40);
+		PieceBuffer.Mark dstEnd = b.Marks.Add(40);
 		b.Move(dstStart, dstEnd, srcStart, srcEnd);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,10}{0,10}{0,10}{0,40}{0,40}{0,44}");
 		Assert.AreEqual(GetPieces(), "{0,10}{16,40}{10,16}{40,44}");
@@ -546,24 +542,24 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
 		
 		// Create a clipboard range covering the word 'fox'
-		PieceBuffer.Mark m1 = b.CreateMarkAbsolute(16);
-		PieceBuffer.Mark m2 = b.CreateMarkAbsolute(19);
+		PieceBuffer.Mark m1 = b.Marks.Add(16);
+		PieceBuffer.Mark m2 = b.Marks.Add(19);
 		PieceBuffer.ClipboardRange foxRange = b.ClipboardCopy(m1, m2);
 		
 		// Create a 2nd clipboard range covering the word 'dog'
-		b.MoveMarkAbsolute(m1, 40);
-		b.MoveMarkAbsolute(m2, 43);
+		m1.Position = 40;
+		m2.Position = 43;
 		PieceBuffer.ClipboardRange dogRange = b.ClipboardCopy(m1, m2);
 		
 		// Paste the 'dog' clipboard range over the word 'fox'
-		b.MoveMarkAbsolute(m1, 16);
-		b.MoveMarkAbsolute(m2, 19);
+		m1.Position = 16;
+		m2.Position = 19;
 		b.ClipboardPaste(m1, m2, dogRange);
 		Assert.AreEqual(GetText(), "the quick brown dog jumps over the lazy dog.");
 		
 		// Paste the 'fox' clipboard range (that doesn't exist in the buffer anymore) over the word 'dog' 
-		b.MoveMarkAbsolute(m1, 40);
-		b.MoveMarkAbsolute(m2, 43);
+		m1.Position = 40;
+		m2.Position = 43;
 		b.ClipboardPaste(m1, m2, foxRange);
 		Assert.AreEqual(GetText(), "the quick brown dog jumps over the lazy fox.");
 	}
@@ -578,26 +574,26 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
 		
 		// Create a clipboard range covering 'quick brown fox'
-		PieceBuffer.Mark m1 = b.CreateMarkAbsolute(4);
-		PieceBuffer.Mark m2 = b.CreateMarkAbsolute(19);
+		PieceBuffer.Mark m1 = b.Marks.Add(4);
+		PieceBuffer.Mark m2 = b.Marks.Add(19);
 		PieceBuffer.ClipboardRange foxRange = b.ClipboardCut(m1, m2);
 		Assert.AreEqual(GetText(), "the  jumps over the lazy dog.");
 		
 		// Create a 2nd clipboard range covering 'lazy dog'
-		b.MoveMarkAbsolute(m1, 20);
-		b.MoveMarkAbsolute(m2, 28);
+		m1.Position = 20;
+		m2.Position = 28;
 		PieceBuffer.ClipboardRange dogRange = b.ClipboardCut(m1, m2);
 		Assert.AreEqual(GetText(), "the  jumps over the .");
 		
 		// Paste the 'lazy dog' clipboard range where 'quick brown fox' used to be
-		b.MoveMarkAbsolute(m1, 4);
-		b.MoveMarkAbsolute(m2, 4);
+		m1.Position = 4;
+		m2.Position = 4;
 		b.ClipboardPaste(m1, m2, dogRange);
 		Assert.AreEqual(GetText(), "the lazy dog jumps over the .");
 		
-		// Paste the 'quick brown fox' clipboard range where 'lazy dog' used to be 
-		b.MoveMarkAbsolute(m1, 28);
-		b.MoveMarkAbsolute(m2, 28);
+		// Paste the 'quick brown fox' clipboard range where 'lazy dog' used to be
+		m1.Position = 28;
+		m2.Position = 28;
 		b.ClipboardPaste(m1, m2, foxRange);
 		Assert.AreEqual(GetText(), "the lazy dog jumps over the quick brown fox.");
 	}
@@ -655,7 +651,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "this is a test");
 		
 		// Insert some more text in the middle of the previous piece
-		b.MoveMark(-4);
+		b.Marks.Insert.Position -= 4;
 		b.Insert("small ");
 		Assert.AreEqual(GetMarks(), "{0,0}{0,16}{0,20}");
 		Assert.AreEqual(GetPieces(), "{0,10}{14,20}{10,14}");
@@ -756,30 +752,30 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
 
 		// Copy the word 'brown'
-		PieceBuffer.Mark srcStart = b.CreateMarkAbsolute(10);
-		PieceBuffer.Mark srcEnd = b.CreateMarkAbsolute(16);
-		PieceBuffer.Mark dstStart = b.CreateMarkAbsolute(40);
-		PieceBuffer.Mark dstEnd = b.CreateMarkAbsolute(40);
+		PieceBuffer.Mark srcStart = b.Marks.Add(10);
+		PieceBuffer.Mark srcEnd = b.Marks.Add(16);
+		PieceBuffer.Mark dstStart = b.Marks.Add(40);
+		PieceBuffer.Mark dstEnd = b.Marks.Add(40);
 		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
 		Assert.AreEqual(GetMarks(), "{0,0}{10,10}{16,16}{0,46}{0,46}{0,46}{0,50}");
 		Assert.AreEqual(GetPieces(), "{0,40}{10,16}{40,44}");
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.");
 		
 		// Copy the whole buffer (including previous copy)
-		b.MoveMarkAbsolute(srcStart, 0);
-		b.MoveMarkAbsolute(srcEnd, 1000);
-		b.MoveMarkAbsolute(dstStart, 1000);
-		b.MoveMarkAbsolute(dstEnd, 1000);
+		srcStart.Position = 0;
+		srcEnd.Position = 1000;
+		dstStart.Position = 1000;
+		dstEnd.Position = 1000;
 		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,100}{0,100}{0,100}{0,100}{0,100}");
 		Assert.AreEqual(GetPieces(), "{0,40}{10,16}{40,44}{0,40}{10,16}{40,44}");
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
 		
 		// Copy last 'lazy' over first 'quick'
-		b.MoveMarkAbsolute(srcStart, 85);
-		b.MoveMarkAbsolute(srcEnd, 89);
-		b.MoveMarkAbsolute(dstStart, 4);
-		b.MoveMarkAbsolute(dstEnd, 9);
+		srcStart.Position = 85;
+		srcEnd.Position = 89;
+		dstStart.Position = 4;
+		dstEnd.Position = 9;
 		b.Copy(dstStart, dstEnd, srcStart, srcEnd);
 		Assert.AreEqual(GetText(), "the lazy brown fox jumps over the lazy brown dog.the quick brown fox jumps over the lazy brown dog.");
 

@@ -44,8 +44,8 @@ public class HexView : Control
 		public SelectionRange(HexView view)
 		{
 			View = view;
-			_Range = new PieceBuffer.Range(view.Document.CreateMarkAbsolute(_Start / 8), 
-			                               view.Document.CreateMarkAbsolute(_End / 8));
+			_Range = new PieceBuffer.Range(view.Document.Marks.Add(_Start / 8),
+			                               view.Document.Marks.Add(_End / 8));
 		}
 
 		public long Start
@@ -62,7 +62,7 @@ public class HexView : Control
 					_Start = value;
 					if(_Start >= View.Document.Length * 8)
 						_Start = View.Document.Length * 8 - 1;
-					View.Document.MoveMarkAbsolute(_Range.Start, _Start / 8);
+					_Range.Start.Position = _Start / 8;
 
 					if(Changed != null)
 						Changed(this, new EventArgs());
@@ -84,7 +84,7 @@ public class HexView : Control
 					_End = value;
 					if(_End >= View.Document.Length * 8)
 						_End = View.Document.Length * 8 - 1;
-					View.Document.MoveMarkAbsolute(_Range.End, _End / 8);
+					_Range.End.Position = _End / 8;
 
 					if(Changed != null)
 						Changed(this, new EventArgs());
@@ -117,9 +117,9 @@ public class HexView : Control
 				_Start = View.Document.Length * 8 - 1;
 			_End = end;
 			if(_End >= View.Document.Length * 8)
-				_End = View.Document.Length * 8 - 1;			
-			View.Document.MoveMarkAbsolute(_Range.Start, _Start / 8);
-			View.Document.MoveMarkAbsolute(_Range.End, _End / 8);
+				_End = View.Document.Length * 8 - 1;
+			_Range.Start.Position = _Start / 8;
+			_Range.End.Position = _End / 8;
 
 			if(hasChanged)
 				if(Changed != null)
@@ -654,11 +654,11 @@ public class HexView : Control
 		address /= 8;
 		address = (address / _BytesPerWord) * _BytesPerWord;
 		
-		PieceBuffer.Mark a = Document.CreateMarkAbsolute(address);
-		PieceBuffer.Mark b = Document.CreateMarkAbsolute(address + _BytesPerWord);
+		PieceBuffer.Mark a = Document.Marks.Add(address);
+		PieceBuffer.Mark b = Document.Marks.Add(address + _BytesPerWord);
 		Document.Insert(a, b, data, _BytesPerWord);
-		Document.DestroyMark(a);
-		Document.DestroyMark(b);
+		Document.Marks.Remove(a);
+		Document.Marks.Remove(b);
 	}
 	
 	private RectangleF MeasureSubString(Graphics graphics, string text, int start, int length, Font font)

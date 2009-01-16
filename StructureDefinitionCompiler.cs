@@ -267,11 +267,11 @@ using System.Drawing;
 				x >>= 8;
 			}
 		
-			PieceBuffer.Mark a = Document.CreateMarkAbsolute((long)(Position/8));
-			PieceBuffer.Mark b = Document.CreateMarkAbsolute((long)((Position+Length)/8));
+			PieceBuffer.Mark a = Document.Marks.Add((long)(Position/8));
+			PieceBuffer.Mark b = Document.Marks.Add((long)((Position+Length)/8));
 			Document.Insert(a, b, data, (long)Length/8);
-			Document.DestroyMark(a);
-			Document.DestroyMark(b);
+			Document.Marks.Remove(a);
+			Document.Marks.Remove(b);
 		}
 	}
 
