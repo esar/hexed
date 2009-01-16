@@ -505,7 +505,7 @@ namespace ChecksumPlugin
 		void IPlugin.Initialize(IPluginHost host)
 		{
 			Host = host;
-			Host.AddWindow(new ResultWindow(Host), "Checksum", DefaultWindowPosition.BottomRight, true);
+			Host.AddWindow(new ResultWindow(Host), "Checksum", Host.Settings.Image("checksum_16.png"), DefaultWindowPosition.BottomRight, true);
 		}
 		
 		void IPlugin.Dispose()

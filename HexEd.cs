@@ -304,6 +304,7 @@ class HexEdApp : Form, IPluginHost
 	private DockingManager		_dockingManager = null;
 	private TabbedGroups		_TabbedGroups = null;
 	private ToolStripPanel		ToolStripPanel;
+	private ToolStripMenuItem	ViewWindowsMenuItem;
 	private ToolStrip			FileToolStrip = new ToolStrip();
 	private ToolStrip			EditToolStrip = new ToolStrip();
 	private ToolStrip			ViewToolStrip = new ToolStrip();
@@ -311,6 +312,7 @@ class HexEdApp : Form, IPluginHost
 	private SelectionPanel		selectionPanel = new SelectionPanel();
 	private StructurePanel		structurePanel;
 	private HistoryPanel		HistoryPanel;
+	private ImageList			WindowImageList;
 	
 	private Content[]			DefaultWindowPositionContent = new Content[4];
 	
@@ -339,6 +341,76 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 
 	public HexEdApp()
 	{					
+		CreateCommands();
+		
+		WindowImageList = new ImageList();
+		WindowImageList.ColorDepth = ColorDepth.Depth32Bit;
+		
+		_TabbedGroups = new TabbedGroups(VisualStyle.Office2003);
+		_TabbedGroups.AllowDrop = true;
+		_TabbedGroups.AtLeastOneLeaf = true;
+		_TabbedGroups.Dock = System.Windows.Forms.DockStyle.Fill;
+		//_TabbedGroups.ImageList = this.groupTabs;
+		_TabbedGroups.Location = new System.Drawing.Point(5, 5);
+		_TabbedGroups.ResizeBarColor = System.Drawing.SystemColors.Control;
+		_TabbedGroups.Size = new System.Drawing.Size(482, 304);
+		//_TabbedGroups.TabControlCreated += new Crownwood.DotNetMagic.Controls.TabbedGroups.TabControlCreatedHandler(this.OnTabControlCreated);
+		//_TabbedGroups.ExternalDrop += new Crownwood.DotNetMagic.Controls.TabbedGroups.ExternalDropHandler(this.OnExternalDrop);
+		Controls.Add(_TabbedGroups);
+				
+		ToolStripPanel = new ToolStripPanel();
+		MainMenuStrip = new MenuStrip();
+		ToolStripPanel.Controls.Add(MainMenuStrip);
+		ToolStripPanel.Dock = DockStyle.Top;
+		Controls.Add(ToolStripPanel);
+
+		CreateMenus();
+		CreateToolBars();
+		
+		structurePanel = new StructurePanel(this);
+		HistoryPanel = new HistoryPanel(this);
+		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
+		_dockingManager.InnerControl = _TabbedGroups;
+		_dockingManager.OuterControl = ToolStripPanel;
+
+		((IPluginHost)this).AddWindow(selectionPanel, "Selection", Settings.Instance.Image("selection_16.png"), DefaultWindowPosition.BottomLeft, true);
+		((IPluginHost)this).AddWindow(structurePanel, "Structure", Settings.Instance.Image("structure_16.png"), DefaultWindowPosition.Left, true);
+		((IPluginHost)this).AddWindow(HistoryPanel, "History", Settings.Instance.Image("history_16.png"), DefaultWindowPosition.Left, true);
+
+		
+	
+		StatusBar.Dock = DockStyle.Bottom;
+		ToolStripStatusLabel label = new ToolStripStatusLabel("Ready");
+		label.Spring = true;
+		label.TextAlign = ContentAlignment.MiddleLeft;
+		StatusBar.Items.Add(label);
+		AddressLabel = new ToolStripStatusLabel("Addr: ");
+		StatusBar.Items.Add(AddressLabel);
+		EditModeLabel = new ToolStripStatusLabel("OVR");
+		StatusBar.Items.Add(EditModeLabel);
+		
+		Controls.Add(StatusBar);
+
+		ToolStripMenuItem mi;
+		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Cu&t");
+		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("&Copy");
+		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("&Paste");
+		SelectionContextMenu.Items.Add("-");
+		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Define Field");
+		mi.Click += new EventHandler(OnSelectionContextMenuDefineField);
+		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Go To Selection As Address");
+
+
+		structurePanel.SelectionChanged += OnStructureSelectionChanged;
+		_TabbedGroups.PageChanged += OnTabbedGroupsPageChanged;
+
+		Application.Idle += OnIdle;
+		
+		Size = new Size(1024, 768);
+	}
+	
+	private void CreateCommands()
+	{
 		Commands.Add("FileNew", null, OnUpdateUiElement);
 		Commands.Add("FileOpen", OnFileOpen, OnUpdateUiElement);
 		Commands.Add("FileSave", null, OnUpdateUiElement);
@@ -380,76 +452,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands.Add("WindowDuplicate", OnWindowDuplicate, OnUpdateUiElement);
 
 		Commands.Add("HelpAbout", OnHelpAbout, OnUpdateUiElement);
-
-		
-		_TabbedGroups = new TabbedGroups(VisualStyle.Office2003);
-		_TabbedGroups.AllowDrop = true;
-		_TabbedGroups.AtLeastOneLeaf = true;
-		_TabbedGroups.Dock = System.Windows.Forms.DockStyle.Fill;
-		//_TabbedGroups.ImageList = this.groupTabs;
-		_TabbedGroups.Location = new System.Drawing.Point(5, 5);
-		_TabbedGroups.ResizeBarColor = System.Drawing.SystemColors.Control;
-		_TabbedGroups.Size = new System.Drawing.Size(482, 304);
-		//_TabbedGroups.TabControlCreated += new Crownwood.DotNetMagic.Controls.TabbedGroups.TabControlCreatedHandler(this.OnTabControlCreated);
-		//_TabbedGroups.ExternalDrop += new Crownwood.DotNetMagic.Controls.TabbedGroups.ExternalDropHandler(this.OnExternalDrop);
-		Controls.Add(_TabbedGroups);
-				
-		ToolStripPanel = new ToolStripPanel();
-		MainMenuStrip = new MenuStrip();
-		ToolStripPanel.Controls.Add(MainMenuStrip);
-		ToolStripPanel.Dock = DockStyle.Top;
-		Controls.Add(ToolStripPanel);
-		
-		structurePanel = new StructurePanel(this);
-		HistoryPanel = new HistoryPanel(this);
-		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
-		_dockingManager.InnerControl = _TabbedGroups;
-		_dockingManager.OuterControl = ToolStripPanel;
-
-		((IPluginHost)this).AddWindow(selectionPanel, "Selection", DefaultWindowPosition.BottomLeft, true);
-		((IPluginHost)this).AddWindow(structurePanel, "Structure", DefaultWindowPosition.Left, true);
-		((IPluginHost)this).AddWindow(HistoryPanel, "History", DefaultWindowPosition.Left, true);
-
-		
-		FileToolStrip.Items.Add(CreateToolButton(null, "new_16.png", "FileNew", "New"));
-		FileToolStrip.Items.Add(CreateToolButton(null, "open_16.png", "FileOpen", "Open"));
-		FileToolStrip.Items.Add(new ToolStripSeparator());
-		FileToolStrip.Items.Add(CreateToolButton(null, "save_16.png", "FileSave", "Save"));
-		FileToolStrip.Items.Add(CreateToolButton(null, "saveall_16.png", "FileSaveAll", "Save All"));
-		
-		EditToolStrip.Items.Add(CreateToolButton(null, "undo_16.png", "EditUndo", "Undo"));
-		EditToolStrip.Items.Add(CreateToolButton(null, "redo_16.png", "EditRedo", "Redo"));
-		EditToolStrip.Items.Add(new ToolStripSeparator());
-		EditToolStrip.Items.Add(CreateToolButton(null, "cut_16.png", "EditCut", "Cut"));
-		EditToolStrip.Items.Add(CreateToolButton(null, "copy_16.png", "EditCopy", "Copy"));
-		EditToolStrip.Items.Add(CreateToolButton(null, "paste_16.png", "EditPaste", "Paste"));
-		EditToolStrip.Items.Add(CreateToolButton(null, "delete_16.png", "EditDelete", "Delete"));
-		
-		ViewToolStrip.Items.Add(CreateToolButton("B", null, "ViewBytes", "Bytes"));
-		ViewToolStrip.Items.Add(CreateToolButton("W", null, "ViewWords", "Words"));
-		ViewToolStrip.Items.Add(CreateToolButton("D", null, "ViewDwords", "Double Words"));
-		ViewToolStrip.Items.Add(CreateToolButton("Q", null, "ViewQwords", "Quad Words"));
-		ViewToolStrip.Items.Add(new ToolStripSeparator());
-		ViewToolStrip.Items.Add(CreateToolButton("LE", null, "ViewLittleEndian", "Little Endian"));
-		ViewToolStrip.Items.Add(CreateToolButton("BE", null, "ViewBigEndian", "Big Endian"));
-		
-		ToolStripPanel.Join(ViewToolStrip, 1);
-		ToolStripPanel.Join(EditToolStrip, 1);
-		ToolStripPanel.Join(FileToolStrip, 1);
-
+	}
 	
-		StatusBar.Dock = DockStyle.Bottom;
-		ToolStripStatusLabel label = new ToolStripStatusLabel("Ready");
-		label.Spring = true;
-		label.TextAlign = ContentAlignment.MiddleLeft;
-		StatusBar.Items.Add(label);
-		AddressLabel = new ToolStripStatusLabel("Addr: ");
-		StatusBar.Items.Add(AddressLabel);
-		EditModeLabel = new ToolStripStatusLabel("OVR");
-		StatusBar.Items.Add(EditModeLabel);
-		
-		Controls.Add(StatusBar);
-
+	private void CreateMenus()
+	{
 		ToolStripMenuItem mi;
 		ToolStripMenuItem mi2;
 		
@@ -499,6 +505,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi2.DropDownItems.Add(new ToolStripMenuItem("Address...", null, OnUiCommand, "ViewGoToAddress"));
 		mi2.DropDownItems.Add(new ToolStripMenuItem("Selection As Address", null, OnUiCommand, "ViewGoToSelectionAsAddress"));
 		mi.DropDownItems.Add(mi2);
+		mi.DropDownItems.Add(new ToolStripSeparator());
+		ViewWindowsMenuItem = (ToolStripMenuItem)mi.DropDownItems.Add("Windows");
 		MainMenuStrip.Items.Add(mi);
 		
 		mi = new ToolStripMenuItem("&Window");
@@ -509,23 +517,35 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi = new ToolStripMenuItem("&Help");
 		mi.DropDownItems.Add(new ToolStripMenuItem("&About", null, OnUiCommand, "HelpAbout"));
 		MainMenuStrip.Items.Add(mi);
+	}
+	
+	private void CreateToolBars()
+	{
+		FileToolStrip.Items.Add(CreateToolButton(null, "new_16.png", "FileNew", "New"));
+		FileToolStrip.Items.Add(CreateToolButton(null, "open_16.png", "FileOpen", "Open"));
+		FileToolStrip.Items.Add(new ToolStripSeparator());
+		FileToolStrip.Items.Add(CreateToolButton(null, "save_16.png", "FileSave", "Save"));
+		FileToolStrip.Items.Add(CreateToolButton(null, "saveall_16.png", "FileSaveAll", "Save All"));
 		
-
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Cu&t");
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("&Copy");
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("&Paste");
-		SelectionContextMenu.Items.Add("-");
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Define Field");
-		mi.Click += new EventHandler(OnSelectionContextMenuDefineField);
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Go To Selection As Address");
-
-
-		structurePanel.SelectionChanged += OnStructureSelectionChanged;
-		_TabbedGroups.PageChanged += OnTabbedGroupsPageChanged;
-
-		Application.Idle += OnIdle;
+		EditToolStrip.Items.Add(CreateToolButton(null, "undo_16.png", "EditUndo", "Undo"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "redo_16.png", "EditRedo", "Redo"));
+		EditToolStrip.Items.Add(new ToolStripSeparator());
+		EditToolStrip.Items.Add(CreateToolButton(null, "cut_16.png", "EditCut", "Cut"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "copy_16.png", "EditCopy", "Copy"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "paste_16.png", "EditPaste", "Paste"));
+		EditToolStrip.Items.Add(CreateToolButton(null, "delete_16.png", "EditDelete", "Delete"));
 		
-		Size = new Size(1024, 768);
+		ViewToolStrip.Items.Add(CreateToolButton("B", null, "ViewBytes", "Bytes"));
+		ViewToolStrip.Items.Add(CreateToolButton("W", null, "ViewWords", "Words"));
+		ViewToolStrip.Items.Add(CreateToolButton("D", null, "ViewDwords", "Double Words"));
+		ViewToolStrip.Items.Add(CreateToolButton("Q", null, "ViewQwords", "Quad Words"));
+		ViewToolStrip.Items.Add(new ToolStripSeparator());
+		ViewToolStrip.Items.Add(CreateToolButton("LE", null, "ViewLittleEndian", "Little Endian"));
+		ViewToolStrip.Items.Add(CreateToolButton("BE", null, "ViewBigEndian", "Big Endian"));
+		
+		ToolStripPanel.Join(ViewToolStrip, 1);
+		ToolStripPanel.Join(EditToolStrip, 1);
+		ToolStripPanel.Join(FileToolStrip, 1);
 	}
 	
 	public static ToolStripMenuItem CreateMenuItem(string text, string image, string name, Keys shortcut)
@@ -815,11 +835,19 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Application.Exit();
 	}
 
+	protected void OnViewWindowsMenuItemClicked(object sender, EventArgs e)
+	{
+		Content content = ((ToolStripItem)sender).Tag as Content;
+		_dockingManager.ShowContent(content);
+		content.BringToFront();
+	}
+	
 	private void OnHelpAbout(object sender, EventArgs args)
 	{
 		AboutDialog dlg = new AboutDialog();
 		dlg.ShowDialog();
 	}
+	
 	
 	
 	
@@ -885,9 +913,26 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	}
 	
 	
-	void IPluginHost.AddWindow(Control control, string name, DefaultWindowPosition defaultPosition, bool visibleByDefault)
+	void IPluginHost.AddWindow(Control control, string name, Image image, DefaultWindowPosition defaultPosition, bool visibleByDefault)
 	{	
-		Content content = _dockingManager.Contents.Add(control, name);
+		Content content;
+		if(image != null)
+		{
+			WindowImageList.Images.Add(image);
+			int imageIndex = WindowImageList.Images.Count - 1;
+			content = _dockingManager.Contents.Add(control, name, WindowImageList, imageIndex);
+			ToolStripItem item = ViewWindowsMenuItem.DropDownItems.Add(name, image);
+			item.Tag = content;
+			item.Click += OnViewWindowsMenuItemClicked;
+		}
+		else
+		{
+			content = _dockingManager.Contents.Add(control, name);
+			ToolStripItem item = ViewWindowsMenuItem.DropDownItems.Add(name);
+			item.Tag = content;
+			item.Click += OnViewWindowsMenuItemClicked;
+		}
+			
 		content.DisplaySize = new Size(400, 240);
 		
 		if(DefaultWindowPositionContent[(int)defaultPosition] == null)

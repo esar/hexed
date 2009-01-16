@@ -88,7 +88,7 @@ namespace PythonConsolePlugin
 
 		void IPlugin.Initialize(IPluginHost host)
 		{
-			host.AddWindow(new PythonConsole(host), "Python Console", DefaultWindowPosition.BottomRight, true);
+			host.AddWindow(new PythonConsole(host), "Python Console", host.Settings.Image("console_16.png"), DefaultWindowPosition.BottomRight, true);
 		}
 		
 		void IPlugin.Dispose()

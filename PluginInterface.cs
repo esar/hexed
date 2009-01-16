@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using System.Drawing;
 
 
 	public enum DefaultWindowPosition
@@ -30,5 +31,5 @@ public interface IPluginHost
 	HexView ActiveView { get; }
 	
 	ToolStripMenuItem AddMenuItem(string path);
-	void AddWindow(Control control, string name, DefaultWindowPosition defaultPosition, bool visibleByDefault);
+	void AddWindow(Control control, string name, Image image, DefaultWindowPosition defaultPosition, bool visibleByDefault);
 }

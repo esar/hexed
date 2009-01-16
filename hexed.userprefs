@@ -1,23 +1,26 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="HexEd.cs" line="884" column="53" />
-    <File name="../../../../../media/disk/Program Files/Crownwood Software Ltd/DotNetMagic 5.2.2/Source/C# Samples/SampleTabbedGroups/SampleTabbedGroups.cs" line="832" column="95" />
-    <File name="HexViewForm.cs" line="53" column="1" />
-    <File name="../../../../../media/disk/Program Files/Crownwood Software Ltd/DotNetMagic 5.2.2/Source/C# Samples/SampleDocking/SampleDocking.cs" line="175" column="28" />
+    <File name="HexEd.cs" line="933" column="31" />
     <File name="SelectionPanel.cs" line="63" column="3" />
     <File name="HistoryPanel.cs" line="121" column="4" />
-    <File name="PythonConsolePlugin/PythonConsole.cs" line="48" column="5" />
+    <File name="PythonConsolePlugin/PythonConsole.cs" line="91" column="101" />
     <File name="SearchPlugin/SearchDialog.cs" line="49" column="1" />
-    <File name="SearchPlugin/Search.cs" line="171" column="34" />
+    <File name="SearchPlugin/Search.cs" line="205" column="90" />
     <File name="../../DotNetMagic/Controls/TabControl/TabControl.cs" line="2439" column="36" />
+    <File name="PluginInterface.cs" line="3" column="22" />
+    <File name="ChecksumPlugin/CrcManaged.cs" line="220" column="4" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
         <Node name="BookmarkPlugin" expanded="True" />
-        <Node name="ChecksumPlugin" expanded="True" />
-        <Node name="hexed" expanded="True" selected="True" />
+        <Node name="CalculatorPlugin" expanded="True" />
+        <Node name="ChecksumPlugin" expanded="True">
+          <Node name="CrcManaged.cs" selected="True" />
+        </Node>
+        <Node name="hexed" expanded="True" />
+        <Node name="PythonConsolePlugin" expanded="True" />
         <Node name="SearchPlugin" expanded="True" />
       </Node>
     </ViewMemento>
@@ -29,7 +32,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/ChecksumPlugin/CrcManaged.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

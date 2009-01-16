@@ -70,28 +70,28 @@ namespace SearchPlugin
 			
 			base.OnPaint(e);
 
-			if(Matches == null)
-				return;
-			
-			float bucketPixelWidth = (float)(ClientSize.Height - border*2) / Matches.BucketCount;
-			
-			for(int i = 0; i < Matches.BucketCount; ++i)
+			if(Matches != null)
 			{
-				if(Matches[i])
+				float bucketPixelWidth = (float)(ClientSize.Height - border*2) / Matches.BucketCount;
+				
+				for(int i = 0; i < Matches.BucketCount; ++i)
 				{
-					RectangleF r = new RectangleF(border, bucketPixelWidth * i + border, ClientSize.Width - border*2, bucketPixelWidth);
+					if(Matches[i])
+					{
+						RectangleF r = new RectangleF(border, bucketPixelWidth * i + border, ClientSize.Width - border*2, bucketPixelWidth);
 
-					if(i != _SelectedMatch / Matches.BucketWidth)
-						e.Graphics.FillRectangle(Brush, r);
+						if(i != _SelectedMatch / Matches.BucketWidth)
+							e.Graphics.FillRectangle(Brush, r);
+					}
 				}
-			}
 
-			if(_SelectedMatch >= 0)
-			{
-				int i = (int)(_SelectedMatch / Matches.BucketWidth);
-				RectangleF r = new RectangleF(border, bucketPixelWidth * i + border, ClientSize.Width - border*2, bucketPixelWidth);
-				e.Graphics.FillRectangle(HighlightBrush, r);
-			}				
+				if(_SelectedMatch >= 0)
+				{
+					int i = (int)(_SelectedMatch / Matches.BucketWidth);
+					RectangleF r = new RectangleF(border, bucketPixelWidth * i + border, ClientSize.Width - border*2, bucketPixelWidth);
+					e.Graphics.FillRectangle(HighlightBrush, r);
+				}				
+			}
 			
 			e.Graphics.DrawRectangle(SystemPens.ButtonShadow, new Rectangle(border, border, ClientSize.Width - 2*border, ClientSize.Height - 2*border));
 		}
@@ -202,7 +202,7 @@ namespace SearchPlugin
 
 		void IPlugin.Initialize(IPluginHost host)
 		{
-			host.AddWindow(new SearchPanel(host), "Search", DefaultWindowPosition.Left, true);
+			host.AddWindow(new SearchPanel(host), "Search", host.Settings.Image("search_16.png"), DefaultWindowPosition.Left, true);
 		}
 		
 		void IPlugin.Dispose()
