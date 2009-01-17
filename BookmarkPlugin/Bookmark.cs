@@ -13,7 +13,22 @@ namespace BookmarkPlugin
 		public PieceBuffer.Range Range
 		{
 			get { return _Range; }
-			set { _Range = value; }
+			set 
+			{
+				if(_Range != null)
+				{
+					_Range.Start.Changed -= OnMarkChanged;
+					_Range.End.Changed -= OnMarkChanged;
+				}
+				
+				_Range = value;
+				
+				if(_Range != null)
+				{
+					_Range.Start.Changed += OnMarkChanged; 
+					_Range.End.Changed += OnMarkChanged;
+				}
+			}
 		}
 		
 		public long Position
@@ -28,6 +43,11 @@ namespace BookmarkPlugin
 		
 		public BookmarkNode(string text) : base(text)
 		{
+		}
+		
+		protected void OnMarkChanged(object sender, EventArgs e)
+		{
+			NotifyModel();
 		}
 	}
 		
@@ -137,8 +157,9 @@ namespace BookmarkPlugin
 			{
 				BookmarkNode node = Tree.GetPath(Tree.SelectedNode).LastNode as BookmarkNode;
 				// TODO: This might not be the same document!
-				Host.ActiveView.Document.Marks.Remove(node.Range.Start);
-				Host.ActiveView.Document.Marks.Remove(node.Range.End);
+				node.Range.Start.Remove();
+				node.Range.End.Remove();
+				node.Range = null;
 				TreeModel.Nodes.Remove(node);
 			}
 		}

@@ -33,7 +33,10 @@ namespace SearchPlugin
 		
 		public void Add(long position)
 		{
-			Buckets[position / BucketWidth] = true;
+			long bucket = position / BucketWidth;
+			if(bucket > Buckets.Length - 1)
+				bucket = Buckets.Length - 1;
+			Buckets[bucket] = true;
 			Owner.Invalidate();
 		}
 	}
@@ -79,6 +82,8 @@ namespace SearchPlugin
 					if(Matches[i])
 					{
 						RectangleF r = new RectangleF(border, bucketPixelWidth * i + border, ClientSize.Width - border*2, bucketPixelWidth);
+						if(r.Height < 1)
+							r.Height = 1;
 
 						if(i != _SelectedMatch / Matches.BucketWidth)
 							e.Graphics.FillRectangle(Brush, r);
@@ -89,6 +94,8 @@ namespace SearchPlugin
 				{
 					int i = (int)(_SelectedMatch / Matches.BucketWidth);
 					RectangleF r = new RectangleF(border, bucketPixelWidth * i + border, ClientSize.Width - border*2, bucketPixelWidth);
+					if(r.Height < 1)
+						r.Height = 1;
 					e.Graphics.FillRectangle(HighlightBrush, r);
 				}				
 			}

@@ -7,6 +7,8 @@ public partial class PieceBuffer
 {
 	public class Mark
 	{
+		public event EventHandler Changed;
+		
 		private MarkCollection _Owner;
 		protected MarkCollection Owner
 		{
@@ -25,6 +27,17 @@ public partial class PieceBuffer
 		{
 			_Owner = owner;
 		}
+		
+		public void Remove()
+		{
+			_Owner.Remove(this);
+		}
+		
+		protected void OnChanged()
+		{
+			if(Changed != null)
+				Changed(this, EventArgs.Empty);
+		}
 	}
 	
 	protected class InternalMark : Mark
@@ -32,7 +45,7 @@ public partial class PieceBuffer
 		public new long Position
 		{
 			get { return _Position; }
-			set { _Position = value; }
+			set { _Position = value; OnChanged(); }
 		}
 		
 		private Piece _Piece;
