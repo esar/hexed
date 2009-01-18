@@ -170,7 +170,7 @@ namespace SearchPlugin
 				NextWorkerCount = CACHE_SIZE;
 				if(Worker.IsBusy && !Worker.CancellationPending)
 				{
-					Console.WriteLine(String.Format("PreCache: {0}, Worker: {1} -> {2}", index, WorkerIndex, WorkerIndex + WorkerCount)); 
+					//Console.WriteLine(String.Format("PreCache: {0}, Worker: {1} -> {2}", index, WorkerIndex, WorkerIndex + WorkerCount)); 
 					Worker.CancelAsync();
 				}
 				else if(!Worker.IsBusy)
@@ -322,12 +322,12 @@ namespace SearchPlugin
 						--i;
 				}
 				
-				Console.WriteLine(String.Format("VS: OnComplete: NextIdx: {0}, NextCount: {1}, RestartPos.Idx: {2}, RestartPos.Pos: {3}", NextWorkerIndex, NextWorkerCount, RestartPositions[i].Index, RestartPositions[i].Position));
+				//Console.WriteLine(String.Format("VS: OnComplete: NextIdx: {0}, NextCount: {1}, RestartPos.Idx: {2}, RestartPos.Pos: {3}", NextWorkerIndex, NextWorkerCount, RestartPositions[i].Index, RestartPositions[i].Position));
 				RunWorker(RestartPositions[i].Position, RestartPositions[i].Index, (int)(NextWorkerCount + (NextWorkerIndex - RestartPositions[i].Index)));
 			}
 			else if(ContinueFullScanIndex >= 0)
 			{
-				Console.WriteLine(String.Format("VS: OnComplete: Continuing full scan, offset: {0}, index: {1}", ContinueFullScanDataOffset, ContinueFullScanIndex));
+				//Console.WriteLine(String.Format("VS: OnComplete: Continuing full scan, offset: {0}, index: {1}", ContinueFullScanDataOffset, ContinueFullScanIndex));
 				RunWorker(ContinueFullScanDataOffset, ContinueFullScanIndex, -1);
 			}
 			
