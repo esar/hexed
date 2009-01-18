@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.ComponentModel;
+
 
 namespace SearchPlugin
 {
@@ -103,23 +105,39 @@ namespace SearchPlugin
 			e.Graphics.DrawRectangle(SystemPens.ButtonShadow, new Rectangle(border, border, ClientSize.Width - 2*border, ClientSize.Height - 2*border));
 		}
 	}
+
 	
 	class SearchPanel : Panel
 	{
+		const int LIST_ITEM_CACHE_SIZE = 256;
+		
 		IPluginHost Host;
 		DocumentMatchIndicator MatchIndicator = new DocumentMatchIndicator();
 		ListView ListView = new ListView();
 		ToolStrip ToolBar = new ToolStrip();
+		StatusStrip StatusBar = new StatusStrip();
+		ToolStripProgressBar ProgressBar = new ToolStripProgressBar();
+		ToolStripStatusLabel ProgressLabel = new ToolStripStatusLabel();		
+		VirtualSearch Search;
+		
+		ListViewItem[] ListItemCache = new ListViewItem[LIST_ITEM_CACHE_SIZE];
+		ListViewItem ListItemZero;
+		long FirstCachedListItemIndex = 0;
+		
 		
 		public SearchPanel(IPluginHost host)
 		{
 			Host = host;
-			
+
 			ListView.Columns.Add("Position");
 			ListView.Columns.Add("Length");
 			ListView.Columns.Add("Value");
 			ListView.View = View.Details;
+			ListView.FullRowSelect = true;
+			ListView.HideSelection = false;
 			ListView.Dock = DockStyle.Fill;
+			ListView.VirtualMode = true;
+			ListView.RetrieveVirtualItem += OnListRetrieveVirtualItem;
 			Controls.Add(ListView);
 			
 			MatchIndicator.Dock = DockStyle.Left;
@@ -131,72 +149,191 @@ namespace SearchPlugin
 			item.Click += OnSearch;
 			ToolBar.Items.Add(item);
 			ToolBar.Items.Add(new ToolStripSeparator());
-			ToolBar.Items.Add(Host.Settings.Image("first_16.png"));
-			ToolBar.Items.Add(Host.Settings.Image("prev_16.png"));
-			ToolBar.Items.Add(Host.Settings.Image("next_16.png"));
-			ToolBar.Items.Add(Host.Settings.Image("last_16.png"));			
+			item = new ToolStripButton(Host.Settings.Image("first_16.png"));
+			item.Click += OnFirst;
+			ToolBar.Items.Add(item);
+			item = new ToolStripButton(Host.Settings.Image("prev_16.png"));
+			item.Click += OnPrev;
+			ToolBar.Items.Add(item);
+			item = new ToolStripButton(Host.Settings.Image("next_16.png"));
+			item.Click += OnNext;
+			ToolBar.Items.Add(item);
+			item = new ToolStripButton(Host.Settings.Image("last_16.png"));
+			item.Click += OnLast;
+			ToolBar.Items.Add(item);
 			Controls.Add(ToolBar);
+
+			ProgressBar.Maximum = 100;
+			ProgressBar.Value = 0;
+			ProgressBar.Alignment = ToolStripItemAlignment.Right;
+			StatusBar.Items.Add(ProgressBar);
 			
+			ProgressLabel.Text = "Ready";
+			StatusBar.Items.Add(ProgressLabel);
 			
-			ListView.DoubleClick += OnListViewDoubleClick;
+			Controls.Add(StatusBar);
+			ProgressBar.Dock = DockStyle.Bottom;
+			Controls.Add(StatusBar);
+			StatusBar.Hide();
+
+			
+			Search = new VirtualSearch();
+			Search.ResultCountChanged += OnSearchResultCountChanged;
+			Search.ProgressChanged += OnSearchProgressChanged;
+			
 			ListView.SelectedIndexChanged += OnListViewSelectedIndexChanged;
 		}
-		
-		public IEnumerable<long> Search(Document document, string pattern)
+
+		protected void OnSearchProgressChanged(object sender, VirtualSearchProgressEventArgs e)
 		{
-			PatternMatchBMH matcher = new PatternMatchBMH();
-			matcher.Initialize(pattern, true);
-
-			long offset = 0;
-			byte[] data = new byte[1024*1024];
-			while(offset < document.Length)
+			if(Search.IsBusy)
 			{
-				long len = (document.Length - offset) > (1024 * 1024) ? (1024 * 1024) : (document.Length - offset);
-				document.GetBytes(offset, data, len);
+				StatusBar.Show();
 				
-				foreach(int i in matcher.SearchBlock(data, 0, (int)len))
-					yield return offset + i;
-
-				offset += len;
+				ProgressBar.Value = e.PercentComplete;
+				ProgressLabel.Text = String.Format("{0}%", e.PercentComplete.ToString());
+			}
+			else
+				StatusBar.Hide();
+		}
+		
+		protected void OnSearchResultCountChanged(object sender, EventArgs e)
+		{
+			ListView.VirtualListSize = (int)Search.ResultCount;
+		}
+		
+		protected void OnListRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
+		{
+			if(e.ItemIndex == 0 && ListItemZero != null)
+			{
+				e.Item = ListItemZero;
+				return;
+			}
+			
+			if(e.ItemIndex >= FirstCachedListItemIndex && 
+			   e.ItemIndex < FirstCachedListItemIndex + LIST_ITEM_CACHE_SIZE)
+			{
+				if(ListItemCache[e.ItemIndex - FirstCachedListItemIndex] == null)
+				{
+					SearchResult result = Search[e.ItemIndex];
+					if(result != null)
+					{
+						e.Item = new ListViewItem(new string[] {result.Position.ToString(), result.Length.ToString(), "abc"});
+						ListItemCache[e.ItemIndex - FirstCachedListItemIndex] = e.Item;
+						if(e.ItemIndex == 0)
+							ListItemZero = e.Item;
+					}
+					else
+						e.Item = new ListViewItem(new string[] {"Searching...", "", ""});
+				}
+				else
+					e.Item = ListItemCache[e.ItemIndex - FirstCachedListItemIndex];
+			}
+			else
+			{
+				e.Item = CacheListItems(e.ItemIndex);
+				if(e.Item == null)
+					e.Item = new ListViewItem(new string[] {"Searching...", "", ""});
 			}
 		}
-
+		
+		protected ListViewItem CacheListItems(int index)
+		{
+			index -= LIST_ITEM_CACHE_SIZE / 2;
+			if(index < 0)
+				index = 0;
+			
+			FirstCachedListItemIndex = index;
+			for(int i = 0; i < LIST_ITEM_CACHE_SIZE; ++i)
+			{
+				SearchResult result = Search[FirstCachedListItemIndex + i];
+				if(result != null)
+				{
+					ListItemCache[i] = new ListViewItem(new string[] {result.Position.ToString(), result.Length.ToString(), "abc"});
+					if(FirstCachedListItemIndex + i == 0)
+						ListItemZero = ListItemCache[i];
+				}
+				else
+					ListItemCache[i] = null;
+			}
+			
+			return ListItemCache[index - FirstCachedListItemIndex];
+		}
+		
+		protected void ClearListItemCache()
+		{
+			Array.Clear(ListItemCache, 0, LIST_ITEM_CACHE_SIZE);
+			FirstCachedListItemIndex = 0;
+		}
+		
 		protected void OnSearch(object sender, EventArgs e)
 		{
 			SearchDialog dlg = new SearchDialog();
 			if(dlg.ShowDialog() != DialogResult.OK)
 				return;
-			
-			ListView.Items.Clear();
+
+			ClearListItemCache();
+			Search.Initialize(Host.ActiveView.Document, dlg.Pattern);
 			MatchIndicator.Reset(Host.ActiveView.Document.Length, 512);
-			
-			foreach(long i in Search(Host.ActiveView.Document, dlg.Pattern))
-			{
-				MatchIndicator.Matches.Add(i);
-				ListViewItem item = ListView.Items.Add(i.ToString());
-				item.SubItems.Add("0");
-				item.SubItems.Add(dlg.Pattern);
-			}
-		}
-		
-		protected void OnListViewDoubleClick(object sender, EventArgs e)
-		{
-			if(ListView.SelectedItems.Count > 0)
-			{
-				ListViewItem item = ListView.SelectedItems[0];
-				long start = Convert.ToInt64(item.Text) * 8;
-				long end = Convert.ToInt64(item.Text) * 8;
-				Host.ActiveView.Selection.Set(start, end);
-				Host.ActiveView.EnsureVisible(start);
-			}
+			ListView.Refresh();
 		}
 		
 		protected void OnListViewSelectedIndexChanged(object sender, EventArgs e)
 		{
-			if(ListView.SelectedItems.Count > 0)
-				MatchIndicator.SelectedMatch = Convert.ToInt64(ListView.SelectedItems[0].Text);
+			if(ListView.SelectedIndices.Count > 0)
+			{
+				SearchResult result = Search[ListView.SelectedIndices[0]];
+				MatchIndicator.SelectedMatch = result.Position;
+				Host.ActiveView.Selection.Set(result.Position * 8, (result.Position + result.Length) * 8);
+				Host.ActiveView.EnsureVisible(result.Position * 8);
+			}
 			else
 				MatchIndicator.SelectedMatch = -1;
+		}
+		
+		protected void OnFirst(object sender, EventArgs e)
+		{
+			if(Search.ResultCount > 0)
+			{
+				ListView.SelectedIndices.Clear();
+				ListView.SelectedIndices.Add(1);
+				ListView.EnsureVisible(1);
+			}
+		}
+		
+		protected void OnPrev(object sender, EventArgs e)
+		{
+			if(Search.ResultCount > 0 && ListView.SelectedIndices.Count > 0 && ListView.SelectedIndices[0] > 0)
+			{
+				int prev = ListView.SelectedIndices[0] - 1;
+				ListView.SelectedIndices.Clear();
+				ListView.SelectedIndices.Add(prev);
+				ListView.EnsureVisible(prev);
+			}
+		}
+		
+		protected void OnNext(object sender, EventArgs e)
+		{
+			if(ListView.SelectedIndices.Count > 0)
+			{
+				int next = ListView.SelectedIndices[0] + 1;
+				if(next < Search.ResultCount)
+				{
+					ListView.SelectedIndices.Clear();
+					ListView.SelectedIndices.Add(next);
+					ListView.EnsureVisible(next);
+				}
+			}
+		}
+		
+		protected void OnLast(object sender, EventArgs e)
+		{
+			if(Search.ResultCount > 0)
+			{
+				ListView.SelectedIndices.Clear();
+				ListView.SelectedIndices.Add((int)Search.ResultCount - 1);
+				ListView.EnsureVisible((int)Search.ResultCount - 1);
+			}
 		}
 	}
 	

@@ -84,7 +84,7 @@ class PatternMatchBMH
 					i += len;
 					offset = i;
 					// Found pattern
-					yield return offset;
+					yield return offset - Pattern.Length;
 				}
 				else
 				{
@@ -111,7 +111,7 @@ class PatternMatchBMH
 				i += len;
 				offset = i;
 				// Found pattern
-				yield return offset;
+				yield return offset - Pattern.Length;
 			}
 			else
 			{

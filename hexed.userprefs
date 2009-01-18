@@ -1,47 +1,33 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="HexEd.cs" line="933" column="31" />
-    <File name="SelectionPanel.cs" line="63" column="3" />
-    <File name="PythonConsolePlugin/PythonConsole.cs" line="91" column="101" />
-    <File name="SearchPlugin/SearchDialog.cs" line="49" column="1" />
-    <File name="SearchPlugin/Search.cs" line="98" column="20" />
-    <File name="../../DotNetMagic/Controls/TabControl/TabControl.cs" line="2439" column="36" />
-    <File name="PluginInterface.cs" line="3" column="22" />
-    <File name="BookmarkPlugin/Bookmark.cs" line="164" column="1" />
+    <File name="SearchPlugin/SearchDialog.cs" line="12" column="33" />
+    <File name="SearchPlugin/Search.cs" line="391" column="59" />
     <File name="PieceBuffer.cs" line="161" column="1" />
-    <File name="HexView.cs" line="123" column="1" />
     <File name="PieceBuffer.Marks.cs" line="33" column="24" />
-    <File name="PieceBuffer.Blocks.cs" line="136" column="8" />
-    <File name="StructureDefinitionCompiler.cs" line="273" column="1" />
-    <File name="PieceBufferTest.cs" line="202" column="26" />
+    <File name="PieceBuffer.Blocks.cs" line="22" column="17" />
+    <File name="ChecksumPlugin/Checksum.cs" line="93" column="1" />
+    <File name="HexEd.cs" line="1" column="1" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="BookmarkPlugin" expanded="True" />
-        <Node name="CalculatorPlugin" expanded="True" />
         <Node name="ChecksumPlugin" expanded="True" />
-        <Node name="hexed" expanded="True" selected="True" />
-        <Node name="PythonConsolePlugin" expanded="True" />
+        <Node name="hexed" expanded="True">
+          <Node name="HexEd.cs" selected="True" />
+        </Node>
         <Node name="SearchPlugin" expanded="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
-      <Node expanded="True">
-        <Node name="hexed" expanded="True" />
-      </Node>
+      <Node expanded="True" />
     </ViewMemento>
     <ViewMemento id="MonoDevelop.NUnit.TestPad">
-      <Node expanded="True" selected="True">
-        <Node name="hexed" expanded="True">
-          <Node name="PieceBufferTest" expanded="True" />
-        </Node>
-      </Node>
+      <Node expanded="True" selected="True" />
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/BookmarkPlugin/Bookmark.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
