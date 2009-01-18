@@ -136,7 +136,6 @@ public class HexView : Control
 
 		public string AsAscii()
 		{
-			Console.WriteLine("len: " + Length);
 			if(Length > 0)
 			{
 				string s = "";
@@ -492,7 +491,7 @@ public class HexView : Control
 
 	public void ScrollToAddress(long address)
 	{
-		if(address < Document.Length && LayoutDimensions.BitsPerRow > 0)
+		if(address < Document.Length * 8 && LayoutDimensions.BitsPerRow > 0)
 			ScrollToPixel((long)((double)(address / LayoutDimensions.BitsPerRow) * (double)LayoutDimensions.WordSize.Height));
 	}
 
@@ -906,7 +905,6 @@ public class HexView : Control
 		
 		address -= word * _BytesPerWord * 8;
 		address /= (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits;
-		Console.WriteLine("address: " + address);
 		if(address >= LayoutDimensions.NumWordDigits)
 			address = LayoutDimensions.NumWordDigits - 1;
 		Graphics g = CreateGraphics();
@@ -1239,7 +1237,6 @@ public class HexView : Control
 		
 		if(x >= 0 && x < _DataRadix)
 		{
-			Console.WriteLine("Digit: " + x);
 			if(Selection.Length != 0)
 			{
 				Document.Insert(Selection.BufferRange.Start, Selection.BufferRange.End, (byte)x);
