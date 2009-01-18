@@ -85,7 +85,7 @@ namespace ChecksumPlugin
 		ToolStripButton RefreshButton;
 		StatusStrip StatusBar = new StatusStrip();
 		ToolStripProgressBar ProgressBar = new ToolStripProgressBar();
-		ToolStripLabel ProgressLabel = new ToolStripLabel();
+		ToolStripStatusLabel ProgressLabel = new ToolStripStatusLabel();
 
 		bool IgnoreCheckStateChange = false;
 		
