@@ -36,13 +36,30 @@ namespace BookmarkPlugin
 			get { return _Range.Start.Position; }
 		}
 		
-		public long Length
+		public string PositionString
 		{
-			get { return _Range.End.Position - _Range.Start.Position; }
+			get { return _IsLeaf ? _Range.Start.Position.ToString() : String.Empty; }
 		}
 		
-		public BookmarkNode(string text) : base(text)
+		public long Length
 		{
+			get { return _Range.Length; }
+		}
+		
+		public string LengthString
+		{
+			get { return IsLeaf ? _Range.Length.ToString() : String.Empty; }
+		}
+		
+		private bool _IsLeaf;
+		public override bool IsLeaf
+		{
+			get { return _IsLeaf; }
+		}
+		
+		public BookmarkNode(bool isFolder, string text) : base(text)
+		{
+			_IsLeaf = !isFolder;
 		}
 		
 		protected void OnMarkChanged(object sender, EventArgs e)
@@ -81,7 +98,10 @@ namespace BookmarkPlugin
 			NodeControlPosition = new NodeTextBox();
 			NodeControlLength = new NodeTextBox();
 			Tree.Name = "Tree";
+			Tree.AllowDrop = true;
 			Tree.UseColumns = true;
+			Tree.FullRowSelect = true;
+			Tree.Cursor = System.Windows.Forms.Cursors.Default;
 			Tree.Columns.Add(TreeColumnName);
 			Tree.Columns.Add(TreeColumnPosition);
 			Tree.Columns.Add(TreeColumnLength);
@@ -90,12 +110,13 @@ namespace BookmarkPlugin
 			Tree.NodeControls.Add(NodeControlPosition);
 			Tree.NodeControls.Add(NodeControlLength);
 			NodeControlIcon.ParentColumn = TreeColumnName;
+			NodeControlIcon.DataPropertyName = "Icon";
 			NodeControlName.ParentColumn = TreeColumnName;
 			NodeControlName.DataPropertyName = "Text";
 			NodeControlPosition.ParentColumn = TreeColumnPosition;
-			NodeControlPosition.DataPropertyName = "Position";
+			NodeControlPosition.DataPropertyName = "PositionString";
 			NodeControlLength.ParentColumn = TreeColumnLength;
-			NodeControlLength.DataPropertyName = "Length";
+			NodeControlLength.DataPropertyName = "LengthString";
 
 			Tree.Dock = DockStyle.Fill;
 			TreeModel = new TreeModel();
@@ -131,11 +152,14 @@ namespace BookmarkPlugin
 			Controls.Add(ToolBar);
 			
 			Tree.NodeMouseDoubleClick += OnNodeDoubleClick;
+			Tree.ItemDrag += OnTreeItemDrag;
+			Tree.DragOver += OnTreeDragOver;
+			Tree.DragDrop += OnTreeDragDrop;
 		}
 		
 		public void OnAddBookmark(object sender, EventArgs e)
 		{
-			BookmarkNode n = new BookmarkNode("New Bookmark");
+			BookmarkNode n = new BookmarkNode(false, "New Bookmark");
 			n.Range = Host.ActiveView.Document.Marks.AddRange(Host.ActiveView.Selection.Start / 8,
 			                                                  Host.ActiveView.Selection.End / 8);
 			TreeModel.Nodes.Add(n);
@@ -145,10 +169,24 @@ namespace BookmarkPlugin
 
 		private void OnNewFolder(object sender, EventArgs e)
 		{
-			BookmarkNode n = new BookmarkNode("New Folder");
+			BookmarkNode n = new BookmarkNode(true, "New Folder");
 			TreeModel.Nodes.Add(n);
 			Tree.SelectedNode = Tree.FindNode(new TreePath(n));
 			NodeControlName.BeginEdit();
+		}
+
+		private void DeleteChildNodes(BookmarkNode node)
+		{
+			foreach(BookmarkNode n in node.Nodes)
+			{
+				if(n.IsLeaf)
+				{
+					n.Range.Remove();
+					n.Range = null;
+				}
+				else
+					DeleteChildNodes(n);
+			}
 		}
 		
 		private void OnDelete(object sender, EventArgs e)
@@ -156,10 +194,13 @@ namespace BookmarkPlugin
 			if(Tree.SelectedNode != null)
 			{
 				BookmarkNode node = Tree.GetPath(Tree.SelectedNode).LastNode as BookmarkNode;
-				// TODO: This might not be the same document!
-				node.Range.Start.Remove();
-				node.Range.End.Remove();
-				node.Range = null;
+				if(node.IsLeaf)
+				{
+					node.Range.Remove();
+					node.Range = null;
+				}
+				else
+					DeleteChildNodes(node);
 				TreeModel.Nodes.Remove(node);
 			}
 		}
@@ -190,6 +231,84 @@ namespace BookmarkPlugin
 				Host.ActiveView.Selection.Set(node.Range.Start.Position*8, node.Range.End.Position*8);
 				Host.ActiveView.EnsureVisible(node.Range.Start.Position*8);
 			}
+		}
+		
+		protected void OnTreeItemDrag(object sender, ItemDragEventArgs e)
+		{
+			Tree.DoDragDropSelectedNodes(DragDropEffects.Move);
+		}
+		
+		protected void OnTreeDragOver(object sender, DragEventArgs e)
+		{
+			if(e.Data.GetDataPresent(typeof(TreeNodeAdv[])) && Tree.DropPosition.Node != null)
+			{
+				TreeNodeAdv[] nodes = e.Data.GetData(typeof(TreeNodeAdv[])) as TreeNodeAdv[];
+				TreeNodeAdv parent = Tree.DropPosition.Node;
+				if(Tree.DropPosition.Position != NodePosition.Inside)
+					parent = parent.Parent;
+
+				if(parent.IsLeaf)
+				{
+					e.Effect = DragDropEffects.None;
+					return;
+				}
+					
+				foreach(TreeNodeAdv node in nodes)
+				{
+					TreeNodeAdv p = parent;
+					while(p != null)
+					{
+						if(node == p)
+						{
+							e.Effect = DragDropEffects.None;
+							return;
+						}
+						p = p.Parent;
+					}
+				}
+
+				e.Effect = e.AllowedEffect;
+			}
+		}
+		
+		protected void OnTreeDragDrop(object sender, DragEventArgs e)
+		{
+			Tree.BeginUpdate();
+
+			TreeNodeAdv[] nodes = (TreeNodeAdv[])e.Data.GetData(typeof(TreeNodeAdv[]));
+			Node dropNode = Tree.DropPosition.Node.Tag as Node;
+			if(Tree.DropPosition.Position == NodePosition.Inside)
+			{
+				foreach(TreeNodeAdv n in nodes)
+					(n.Tag as Node).Parent = dropNode;
+				Tree.DropPosition.Node.IsExpanded = true;
+			}
+			else
+			{
+				Node parent = dropNode.Parent;
+				Node nextItem = dropNode;
+				if (Tree.DropPosition.Position == NodePosition.After)
+					nextItem = dropNode.NextNode;
+
+				foreach(TreeNodeAdv node in nodes)
+					(node.Tag as Node).Parent = null;
+
+				int index = -1;
+				index = parent.Nodes.IndexOf(nextItem);
+				foreach(TreeNodeAdv node in nodes)
+				{
+					Node item = node.Tag as Node;
+					if(index == -1)
+						parent.Nodes.Add(item);
+					else
+					{
+						parent.Nodes.Insert(index, item);
+						index++;
+					}
+				}
+			}
+
+			Tree.EndUpdate();
 		}
 	}
 
