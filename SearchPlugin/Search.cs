@@ -191,7 +191,7 @@ namespace SearchPlugin
 				StatusBar.Show();
 				
 				ProgressBar.Value = e.PercentComplete;
-				ProgressLabel.Text = String.Format("{0}%", e.PercentComplete.ToString());
+				ProgressLabel.Text = String.Format("{0}%  ({1:#.##}MB/s", e.PercentComplete, e.MBps);
 			}
 			else
 				StatusBar.Hide();

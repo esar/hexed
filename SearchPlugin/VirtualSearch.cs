@@ -59,16 +59,18 @@ namespace SearchPlugin
 		public long StartIndex;
 		public SearchResult[] NewResults;
 		public int NumNewResults;
+		public float MBps;
 		public WorkerArgs Args;
 		public bool Cancelled;
 		
-		public WorkerProgress(long startOffset, long endOffset, long startIndex, SearchResult[] newResults, int numNewResults, WorkerArgs args, bool cancelled)
+		public WorkerProgress(long startOffset, long endOffset, long startIndex, SearchResult[] newResults, int numNewResults, float mbps, WorkerArgs args, bool cancelled)
 		{
 			StartOffset = startOffset;
 			EndOffset = endOffset;
 			StartIndex = startIndex;
 			NewResults = newResults;
 			NumNewResults = numNewResults;
+			MBps = mbps;
 			Args = args;
 			Cancelled = cancelled;
 		}
@@ -229,6 +231,7 @@ namespace SearchPlugin
 			matcher.Initialize(args.Pattern, true);
 
 			int lastReportTime = Environment.TickCount;
+			long lastReportBytes = 0;
 			long offset = args.StartDataOffset;
 			byte[] data = new byte[1024*1024];
 			while(offset < args.Document.Length)
@@ -241,10 +244,13 @@ namespace SearchPlugin
 					results[numResults++] = new SearchResult(offset + i, args.Pattern.Length);
 					if(numResults >= BATCH_SIZE || Environment.TickCount > lastReportTime + 250)
 					{
-						Worker.ReportProgress(50, new WorkerProgress(args.StartDataOffset, offset, args.StartIndex + totalResultsDelivered, results, numResults, args, false));
+						float MBps = (float)(offset - lastReportBytes) / (1024 * 1024);
+						MBps /= (float)(System.Environment.TickCount - lastReportTime) / 1000;
+						Worker.ReportProgress(50, new WorkerProgress(args.StartDataOffset, offset, args.StartIndex + totalResultsDelivered, results, numResults, MBps, args, false));
 						totalResultsDelivered += numResults;
 						results = new SearchResult[BATCH_SIZE];
 						numResults = 0;
+						lastReportBytes = offset;
 						lastReportTime = Environment.TickCount;
 					}
 					
@@ -263,7 +269,7 @@ namespace SearchPlugin
 			}
 
 			
-			WorkerProgress finalProgress = new WorkerProgress(args.StartDataOffset, offset, args.StartIndex + totalResultsDelivered, results, numResults, args, Worker.CancellationPending); 
+			WorkerProgress finalProgress = new WorkerProgress(args.StartDataOffset, offset, args.StartIndex + totalResultsDelivered, results, numResults, 0, args, Worker.CancellationPending); 
 			Worker.ReportProgress(100, finalProgress);
 			e.Result = finalProgress;
 
@@ -294,7 +300,7 @@ namespace SearchPlugin
 				ResultCountChanged(this, EventArgs.Empty);
 			
 			if(ProgressChanged != null)
-				ProgressChanged(this, new VirtualSearchProgressEventArgs((int)((100.0 / Document.Length) * progress.EndOffset), 0));
+				ProgressChanged(this, new VirtualSearchProgressEventArgs((int)((100.0 / Document.Length) * progress.EndOffset), progress.MBps));
 		}
 		
 		protected void OnWorkerComplete(object sender, RunWorkerCompletedEventArgs e)
