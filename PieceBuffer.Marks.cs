@@ -109,10 +109,21 @@ public partial class PieceBuffer
 		public Mark Start;
 		public Mark End;
 
+		public long Length
+		{
+			get { return End.Position - Start.Position; }
+		}
+		
 		public Range(Mark start, Mark end)
 		{
 			Start = start; 
 			End = end;
+		}
+		
+		public void Remove()
+		{
+			Start.Remove();
+			End.Remove();
 		}
 	}
 	
