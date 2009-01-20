@@ -2,22 +2,18 @@
   <Files>
     <File name="Welcome" />
     <File name="SearchPlugin/SearchDialog.cs" line="12" column="33" />
-    <File name="SearchPlugin/Search.cs" line="109" column="1" />
-    <File name="PieceBuffer.cs" line="161" column="1" />
-    <File name="PieceBuffer.Marks.cs" line="121" column="1" />
-    <File name="PieceBuffer.Blocks.cs" line="22" column="17" />
-    <File name="HexEd.cs" line="1" column="1" />
-    <File name="SearchPlugin/PatternMatchBMH.cs" line="114" column="41" />
-    <File name="SearchPlugin/VirtualSearch.cs" line="173" column="8" />
-    <File name="HexView.cs" line="494" column="35" />
+    <File name="SearchPlugin/Search.cs" line="189" column="21" />
+    <File name="../../TreeViewAdv/SampleApp/SimpleExample.cs" line="210" column="4" />
+    <File name="../../TreeViewAdv/SampleApp/SimpleExample.Designer.cs" line="280" column="61" />
+    <File name="BookmarkPlugin/Bookmark.cs" line="9" column="123" />
+    <File name="HexEd.cs" line="777" column="2" />
+    <File name="PieceBuffer.Blocks.cs" line="1" column="1" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="ChecksumPlugin" expanded="True" />
-        <Node name="hexed" expanded="True">
-          <Node name="PieceBuffer.Marks.cs" selected="True" />
-        </Node>
+        <Node name="BookmarkPlugin" expanded="True" />
+        <Node name="hexed" expanded="True" selected="True" />
         <Node name="SearchPlugin" expanded="True" />
       </Node>
     </ViewMemento>
@@ -29,7 +25,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PieceBuffer.Marks.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

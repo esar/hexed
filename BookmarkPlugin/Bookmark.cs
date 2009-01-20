@@ -5,8 +5,14 @@ using System.Windows.Forms;
 using Aga.Controls.Tree;
 using Aga.Controls.Tree.NodeControls;
 
+
+// TODO: When HexView selection changes, highlight relevant bookmark node or clear selection if not in a bookmark any more
+
+
 namespace BookmarkPlugin
 {
+	class Bookmarks : TreeModel {}
+	
 	class BookmarkNode : Node
 	{
 		private PieceBuffer.Range _Range;
@@ -72,8 +78,9 @@ namespace BookmarkPlugin
 	public class BookmarkPanel : Panel
 	{
 		private IPluginHost 	Host;
+		private Document		Document;
 		private TreeViewAdv 	Tree;
-		private TreeModel		TreeModel;
+		private Bookmarks		Bookmarks;
 		private TreeColumn		TreeColumnName;
 		private TreeColumn		TreeColumnPosition;
 		private TreeColumn		TreeColumnLength;
@@ -81,6 +88,7 @@ namespace BookmarkPlugin
 		private NodeTextBox		NodeControlName;
 		private NodeTextBox		NodeControlPosition;
 		private NodeTextBox		NodeControlLength;
+		private DocumentRangeIndicator RangeIndicator;
 		private ToolStrip ToolBar;
 
 		
@@ -88,6 +96,7 @@ namespace BookmarkPlugin
 		{
 			Host = host;
 			Host.AddMenuItem("Edit/Add Bookmark").Click += OnAddBookmark;
+			Host.ActiveViewChanged += OnActiveViewChanged;
 			
 			Tree = new TreeViewAdv();
 			TreeColumnName = new TreeColumn("Name", 100);
@@ -119,9 +128,11 @@ namespace BookmarkPlugin
 			NodeControlLength.DataPropertyName = "LengthString";
 
 			Tree.Dock = DockStyle.Fill;
-			TreeModel = new TreeModel();
-			Tree.Model = TreeModel;
 			Controls.Add(Tree);
+			
+			RangeIndicator = new DocumentRangeIndicator();
+			RangeIndicator.Dock = DockStyle.Left;
+			Controls.Add(RangeIndicator);
 			
 			ToolBar = new ToolStrip();
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
@@ -157,12 +168,50 @@ namespace BookmarkPlugin
 			Tree.DragDrop += OnTreeDragDrop;
 		}
 		
+		protected void PopulateRangeIndicator(System.Collections.ObjectModel.Collection<Node> nodes)
+		{
+			foreach(BookmarkNode n in nodes)
+			{
+				if(n.IsLeaf)
+					RangeIndicator.Ranges.Add(n.Range.Start.Position, n.Range.End.Position);
+				else
+					PopulateRangeIndicator(n.Nodes);
+			}
+		}
+		
+		protected void OnActiveViewChanged(object sender, EventArgs e)
+		{
+			Bookmarks  = null;
+			
+			Document = Host.ActiveView.Document;
+			if(Document != null)
+			{
+				object o;
+				if(!Document.MetaData.TryGetValue(typeof(Bookmarks).FullName, out o))
+				{
+					Bookmarks = new Bookmarks();
+					Document.MetaData.Add(typeof(Bookmarks).FullName, Bookmarks);
+				}
+				else
+					Bookmarks = (Bookmarks)o;
+				
+				RangeIndicator.DocumentLength = Document.Length;
+				RangeIndicator.Ranges.Clear();
+				RangeIndicator.SelectedRange = null;
+				PopulateRangeIndicator(Bookmarks.Nodes);
+			}
+				
+			Tree.Model = Bookmarks;
+		}
+		
 		public void OnAddBookmark(object sender, EventArgs e)
 		{
 			BookmarkNode n = new BookmarkNode(false, "New Bookmark");
 			n.Range = Host.ActiveView.Document.Marks.AddRange(Host.ActiveView.Selection.Start / 8,
 			                                                  Host.ActiveView.Selection.End / 8);
-			TreeModel.Nodes.Add(n);
+			RangeIndicator.DocumentLength = Host.ActiveView.Document.Length;
+			RangeIndicator.Ranges.Add(n.Range.Start.Position, n.Range.End.Position);
+			Bookmarks.Nodes.Add(n);
 			Tree.SelectedNode = Tree.FindNode(new TreePath(n));
 			NodeControlName.BeginEdit();
 		}
@@ -170,7 +219,7 @@ namespace BookmarkPlugin
 		private void OnNewFolder(object sender, EventArgs e)
 		{
 			BookmarkNode n = new BookmarkNode(true, "New Folder");
-			TreeModel.Nodes.Add(n);
+			Bookmarks.Nodes.Add(n);
 			Tree.SelectedNode = Tree.FindNode(new TreePath(n));
 			NodeControlName.BeginEdit();
 		}
@@ -201,7 +250,7 @@ namespace BookmarkPlugin
 				}
 				else
 					DeleteChildNodes(node);
-				TreeModel.Nodes.Remove(node);
+				Bookmarks.Nodes.Remove(node);
 			}
 		}
 		
@@ -309,9 +358,12 @@ namespace BookmarkPlugin
 				BookmarkNode node = Tree.GetPath(Tree.SelectedNode).LastNode as BookmarkNode;
 				if(node.Range != null)
 				{
+					RangeIndicator.SelectedRange = new DocumentRange(node.Range.Start.Position, node.Range.End.Position);
 					Host.ActiveView.Selection.Set(node.Range.Start.Position*8, node.Range.End.Position*8);
 					Host.ActiveView.EnsureVisible(node.Range.Start.Position*8);
 				}
+				else
+					RangeIndicator.SelectedRange = null;
 			}
 		}
 		
