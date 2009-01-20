@@ -113,8 +113,8 @@ namespace ChecksumPlugin
 
 			
 			TreeView = new TreeViewAdv();
-			NameColumn = new TreeColumn("Algorithm", 100);
-			ValueColumn = new TreeColumn("Value", 100);
+			NameColumn = new TreeColumn("Algorithm", 200);
+			ValueColumn = new TreeColumn("Value", 200);
 			TreeView.UseColumns = true;
 			TreeView.Columns.Add(NameColumn);
 			TreeView.Columns.Add(ValueColumn);
