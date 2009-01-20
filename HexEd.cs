@@ -411,7 +411,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	
 	private void CreateCommands()
 	{
-		Commands.Add("FileNew", null, OnUpdateUiElement);
+		Commands.Add("FileNew", OnFileNew, OnUpdateUiElement);
 		Commands.Add("FileOpen", OnFileOpen, OnUpdateUiElement);
 		Commands.Add("FileSave", null, OnUpdateUiElement);
 		Commands.Add("FileSaveAs", null, OnUpdateUiElement);
@@ -737,6 +737,17 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		selectionPanel.Update(view);
 	}
 
+	private void OnFileNew(object sender, EventArgs e)
+	{
+		Document doc = new Document();
+		HexViewForm form = new HexViewForm(doc);
+		form.Title = "New File";
+		form.Image = Settings.Instance.Image("document_16.png");
+		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
+		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
+		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
+	}
+	
 	private void OnFileOpen(object sender, EventArgs args)
 	{
 		OpenFileDialog ofd = new OpenFileDialog();
@@ -763,7 +774,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			{
 				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
-
 		}
 	}
 
