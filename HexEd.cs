@@ -340,7 +340,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	}
 
 	public HexEdApp()
-	{					
+	{
+		Text = "HexEd";
+		
 		CreateCommands();
 		
 		WindowImageList = new ImageList();
@@ -714,10 +716,19 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		}		
 	}
 	
+	protected void UpdateWindowTitle(string documentTitle)
+	{
+		string[] parts = Text.Split(new string[] {" - "}, 2, StringSplitOptions.None);
+		Text = parts[0] + " - " + documentTitle;
+	}
+	
 	protected void OnTabbedGroupsPageChanged(object sender, Crownwood.DotNetMagic.Controls.TabPage e)
 	{
 		if(_TabbedGroups.ActiveTabPage != null)
+		{
+			UpdateWindowTitle(_TabbedGroups.ActiveTabPage.Title);
 			Commands.Merge(((HexViewForm)_TabbedGroups.ActiveTabPage).Commands);
+		}
 		else
 			Commands.RevertMerge();
 		
