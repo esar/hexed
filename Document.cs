@@ -10,10 +10,15 @@ using System.Collections.Generic;
 public class Document : PieceBuffer
 {
 	private Record			_Structure;
-	
 	public Record Structure
 	{
 		get { return _Structure; }
+	}
+	
+	protected Dictionary<string, object> _MetaData = new Dictionary<string,object>();
+	public Dictionary<string, object> MetaData
+	{
+		get { return _MetaData; }
 	}
 	
 	public Document()
