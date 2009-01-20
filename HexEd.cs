@@ -745,14 +745,25 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		if(ofd.ShowDialog() == DialogResult.OK)
 		{
-			Document doc = new Document(ofd.FileName);
+			try
+			{
+				Document doc = new Document(ofd.FileName);
+				HexViewForm form = new HexViewForm(doc);
+				form.Title = ofd.FileName;
+				form.Image = Settings.Instance.Image("document_16.png");
+				form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
+				form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
+				_TabbedGroups.ActiveLeaf.TabPages.Add(form);
+			}
+			catch(System.Security.SecurityException ex)
+			{
+				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			catch(UnauthorizedAccessException ex)
+			{
+				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 
-			HexViewForm form = new HexViewForm(doc);
-			form.Title = ofd.FileName;
-			form.Image = Settings.Instance.Image("document_16.png");
-			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
-			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-			_TabbedGroups.ActiveLeaf.TabPages.Add(form);
 		}
 	}
 
