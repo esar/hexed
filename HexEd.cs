@@ -357,7 +357,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		_TabbedGroups.ResizeBarColor = System.Drawing.SystemColors.Control;
 		_TabbedGroups.Size = new System.Drawing.Size(482, 304);
 		//_TabbedGroups.TabControlCreated += new Crownwood.DotNetMagic.Controls.TabbedGroups.TabControlCreatedHandler(this.OnTabControlCreated);
-		//_TabbedGroups.ExternalDrop += new Crownwood.DotNetMagic.Controls.TabbedGroups.ExternalDropHandler(this.OnExternalDrop);
+//		_TabbedGroups.ExternalDrop += OnTabbedGroupsExternalDrop;
+//		_TabbedGroups.ExternalDragEnter += OnTabbedGroupsExternalDragEnter;
 		Controls.Add(_TabbedGroups);
 				
 		ToolStripPanel = new ToolStripPanel();
@@ -755,11 +756,13 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 
 	protected void Open(string filename)
 	{
+		string[] filenameParts = filename.Split(new char[] {Path.PathSeparator, Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
+		
 		try
 		{
 			Document doc = new Document(filename);
 			HexViewForm form = new HexViewForm(doc);
-			form.Title = filename;
+			form.Title = filenameParts[filenameParts.Length - 1];
 			form.Image = Settings.Instance.Image("document_16.png");
 			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
@@ -775,7 +778,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		}
 	}
 	
-	protected void OnDragEnter(object sender, System.Windows.Forms.DragEventArgs e)
+	protected void OnDragEnter(object sender, DragEventArgs e)
 	{
 		if(e.Data.GetDataPresent(DataFormats.FileDrop))
 			e.Effect = DragDropEffects.All;
@@ -783,13 +786,26 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			e.Effect = DragDropEffects.None;
 	}
 
-	protected void OnDragDrop(object sender, System.Windows.Forms.DragEventArgs e)
+	protected void OnDragDrop(object sender, DragEventArgs e)
 	{
 		string[] filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
 		
 		foreach(string filename in filenames)
 			Open(filename);
 	}
+	
+	/*
+	protected void OnTabbedGroupsExternalDrop(TabbedGroups sender, TabGroupLeaf leaf, Crownwood.DotNetMagic.Controls.TabControl control, TabbedGroups.DragProvider provider)
+	{
+		
+	}
+	
+	protected bool OnTabbedGroupsExternalDragEnter(TabbedGroups sender, TabGroupLeaf leaf, Crownwood.DotNetMagic.Controls.TabControl control, DragEventArgs e)
+	{
+		OnDragEnter(sender, e);
+		return (e.AllowedEffect != DragDropEffects.None);		
+	}
+	*/
 	
 	private void OnFileNew(object sender, EventArgs e)
 	{
