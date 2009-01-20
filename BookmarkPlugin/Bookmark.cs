@@ -151,7 +151,7 @@ namespace BookmarkPlugin
 			item.Click += OnMoveLast;
 			Controls.Add(ToolBar);
 			
-			Tree.NodeMouseDoubleClick += OnNodeDoubleClick;
+			Tree.SelectionChanged += OnTreeSelectionChanged;
 			Tree.ItemDrag += OnTreeItemDrag;
 			Tree.DragOver += OnTreeDragOver;
 			Tree.DragDrop += OnTreeDragDrop;
@@ -207,29 +207,111 @@ namespace BookmarkPlugin
 		
 		private void OnMoveFirst(object sender, EventArgs e)
 		{
+			TreeNodeAdv root = Tree.FindNode(new TreePath());
+			if(root.Children.Count > 0)
+			{
+				TreeNodeAdv n = root.Children[0];
+				if(!n.IsLeaf)
+					n = GetNextBookmarkNode(n);
+				if(n != null)
+					Tree.SelectedNode = n;
+			}
+		}
+		
+		private TreeNodeAdv GetPrevBookmarkNode(TreeNodeAdv node)
+		{
+			TreeNodeAdv n = node;
+			
+			do
+			{
+				if(n.Index > 0)
+					n = n.Parent.Children[n.Index - 1];
+				else
+					n = n.Parent;
+				
+				if(n != null && !n.IsLeaf)
+				{
+					TreeNodeAdv next = GetNextBookmarkNode(n);
+					if(next != null && next != node)
+					{
+						TreeNodeAdv next2;
+						while((next2 = GetNextBookmarkNode(next)) != node)
+							next = next2;
+						n = next;
+					}
+				}
+				
+			} while(n != null && !n.IsLeaf);
+
+			return n;
 		}
 		
 		private void OnMovePrev(object sender, EventArgs e)
 		{
+			if(Tree.SelectedNode != null)
+			{
+				TreeNodeAdv n = GetPrevBookmarkNode(Tree.SelectedNode);
+				if(n != null)
+					Tree.SelectedNode = n;
+			}
+		}
+		
+		private TreeNodeAdv GetNextBookmarkNode(TreeNodeAdv n)
+		{
+			do
+			{
+				if(n.Children.Count > 0)
+					n = n.Children[0];
+				else if(n.NextNode != null)
+					n = n.NextNode;
+				else
+				{
+					do
+					{
+						n = n.Parent;
+						
+					} while(n != null && n.NextNode == null);
+					
+					if(n != null)
+						n = n.NextNode;
+				}
+				
+			} while(n != null && !n.IsLeaf);
+
+			return n;
 		}
 		
 		private void OnMoveNext(object sender, EventArgs e)
 		{
 			if(Tree.SelectedNode != null)
-				Tree.SelectedNode = Tree.SelectedNode.NextNode;
+			{
+				TreeNodeAdv n = GetNextBookmarkNode(Tree.SelectedNode);
+				if(n != null)
+					Tree.SelectedNode = n;
+			}
 		}
 		
 		private void OnMoveLast(object sender, EventArgs e)
 		{
+			TreeNodeAdv node = Tree.FindNode(new TreePath());
+			while(node != null && node.Children.Count > 0)
+				node = node.Children[node.Children.Count - 1];
+			if(node != null && !node.IsLeaf)
+				node = GetPrevBookmarkNode(node);
+			if(node != null)
+				Tree.SelectedNode = node;
 		}
 		
-		private void OnNodeDoubleClick(object sender, TreeNodeAdvMouseEventArgs e)
+		private void OnTreeSelectionChanged(object sender, EventArgs e)
 		{
-			BookmarkNode node = Tree.GetPath(e.Node).LastNode as BookmarkNode;
-			if(node.Range != null)
+			if(Tree.SelectedNode != null)
 			{
-				Host.ActiveView.Selection.Set(node.Range.Start.Position*8, node.Range.End.Position*8);
-				Host.ActiveView.EnsureVisible(node.Range.Start.Position*8);
+				BookmarkNode node = Tree.GetPath(Tree.SelectedNode).LastNode as BookmarkNode;
+				if(node.Range != null)
+				{
+					Host.ActiveView.Selection.Set(node.Range.Start.Position*8, node.Range.End.Position*8);
+					Host.ActiveView.EnsureVisible(node.Range.Start.Position*8);
+				}
 			}
 		}
 		
