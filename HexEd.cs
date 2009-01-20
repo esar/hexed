@@ -342,7 +342,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	public HexEdApp()
 	{
 		Text = "HexEd";
-		
+
 		CreateCommands();
 		
 		WindowImageList = new ImageList();
@@ -406,10 +406,15 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		structurePanel.SelectionChanged += OnStructureSelectionChanged;
 		_TabbedGroups.PageChanged += OnTabbedGroupsPageChanged;
 
+		AllowDrop = true;
+		this.DragEnter += OnDragEnter;
+		this.DragDrop += OnDragDrop;
+		
 		Application.Idle += OnIdle;
 		
 		Size = new Size(1024, 768);
 	}
+
 	
 	private void CreateCommands()
 	{
@@ -748,6 +753,44 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		selectionPanel.Update(view);
 	}
 
+	protected void Open(string filename)
+	{
+		try
+		{
+			Document doc = new Document(filename);
+			HexViewForm form = new HexViewForm(doc);
+			form.Title = filename;
+			form.Image = Settings.Instance.Image("document_16.png");
+			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
+			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
+			_TabbedGroups.ActiveLeaf.TabPages.Add(form);
+		}
+		catch(System.Security.SecurityException ex)
+		{
+			MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
+		catch(UnauthorizedAccessException ex)
+		{
+			MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
+	}
+	
+	protected void OnDragEnter(object sender, System.Windows.Forms.DragEventArgs e)
+	{
+		if(e.Data.GetDataPresent(DataFormats.FileDrop))
+			e.Effect = DragDropEffects.All;
+		else
+			e.Effect = DragDropEffects.None;
+	}
+
+	protected void OnDragDrop(object sender, System.Windows.Forms.DragEventArgs e)
+	{
+		string[] filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
+		
+		foreach(string filename in filenames)
+			Open(filename);
+	}
+	
 	private void OnFileNew(object sender, EventArgs e)
 	{
 		Document doc = new Document();
@@ -766,26 +809,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		ofd.Filter = "All Files (*.*)|*.*";
 		
 		if(ofd.ShowDialog() == DialogResult.OK)
-		{
-			try
-			{
-				Document doc = new Document(ofd.FileName);
-				HexViewForm form = new HexViewForm(doc);
-				form.Title = ofd.FileName;
-				form.Image = Settings.Instance.Image("document_16.png");
-				form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
-				form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-				_TabbedGroups.ActiveLeaf.TabPages.Add(form);
-			}
-			catch(System.Security.SecurityException ex)
-			{
-				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-			catch(UnauthorizedAccessException ex)
-			{
-				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-		}
+			Open(ofd.FileName);
 	}
 
 	private void OnEditPreferences(object sender, EventArgs e)
