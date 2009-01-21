@@ -182,8 +182,10 @@ namespace BookmarkPlugin
 		protected void OnActiveViewChanged(object sender, EventArgs e)
 		{
 			Bookmarks  = null;
+			Document = null;
+			if(Host.ActiveView != null)
+				Document = Host.ActiveView.Document;
 			
-			Document = Host.ActiveView.Document;
 			if(Document != null)
 			{
 				object o;
