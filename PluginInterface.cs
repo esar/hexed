@@ -29,6 +29,7 @@ public interface IPluginHost
 	
 	Settings Settings { get; }
 	HexView ActiveView { get; }
+	ProgressNotificationCollection ProgressNotifications { get; }
 	
 	ToolStripMenuItem AddMenuItem(string path);
 	void AddWindow(Control control, string name, Image image, DefaultWindowPosition defaultPosition, bool visibleByDefault);

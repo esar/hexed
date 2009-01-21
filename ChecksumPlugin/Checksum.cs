@@ -68,6 +68,7 @@ namespace ChecksumPlugin
 	{
 		IPluginHost Host;
 		BackgroundWorker Worker;
+		ProgressNotification Progress;
 
 		private TreeViewAdv TreeView;
 		private TreeModel	TreeModel;
@@ -83,9 +84,6 @@ namespace ChecksumPlugin
 		ToolStripComboBox SelectionComboBox;
 		ToolStripTextBox SelectionTextBox;
 		ToolStripButton RefreshButton;
-		StatusStrip StatusBar = new StatusStrip();
-		ToolStripProgressBar ProgressBar = new ToolStripProgressBar();
-		ToolStripStatusLabel ProgressLabel = new ToolStripStatusLabel();
 
 		bool IgnoreCheckStateChange = false;
 		
@@ -221,20 +219,6 @@ namespace ChecksumPlugin
 			ToolBar.Items.Add(RefreshButton);
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
 			Controls.Add(ToolBar);
-			
-			
-			ProgressBar.Maximum = 100;
-			ProgressBar.Value = 0;
-			ProgressBar.Alignment = ToolStripItemAlignment.Right;
-			StatusBar.Items.Add(ProgressBar);
-			
-			ProgressLabel.Text = "Ready";
-			StatusBar.Items.Add(ProgressLabel);
-			
-			Controls.Add(StatusBar);
-			ProgressBar.Dock = DockStyle.Bottom;
-			Controls.Add(StatusBar);
-			StatusBar.Hide();
 		}
 		
 		
@@ -355,12 +339,13 @@ namespace ChecksumPlugin
 				return;
 			}
 			
+			Progress = new ProgressNotification();
+			Host.ProgressNotifications.Add(Progress);
+			
 			
 			List<string> enabledAlgorithms = FindSelectedAlgorithms();
 			
-			StatusBar.Show();
 			RefreshButton.Image = Host.Settings.Image("stop_16.png");
-			ProgressLabel.Text = "Calculating...";
 			if(SelectionComboBox.SelectedIndex != 0)
 			{
 				Worker.RunWorkerAsync(new WorkerArgs(enabledAlgorithms, 
@@ -462,12 +447,14 @@ namespace ChecksumPlugin
 		
 		public void OnProgressChanged(object sender, ProgressChangedEventArgs e)
 		{
-			ProgressBar.Value = e.ProgressPercentage;
-			ProgressLabel.Text = String.Format("Calculating...{0}%  ({1:0.##} MB/s)", e.ProgressPercentage, (float)e.UserState);
+			Progress.Update(e.ProgressPercentage, String.Format("Calculating checksums...  ({0:0.##} MB/s)", (float)e.UserState));
 		}
 		
 		public void OnCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
+			Host.ProgressNotifications.Remove(Progress);
+			Progress = null;
+			
 			if(e.Cancelled == false)
 			{
 				List<ChecksumResult> results = e.Result as List<ChecksumResult>;
@@ -486,9 +473,6 @@ namespace ChecksumPlugin
 				}
 			}
 			
-			StatusBar.Hide();
-			ProgressLabel.Text = "Ready";
-			ProgressBar.Value = 0;
 			RefreshButton.Image = Host.Settings.Image("go_16.png");
 			RefreshButton.Enabled = true;
 		}

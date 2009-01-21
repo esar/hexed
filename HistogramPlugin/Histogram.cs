@@ -210,12 +210,14 @@ namespace HistogramPlugin
 		public long BytesTotal;
 		public long BytesDone;
 		public long[] Counts;
+		public float MBps;
 		
-		public WorkerProgress(long[] counts, long bytesTotal, long bytesDone)
+		public WorkerProgress(long[] counts, long bytesTotal, long bytesDone, float mbps)
 		{
 			Counts = counts;
 			BytesTotal = bytesTotal;
 			BytesDone = bytesDone;
+			MBps = mbps;
 		}
 	}
 	
@@ -236,6 +238,7 @@ namespace HistogramPlugin
 		ListViewItem StatsItemMedian;
 		DocumentRangeIndicator RangeIndicator = new DocumentRangeIndicator();
 		BackgroundWorker Worker;
+		ProgressNotification Progress;
 		
 		
 		public HistogramPanel(IPluginHost host)
@@ -345,6 +348,9 @@ namespace HistogramPlugin
 		{
 			Graph.Data.Clear();
 			
+			Progress = new ProgressNotification();
+			Host.ProgressNotifications.Add(Progress);
+			
 			if(SelectionComboBox.SelectedIndex != 0)
 			{
 				Worker.RunWorkerAsync(new WorkerArgs(Host.ActiveView.Document,
@@ -398,7 +404,7 @@ namespace HistogramPlugin
 				{
 					float MBps = (float)(offset - lastReportBytes) / (1024 * 1024);
 					MBps /= (float)(System.Environment.TickCount - lastReportTime) / 1000;
-					Worker.ReportProgress((int)((100.0 / total) * (total - len)), new WorkerProgress(counts, total, total - len));
+					Worker.ReportProgress((int)((100.0 / total) * (total - len)), new WorkerProgress(counts, total, total - len, MBps));
 					counts = new long[256];
 					lastReportBytes = offset;
 					lastReportTime = System.Environment.TickCount;
@@ -411,13 +417,17 @@ namespace HistogramPlugin
 				}
 			}
 			
-			Worker.ReportProgress(100, new WorkerProgress(counts, total, total));
+			Worker.ReportProgress(100, new WorkerProgress(counts, total, total, 0));
 		}
 
 		public void OnProgressChanged(object sender, ProgressChangedEventArgs e)
 		{
 			WorkerProgress progress = (WorkerProgress)e.UserState;
 
+			float percentDone = (float)progress.BytesDone / progress.BytesTotal;
+			percentDone *= 100.0f;
+			Progress.Update((int)percentDone, String.Format("Calculating statistics... ({0:0.##} MB/s)", progress.MBps));
+			
 			List.BeginUpdate();
 			//Graph.BeginUpdate();
 			foreach(ListViewItem i in List.Items)
@@ -443,6 +453,8 @@ namespace HistogramPlugin
 		
 		public void OnCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
+			Host.ProgressNotifications.Remove(Progress);
+			Progress = null;
 		}
 	}
 	

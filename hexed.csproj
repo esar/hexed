@@ -73,6 +73,7 @@
     <Compile Include="PieceBuffer.Marks.cs" />
     <Compile Include="PieceBuffer.Blocks.cs" />
     <Compile Include="DocumentRangeIndicator.cs" />
+    <Compile Include="ProgressNotification.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

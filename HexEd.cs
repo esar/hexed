@@ -316,6 +316,8 @@ class HexEdApp : Form, IPluginHost
 	
 	private Content[]			DefaultWindowPositionContent = new Content[4];
 	
+	private ToolStripProgressBar	ProgressBar;
+	private ToolStripStatusLabel	ProgressMessage;
 	private ToolStripStatusLabel	EditModeLabel;
 	private ToolStripStatusLabel	AddressLabel;
 	private ToolStripStatusLabel	ModifiedLabel;
@@ -325,6 +327,15 @@ class HexEdApp : Form, IPluginHost
 	protected ContextMenuStrip	SelectionContextMenu	= new ContextMenuStrip();
 
 	public event EventHandler ActiveViewChanged;
+	
+	protected Timer ProgressNotificationTimer = new Timer();
+	protected ProgressNotification CurrentProgressNotification;
+	protected ProgressNotificationCollection _ProgressNotifications = new ProgressNotificationCollection();
+	public ProgressNotificationCollection ProgressNotifications
+	{
+		get { return _ProgressNotifications; }
+	}
+	
 	
 	[STAThread]
 	public static void Main()
@@ -384,10 +395,15 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 	
 		StatusBar.Dock = DockStyle.Bottom;
-		ToolStripStatusLabel label = new ToolStripStatusLabel("Ready");
-		label.Spring = true;
-		label.TextAlign = ContentAlignment.MiddleLeft;
-		StatusBar.Items.Add(label);
+		ProgressBar = new ToolStripProgressBar();
+		ProgressBar.Minimum = 0;
+		ProgressBar.Maximum = 100;
+		ProgressBar.Visible = false;
+		StatusBar.Items.Add(ProgressBar);
+		ProgressMessage = new ToolStripStatusLabel("Ready");
+		ProgressMessage.Spring = true;
+		ProgressMessage.TextAlign = ContentAlignment.MiddleLeft;
+		StatusBar.Items.Add(ProgressMessage);
 		StatusBar.Items.Add(new ToolStripSeparator());
 		AddressLabel = new ToolStripStatusLabel("Addr: ");
 		StatusBar.Items.Add(AddressLabel);
@@ -418,6 +434,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		AllowDrop = true;
 		this.DragEnter += OnDragEnter;
 		this.DragDrop += OnDragDrop;
+		
+		ProgressNotificationTimer.Interval = 2500;
+		ProgressNotificationTimer.Tick += OnProgressNotificationTimerTick;
+		ProgressNotifications.NotificationAdded += OnProgressNotificationAdded;
+		ProgressNotifications.NotificationRemoved += OnProgressNotificationRemoved;
 		
 		Application.Idle += OnIdle;
 		
@@ -928,8 +949,86 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		dlg.ShowDialog();
 	}
 	
+
+	protected void OnProgressNotificationAdded(object sender, ProgressNotificationEventArgs e)
+	{
+		// Unsubscribe from current notification
+		if(CurrentProgressNotification != null)
+			CurrentProgressNotification.Changed -= OnProgressNotificationChanged;
+		
+		// If there's now more than one, start the timer
+		if(ProgressNotifications.Count > 1)
+		{
+			Console.WriteLine("Starting notification timer");
+			//ProgressNotificationTimer.Enabled = true;
+			ProgressNotificationTimer.Start();
+		}
+		
+		// Subscribe to the new notification
+		CurrentProgressNotification = e.Notification;
+		OnProgressNotificationChanged(e.Notification, EventArgs.Empty);
+		e.Notification.Changed += OnProgressNotificationChanged;
+	}
 	
+	protected void OnProgressNotificationRemoved(object sender, ProgressNotificationEventArgs e)
+	{
+		// If we were subscribed to this notification, we need to change to a different one
+		if(CurrentProgressNotification == e.Notification)
+		{
+			e.Notification.Changed -= OnProgressNotificationChanged;
+			if(ProgressNotifications.Count > 0)
+			{
+				if(e.Notification.Index >= ProgressNotifications.Count)
+					CurrentProgressNotification = ProgressNotifications[0];
+				else
+					CurrentProgressNotification = ProgressNotifications[e.Notification.Index];
+				CurrentProgressNotification.Changed += OnProgressNotificationChanged;
+			}
+			else
+				CurrentProgressNotification = null;
+		}
+					
+		// If there's only one left, we don't need the timer anymore
+		if(ProgressNotifications.Count == 1)
+		{
+			Console.WriteLine("Stopping notification timer");
+			ProgressNotificationTimer.Stop();
+			//ProgressNotificationTimer.Enabled = false;
+		}
+		
+		// If there's none left, set status to ready, otherwise update to
+		// newly subscribed notification
+		if(CurrentProgressNotification == null)
+		{
+			ProgressBar.Visible = false;
+			ProgressMessage.Text = "Ready";
+		}
+		else
+			OnProgressNotificationChanged(CurrentProgressNotification, EventArgs.Empty);
+	}
 	
+	protected void OnProgressNotificationTimerTick(object sender, EventArgs e)
+	{
+		int next = (CurrentProgressNotification.Index + 1) % ProgressNotifications.Count;
+		Console.WriteLine(String.Format("Progress notification timer TICK: {0} -> {1}", CurrentProgressNotification.Index, next));
+		CurrentProgressNotification.Changed -= OnProgressNotificationChanged;
+		CurrentProgressNotification = ProgressNotifications[next];
+		CurrentProgressNotification.Changed += OnProgressNotificationChanged;
+		OnProgressNotificationChanged(CurrentProgressNotification, EventArgs.Empty);
+	}
+	
+	protected void OnProgressNotificationChanged(object sender, EventArgs e)
+	{
+		ProgressBar.Visible = true;
+		ProgressNotification progress = (ProgressNotification)sender;
+		int percent = progress.PercentComplete;
+		if(percent < 0)
+			percent = 0;
+		if(percent > 100)
+			percent = 100;
+		ProgressBar.Value = percent; 
+		ProgressMessage.Text = String.Format("{0}% {1}", percent, progress.Message);
+	}
 	
 	
 	private void LoadPlugins()

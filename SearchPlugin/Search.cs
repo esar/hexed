@@ -115,10 +115,8 @@ namespace SearchPlugin
 		DocumentMatchIndicator MatchIndicator = new DocumentMatchIndicator();
 		ListView ListView = new ListView();
 		ToolStrip ToolBar = new ToolStrip();
-		StatusStrip StatusBar = new StatusStrip();
-		ToolStripProgressBar ProgressBar = new ToolStripProgressBar();
-		ToolStripStatusLabel ProgressLabel = new ToolStripStatusLabel();		
 		VirtualSearch Search;
+		ProgressNotification Progress;
 		
 		ListViewItem[] ListItemCache = new ListViewItem[LIST_ITEM_CACHE_SIZE];
 		ListViewItem ListItemZero;
@@ -163,20 +161,6 @@ namespace SearchPlugin
 			ToolBar.Items.Add(item);
 			Controls.Add(ToolBar);
 
-			ProgressBar.Maximum = 100;
-			ProgressBar.Value = 0;
-			ProgressBar.Alignment = ToolStripItemAlignment.Right;
-			StatusBar.Items.Add(ProgressBar);
-			
-			ProgressLabel.Text = "Ready";
-			StatusBar.Items.Add(ProgressLabel);
-			
-			Controls.Add(StatusBar);
-			ProgressBar.Dock = DockStyle.Bottom;
-			Controls.Add(StatusBar);
-			StatusBar.Hide();
-
-			
 			Search = new VirtualSearch();
 			Search.ResultCountChanged += OnSearchResultCountChanged;
 			Search.ProgressChanged += OnSearchProgressChanged;
@@ -188,13 +172,19 @@ namespace SearchPlugin
 		{
 			if(Search.IsBusy)
 			{
-				StatusBar.Show();
-				
-				ProgressBar.Value = e.PercentComplete;
-				ProgressLabel.Text = String.Format("{0}%  ({1:#.##}MB/s", e.PercentComplete, e.MBps);
+				if(Progress == null)
+				{
+					Progress = new ProgressNotification();
+					Host.ProgressNotifications.Add(Progress);
+				}
+
+				Progress.Update(e.PercentComplete, String.Format("Searching...  ({0:0.##}MB/s)", e.MBps));
 			}
 			else
-				StatusBar.Hide();
+			{
+				Host.ProgressNotifications.Remove(Progress);
+				Progress = null;
+			}
 		}
 		
 		protected void OnSearchResultCountChanged(object sender, EventArgs e)
