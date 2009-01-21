@@ -318,6 +318,7 @@ class HexEdApp : Form, IPluginHost
 	
 	private ToolStripStatusLabel	EditModeLabel;
 	private ToolStripStatusLabel	AddressLabel;
+	private ToolStripStatusLabel	ModifiedLabel;
 
 	private static CommandSet	Commands = new CommandSet();
 	
@@ -387,10 +388,17 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		label.Spring = true;
 		label.TextAlign = ContentAlignment.MiddleLeft;
 		StatusBar.Items.Add(label);
+		StatusBar.Items.Add(new ToolStripSeparator());
 		AddressLabel = new ToolStripStatusLabel("Addr: ");
 		StatusBar.Items.Add(AddressLabel);
+		StatusBar.Items.Add(new ToolStripSeparator());
 		EditModeLabel = new ToolStripStatusLabel("OVR");
 		StatusBar.Items.Add(EditModeLabel);
+		StatusBar.Items.Add(new ToolStripSeparator());
+		ModifiedLabel = new ToolStripStatusLabel("MOD");
+		ModifiedLabel.ForeColor = SystemColors.GrayText;
+		StatusBar.Items.Add(ModifiedLabel);
+		StatusBar.Items.Add(new ToolStripSeparator());
 		
 		Controls.Add(StatusBar);
 
