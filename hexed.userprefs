@@ -2,19 +2,20 @@
   <Files>
     <File name="Welcome" />
     <File name="SearchPlugin/SearchDialog.cs" line="12" column="33" />
-    <File name="SearchPlugin/Search.cs" line="189" column="21" />
-    <File name="../../TreeViewAdv/SampleApp/SimpleExample.cs" line="210" column="4" />
-    <File name="../../TreeViewAdv/SampleApp/SimpleExample.Designer.cs" line="280" column="61" />
-    <File name="BookmarkPlugin/Bookmark.cs" line="9" column="123" />
-    <File name="HexEd.cs" line="777" column="2" />
-    <File name="PieceBuffer.Blocks.cs" line="1" column="1" />
+    <File name="SearchPlugin/Search.cs" line="108" column="1" />
+    <File name="HexEd.cs" line="404" column="1" />
+    <File name="HistogramPlugin/Histogram.cs" line="101" column="15" />
+    <File name="HexView.cs" line="417" column="1" />
+    <File name="ChecksumPlugin/Checksum.cs" line="453" column="1" />
+    <File name="BookmarkPlugin/Bookmark.cs" line="184" column="22" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
         <Node name="BookmarkPlugin" expanded="True" />
+        <Node name="ChecksumPlugin" expanded="True" />
         <Node name="hexed" expanded="True" selected="True" />
-        <Node name="SearchPlugin" expanded="True" />
+        <Node name="HistogramPlugin" expanded="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
@@ -25,7 +26,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HistogramPlugin/Histogram.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

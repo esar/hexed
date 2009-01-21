@@ -133,6 +133,16 @@ public class DocumentRangeIndicator : UserControl
 		set { _DocumentLength = value; Invalidate(); }
 	}
 	
+	protected Orientation _Orientation;
+	public Orientation Orientation
+	{
+		get { return _Orientation; }
+		set 
+		{ 
+			_Orientation = value;
+		}
+	}
+	
 	protected SolidBrush Brush;
 	protected SolidBrush HighlightBrush;
 	
@@ -141,7 +151,9 @@ public class DocumentRangeIndicator : UserControl
 		_Ranges = new DocumentRangeCollection(this);
 		Brush = new SolidBrush(SystemColors.ButtonShadow);
 		HighlightBrush = new SolidBrush(SystemColors.Highlight);
+		_Orientation = Orientation.Vertical;
 		Width = 25;
+		Height = 25;
 	}
 
 	protected override void OnPaint(PaintEventArgs e)
