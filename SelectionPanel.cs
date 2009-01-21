@@ -3,59 +3,76 @@ using System.Drawing;
 using System.Windows.Forms;
 
 
-class SelectionPanel : ListView
+class SelectionPanel : Panel
 {
-	private ListViewItem.ListViewSubItem	lengthItem = null;
-	private ListViewItem.ListViewSubItem	integerItem = null;
-	private ListViewItem.ListViewSubItem	floatItem = null;
-	private ListViewItem.ListViewSubItem	asciiItem = null;
-	private ListViewItem.ListViewSubItem	unicodeItem = null;
-	private ListViewItem.ListViewSubItem	utf8Item = null;
+	protected ToolStrip ToolBar = new ToolStrip();
+	protected ListView  List = new ListView();
+	protected ListViewItem.ListViewSubItem	lengthItem = null;
+	protected ListViewItem.ListViewSubItem	integerItem = null;
+	protected ListViewItem.ListViewSubItem	floatItem = null;
+	protected ListViewItem.ListViewSubItem	asciiItem = null;
+	protected ListViewItem.ListViewSubItem	unicodeItem = null;
+	protected ListViewItem.ListViewSubItem	utf8Item = null;
 
 	public SelectionPanel()
 	{
-		View = View.Details;
-		AllowColumnReorder = true;
-		FullRowSelect = true;
-		GridLines = true;
-
-		Font = new Font("Courier New", 10);
-
-		Columns.Add("Type", -2, HorizontalAlignment.Left);
-		Columns.Add("Value", -2, HorizontalAlignment.Left);
+		List.View = View.Details;
+		List.AllowColumnReorder = true;
+		List.FullRowSelect = true;
+		List.GridLines = true;
+		List.Columns.Add("Type", -2, HorizontalAlignment.Left);
+		List.Columns.Add("Value", -2, HorizontalAlignment.Left);
 
 		ListViewItem i;
-
-		i = Items.Add("Length");
+		i = List.Items.Add("Length");
 		i.UseItemStyleForSubItems = false;
 		lengthItem = i.SubItems.Add("");
 		
-		i = Items.Add("Integer");
+		i = List.Items.Add("Integer");
 		i.UseItemStyleForSubItems = false;
 		integerItem = i.SubItems.Add("");
 
-		i = Items.Add("Floating Point");
+		i = List.Items.Add("Floating Point");
 		i.UseItemStyleForSubItems = false;
 		floatItem = i.SubItems.Add("");
 
-		i = Items.Add("ASCII");
+		i = List.Items.Add("ASCII");
 		i.UseItemStyleForSubItems = false;
 		asciiItem = i.SubItems.Add("");
 
-		i = Items.Add("Unicode");
+		i = List.Items.Add("Unicode");
 		i.UseItemStyleForSubItems = false;
 		unicodeItem = i.SubItems.Add("");
 
-		i = Items.Add("UTF-8");
+		i = List.Items.Add("UTF-8");
 		i.UseItemStyleForSubItems = false;
 		utf8Item = i.SubItems.Add("");
+
+		List.AutoResizeColumn(0, ColumnHeaderAutoResizeStyle.ColumnContent);
+		List.Columns[1].Width = -2;
+		List.Dock = DockStyle.Fill;
+		Controls.Add(List);
+		
+		ToolBar.GripStyle = ToolStripGripStyle.Hidden;
+		ToolBar.Items.Add(Settings.Instance.Image("byteswap_16.png")).ToolTipText = "Byte Swap";
+		ToolBar.Items.Add(Settings.Instance.Image("invert_16.png")).ToolTipText = "Invert";
+		ToolBar.Items.Add(new ToolStripSeparator());
+		ToolBar.Items.Add(Settings.Instance.Image("shiftleft_16.png")).ToolTipText = "Shift Left";
+		ToolBar.Items.Add(Settings.Instance.Image("shiftright_16.png")).ToolTipText = "Shift Right";
+		ToolBar.Items.Add(Settings.Instance.Image("rotateleft_16.png")).ToolTipText = "Rotate Left";
+		ToolBar.Items.Add(Settings.Instance.Image("rotateright_16.png")).ToolTipText = "Rotate Right";
+		ToolBar.Items.Add(new ToolStripSeparator());
+		ToolBar.Items.Add("&&").ToolTipText = "AND";
+		ToolBar.Items.Add("|").ToolTipText = "OR";
+		ToolBar.Items.Add("^").ToolTipText = "XOR";
+		Controls.Add(ToolBar);
 	}
 
 	public void Update(HexView view)
 	{
 		if(view == null)
 		{
-			foreach(ListViewItem i in Items)
+			foreach(ListViewItem i in List.Items)
 				i.SubItems[1].Text = String.Empty;
 			return;
 		}
