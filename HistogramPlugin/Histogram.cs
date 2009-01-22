@@ -8,15 +8,28 @@ using System.ComponentModel;
 
 namespace HistogramPlugin
 {
-	public class HistogramData
+	public class Histogram
 	{
-		protected HistogramControl Owner;
+		protected BackgroundWorker _Worker;
+		public BackgroundWorker Worker
+		{
+			get { return _Worker; }
+			set { _Worker = value; }
+		}
+		
+		protected ProgressNotification _Progress;
+		public ProgressNotification Progress
+		{
+			get { return _Progress; }
+			set { _Progress = value; }
+		}
+
 		
 		protected int _Length;
 		public int Length
 		{
 			get { return _Length; }
-			set { _Length = value; Array.Resize(ref Buckets, _Length); Owner.Invalidate(); }
+			set { _Length = value; Array.Resize(ref Buckets, _Length); }
 		}
 		
 		protected long[] Buckets;
@@ -25,6 +38,9 @@ namespace HistogramPlugin
 			get { return Buckets[index]; }
 			set 
 			{
+				_Sum -= Buckets[index];
+				_Sum += value;
+				
 				if(index == _MaxBucket && value < _Max)
 				{
 					_Max = 0;
@@ -62,7 +78,6 @@ namespace HistogramPlugin
 				}
 				
 				Buckets[index] = value; 
-				Owner.Invalidate(); 
 			}
 		}
 
@@ -90,9 +105,14 @@ namespace HistogramPlugin
 			get { return _MinBucket; }
 		}
 		
-		public HistogramData(HistogramControl owner)
+		protected long _Sum;
+		public long Sum
 		{
-			Owner = owner;
+			get { return _Sum; }
+		}
+		
+		public Histogram()
+		{
 		}
 		
 		public void Clear()
@@ -108,10 +128,11 @@ namespace HistogramPlugin
 		protected int MouseHighlightIndex = -1;
 		protected ToolTip Tip = new ToolTip();
 		
-		protected HistogramData _Data;
-		public HistogramData Data
+		protected Histogram _Data;
+		public Histogram Data
 		{
 			get { return _Data; }
+			set { _Data = value; Invalidate(); }
 		}
 		
 		public HistogramControl()
@@ -119,13 +140,14 @@ namespace HistogramPlugin
 			SetStyle(ControlStyles.AllPaintingInWmPaint, true);
 			SetStyle(ControlStyles.DoubleBuffer, true);
 			SetStyle(ControlStyles.UserPaint, true);
-			
-			_Data = new HistogramData(this);			
 		}
 	
 		protected override void OnMouseMove(MouseEventArgs e)
 		{
 			base.OnMouseMove(e);
+			
+			if(_Data == null)
+				return;
 			
 			float barWidth = (float)ClientRectangle.Width / (float)_Data.Length;
 			MouseHighlightIndex = (int)((float)e.Location.X / barWidth);
@@ -153,6 +175,10 @@ namespace HistogramPlugin
 		protected override void OnPaint(PaintEventArgs e)
 		{
 			base.OnPaint(e);
+			
+			if(_Data == null)
+				return;
+			
 			e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
 
 			float barWidth = (float)ClientRectangle.Width / (float)_Data.Length;
@@ -193,13 +219,17 @@ namespace HistogramPlugin
 	
 	public class WorkerArgs
 	{
+		public BackgroundWorker Worker;
 		public Document Document;
+		public Histogram Histogram;
 		public long StartPosition;
 		public long EndPosition;
 		
-		public WorkerArgs(Document document, long start, long end)
+		public WorkerArgs(BackgroundWorker worker, Document document, Histogram histogram, long start, long end)
 		{
+			Worker = worker;
 			Document = document;
+			Histogram = histogram;
 			StartPosition = start;
 			EndPosition = end;
 		}
@@ -207,13 +237,15 @@ namespace HistogramPlugin
 	
 	public class WorkerProgress
 	{
+		public WorkerArgs Args;
 		public long BytesTotal;
 		public long BytesDone;
 		public long[] Counts;
 		public float MBps;
 		
-		public WorkerProgress(long[] counts, long bytesTotal, long bytesDone, float mbps)
+		public WorkerProgress(WorkerArgs args, long[] counts, long bytesTotal, long bytesDone, float mbps)
 		{
+			Args = args;
 			Counts = counts;
 			BytesTotal = bytesTotal;
 			BytesDone = bytesDone;
@@ -237,17 +269,17 @@ namespace HistogramPlugin
 		ListViewItem StatsItemMean;
 		ListViewItem StatsItemMedian;
 		DocumentRangeIndicator RangeIndicator = new DocumentRangeIndicator();
-		BackgroundWorker Worker;
-		ProgressNotification Progress;
+		Document Document;
+		Histogram Histogram;
 		
 		
 		public HistogramPanel(IPluginHost host)
 		{
 			Host = host;
+			Host.ActiveViewChanged += OnActiveViewChanged;
 			
 			Graph.Dock = DockStyle.Fill;
 			Controls.Add(Graph);
-			Graph.Data.Length = 256;
 			
 			List.View = View.Details;
 			List.Columns.Add("Hex");
@@ -304,17 +336,59 @@ namespace HistogramPlugin
 			ToolBar.Items.Add(SelectionComboBox);
 			ToolBar.Items.Add(Host.Settings.Image("go_16.png")).Click += OnCalculate;
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
-			Controls.Add(ToolBar);
-			
-			Worker = new BackgroundWorker();
-			Worker.WorkerReportsProgress = true;
-			Worker.WorkerSupportsCancellation = true;
-			Worker.DoWork += OnDoWork;
-			Worker.ProgressChanged += OnProgressChanged;
-			Worker.RunWorkerCompleted += OnCompleted;
+			Controls.Add(ToolBar);			
 		}
 
-		public void OnShowGraph(object sender, EventArgs e)
+		protected void PopulateList(Histogram data)
+		{
+			List.BeginUpdate();
+			foreach(ListViewItem i in List.Items)
+			{
+				long count = data[i.Index];
+				float percent = (float)count / data.Sum;
+				percent *= 100.0f;
+				
+				i.SubItems[3].Text = count.ToString();
+				i.SubItems[4].Text = percent.ToString("0.00");
+			}
+			List.EndUpdate();			
+		}
+		
+		protected void PopulateStatsList(Histogram data)
+		{
+			StatsList.BeginUpdate();
+			StatsItemMin.SubItems[1].Text = data.Min.ToString();
+			StatsItemMax.SubItems[1].Text = data.Max.ToString();
+			StatsItemMean.SubItems[1].Text = ((float)data.Sum / 256).ToString("0.##");
+			StatsList.EndUpdate();
+		}
+		
+		protected void OnActiveViewChanged(object sender, EventArgs e)
+		{
+			Histogram = null;
+			Document = null;
+			if(Host.ActiveView != null)
+				Document = Host.ActiveView.Document;
+			
+			if(Document != null)
+			{
+				object o;
+				if(!Document.MetaData.TryGetValue(typeof(Histogram).FullName, out o))
+				{
+					Histogram = new Histogram();
+					Histogram.Length = 256;
+					Document.MetaData.Add(typeof(Histogram).FullName, Histogram);
+				}
+				else
+					Histogram = (Histogram)o;
+			}
+				
+			PopulateList(Histogram);
+			PopulateStatsList(Histogram);
+			Graph.Data = Histogram;			
+		}
+		
+		protected void OnShowGraph(object sender, EventArgs e)
 		{
 			TableButton.Checked = false;
 			StatsButton.Checked = false;
@@ -324,7 +398,7 @@ namespace HistogramPlugin
 			Graph.Show();
 		}
 		
-		public void OnShowTable(object sender, EventArgs e)
+		protected void OnShowTable(object sender, EventArgs e)
 		{
 			GraphButton.Checked = false;
 			StatsButton.Checked = false;
@@ -334,7 +408,7 @@ namespace HistogramPlugin
 			List.Show();
 		}
 		
-		public void OnShowStats(object sender, EventArgs e)
+		protected void OnShowStats(object sender, EventArgs e)
 		{
 			GraphButton.Checked = false;
 			TableButton.Checked = false;
@@ -346,22 +420,32 @@ namespace HistogramPlugin
 		
 		public void OnCalculate(object sender, EventArgs e)
 		{
-			Graph.Data.Clear();
+			Histogram.Clear();
+			Histogram.Worker = new BackgroundWorker();
+			Histogram.Worker.WorkerReportsProgress = true;
+			Histogram.Worker.WorkerSupportsCancellation = true;
+			Histogram.Worker.DoWork += OnDoWork;
+			Histogram.Worker.ProgressChanged += OnProgressChanged;
+			Histogram.Worker.RunWorkerCompleted += OnCompleted;
 			
-			Progress = new ProgressNotification();
-			Host.ProgressNotifications.Add(Progress);
+			Histogram.Progress = new ProgressNotification();
+			Host.ProgressNotifications.Add(Histogram.Progress);
 			
 			if(SelectionComboBox.SelectedIndex != 0)
 			{
-				Worker.RunWorkerAsync(new WorkerArgs(Host.ActiveView.Document,
-				                                     -1, 
-				                                     -1));
+				Histogram.Worker.RunWorkerAsync(new WorkerArgs(Histogram.Worker,
+				                                               Host.ActiveView.Document,
+				                                               Histogram,
+				                                               -1, 
+				                                               -1));
 			}
 			else
 			{
-				Worker.RunWorkerAsync(new WorkerArgs(Host.ActiveView.Document, 
-				                                     Host.ActiveView.Selection.Start, 
-				                                     Host.ActiveView.Selection.End));
+				Histogram.Worker.RunWorkerAsync(new WorkerArgs(Histogram.Worker,
+				                                               Host.ActiveView.Document,
+				                                               Histogram,
+				                                               Host.ActiveView.Selection.Start, 
+				                                               Host.ActiveView.Selection.End));
 			}
 		}
 		
@@ -400,65 +484,72 @@ namespace HistogramPlugin
 				len -= partLen;
 				offset += partLen;
 				
-				if(System.Environment.TickCount > lastReportTime + 250)
+				if(System.Environment.TickCount > lastReportTime + 500)
 				{
 					float MBps = (float)(offset - lastReportBytes) / (1024 * 1024);
 					MBps /= (float)(System.Environment.TickCount - lastReportTime) / 1000;
-					Worker.ReportProgress((int)((100.0 / total) * (total - len)), new WorkerProgress(counts, total, total - len, MBps));
+					args.Worker.ReportProgress((int)((100.0 / total) * (total - len)), new WorkerProgress(args, counts, total, total - len, MBps));
 					counts = new long[256];
 					lastReportBytes = offset;
 					lastReportTime = System.Environment.TickCount;
 				}
 				
-				if(Worker.CancellationPending)
+				if(args.Worker.CancellationPending)
 				{
 					e.Cancel = true;
 					return;
 				}
 			}
 			
-			Worker.ReportProgress(100, new WorkerProgress(counts, total, total, 0));
+			args.Worker.ReportProgress(100, new WorkerProgress(args, counts, total, total, 0));
+			e.Result = new WorkerProgress(args, counts, total, total, 0);
 		}
 
 		public void OnProgressChanged(object sender, ProgressChangedEventArgs e)
 		{
 			WorkerProgress progress = (WorkerProgress)e.UserState;
+			Histogram data = progress.Args.Histogram;
 
 			float percentDone = (float)progress.BytesDone / progress.BytesTotal;
 			percentDone *= 100.0f;
-			Progress.Update((int)percentDone, String.Format("Calculating statistics... ({0:0.##} MB/s)", progress.MBps));
+			data.Progress.Update((int)percentDone, String.Format("Calculating statistics... ({0:0.##} MB/s)", progress.MBps));
 			
 			List.BeginUpdate();
-			//Graph.BeginUpdate();
 			foreach(ListViewItem i in List.Items)
 			{
 				int index = i.Index;
-				long val = Graph.Data[index] + progress.Counts[index];
+				long val = data[index] + progress.Counts[index];
 				float percent = (float)val / progress.BytesDone;
 				percent *= 100.0f;
 				
-				Graph.Data[index] = val;
+				data[index] = val;
 				i.SubItems[3].Text = val.ToString();
 				i.SubItems[4].Text = percent.ToString("0.00");
 			}
-			//Graph.EndUpdate();
 			List.EndUpdate();
 			
+			if(Graph.Data == data)
+				Graph.Invalidate();
+			
 			StatsList.BeginUpdate();
-			StatsItemMin.SubItems[1].Text = Graph.Data.Min.ToString();
-			StatsItemMax.SubItems[1].Text = Graph.Data.Max.ToString();
+			StatsItemMin.SubItems[1].Text = data.Min.ToString();
+			StatsItemMax.SubItems[1].Text = data.Max.ToString();
 			StatsItemMean.SubItems[1].Text = ((float)progress.BytesDone / 256).ToString("0.##");
 			StatsList.EndUpdate();
 		}
 		
 		public void OnCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
-			Host.ProgressNotifications.Remove(Progress);
-			Progress = null;
+			WorkerProgress progress = (WorkerProgress)e.Result;
+			Histogram histogram = progress.Args.Histogram;
+			histogram.Worker.Dispose();
+			histogram.Worker = null;
+			Host.ProgressNotifications.Remove(histogram.Progress);
+			histogram.Progress = null;
 		}
 	}
 	
-	public class Histogram : IPlugin
+	public class HistogramPlugin : IPlugin
 	{
 		string IPlugin.Name { get { return "Histogram"; } }
 		string IPlugin.Author { get { return "Stephen Robinson"; } }
