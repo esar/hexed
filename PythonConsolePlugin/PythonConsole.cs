@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -81,9 +82,10 @@ namespace PythonConsolePlugin
 		IronPython.Hosting.PythonEngine Python;
 		PythonConsoleFeederStream StderrStream;
 		PythonConsoleFeederStream StdoutStream;
-		string LastExpression;
+		StringBuilder CurrentExpression = new StringBuilder();
 		Font ResultFont;
 		Font ErrorFont;
+
 		
 		public PythonConsole(IPluginHost host)
 		{
@@ -91,7 +93,7 @@ namespace PythonConsolePlugin
 			Host.ActiveViewChanged += OnActiveViewChanged;
 
 			Multiline = true;
-			Font = new Font("Courier New", 10);
+			Font = new Font(FontFamily.GenericMonospace, 10);
 			ResultFont = new Font(Font, FontStyle.Bold);
 			ErrorFont = ResultFont;
 
@@ -160,12 +162,24 @@ namespace PythonConsolePlugin
 			{
 				try
 				{
-					LastExpression = Lines[Lines.Length - 2];
-					Python.ExecuteToConsole(LastExpression);
+					string newText = Lines[Lines.Length - 2];
+					CurrentExpression.Append(newText);
+					CurrentExpression.Append("\n");
+					if(Python.ParseInteractiveInput(CurrentExpression.ToString(), newText.Trim().Length != 0))
+					{
+						Python.ExecuteToConsole(CurrentExpression.ToString());
+						CurrentExpression.Remove(0, CurrentExpression.Length);
+					}
+					else
+					{
+						int indent = IronPython.Compiler.Parser.GetNextAutoIndentSize(CurrentExpression.ToString(), 4);
+						AppendText(String.Empty.PadLeft(indent, ' '), Font, Color.Black);
+					}
 				}
 				catch(Exception exp)
 				{
 					AppendText(exp.Message + "\r\n", ErrorFont, Color.Red);
+					CurrentExpression.Remove(0, CurrentExpression.Length);
 				}
 			}
 			if(e.KeyCode != Keys.Left && e.KeyCode != Keys.Right)

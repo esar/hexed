@@ -2,12 +2,18 @@
   <Files>
     <File name="Welcome" />
     <File name="SearchPlugin/SearchDialog.cs" line="12" column="33" />
-    <File name="SearchPlugin/Search.cs" line="108" column="1" />
-    <File name="HexEd.cs" line="404" column="1" />
-    <File name="HistogramPlugin/Histogram.cs" line="101" column="15" />
+    <File name="SearchPlugin/Search.cs" line="181" column="72" />
+    <File name="HexEd.cs" line="1030" column="61" />
+    <File name="HistogramPlugin/Histogram.cs" line="487" column="58" />
     <File name="HexView.cs" line="417" column="1" />
-    <File name="ChecksumPlugin/Checksum.cs" line="453" column="1" />
-    <File name="BookmarkPlugin/Bookmark.cs" line="184" column="22" />
+    <File name="ChecksumPlugin/Checksum.cs" line="450" column="88" />
+    <File name="BookmarkPlugin/Bookmark.cs" line="207" column="1" />
+    <File name="CalculatorPlugin/Calculator.cs" line="40" column="1" />
+    <File name="ProgressNotification.cs" line="72" column="53" />
+    <File name="DocumentRangeIndicator.cs" line="112" column="1" />
+    <File name="PluginInterface.cs" line="32" column="63" />
+    <File name="ManagedCaret.cs" line="107" column="9" />
+    <File name="PythonConsolePlugin/PythonConsole.cs" line="190" column="4" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
@@ -16,6 +22,8 @@
         <Node name="ChecksumPlugin" expanded="True" />
         <Node name="hexed" expanded="True" selected="True" />
         <Node name="HistogramPlugin" expanded="True" />
+        <Node name="PythonConsolePlugin" expanded="True" />
+        <Node name="SearchPlugin" expanded="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
@@ -26,7 +34,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HistogramPlugin/Histogram.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PythonConsolePlugin/PythonConsole.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
