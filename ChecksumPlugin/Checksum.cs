@@ -354,10 +354,10 @@ namespace ChecksumPlugin
 				else
 					Checksums = (Checksums)obj;
 				
-				if(!Document.State.TryGetValue("Checksums", out obj))
+				if(!Document.PluginState.TryGetValue(this.GetType().FullName, out obj))
 				{
 					State = new ChecksumState();
-					Document.State.Add("Checksums", State);
+					Document.PluginState.Add(this.GetType().FullName, State);
 				}
 				else
 					State = (ChecksumState)obj;
@@ -549,7 +549,11 @@ namespace ChecksumPlugin
 			{
 				RefreshButton.Image = Host.Settings.Image("go_16.png");
 				RefreshButton.Enabled = true;
+				State.Worker = null;
+				State.Progress = null;
 			}
+			
+			worker.Dispose();
 		}
 	}
 	

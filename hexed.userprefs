@@ -4,24 +4,18 @@
     <File name="SearchPlugin/SearchDialog.cs" line="12" column="33" />
     <File name="SearchPlugin/Search.cs" line="181" column="72" />
     <File name="HexEd.cs" line="1030" column="61" />
-    <File name="HistogramPlugin/Histogram.cs" line="487" column="58" />
-    <File name="HexView.cs" line="417" column="1" />
-    <File name="ChecksumPlugin/Checksum.cs" line="450" column="88" />
-    <File name="BookmarkPlugin/Bookmark.cs" line="207" column="1" />
-    <File name="CalculatorPlugin/Calculator.cs" line="40" column="1" />
-    <File name="ProgressNotification.cs" line="72" column="53" />
-    <File name="DocumentRangeIndicator.cs" line="112" column="1" />
-    <File name="PluginInterface.cs" line="32" column="63" />
-    <File name="ManagedCaret.cs" line="107" column="9" />
-    <File name="PythonConsolePlugin/PythonConsole.cs" line="190" column="4" />
+    <File name="ChecksumPlugin/Checksum.cs" line="261" column="32" />
+    <File name="Document.cs" line="27" column="23" />
+    <File name="HistogramPlugin/Histogram.cs" line="572" column="1" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="BookmarkPlugin" expanded="True" />
         <Node name="ChecksumPlugin" expanded="True" />
-        <Node name="hexed" expanded="True" selected="True" />
-        <Node name="HistogramPlugin" expanded="True" />
+        <Node name="hexed" expanded="True" />
+        <Node name="HistogramPlugin" expanded="True">
+          <Node name="Histogram.cs" selected="True" />
+        </Node>
         <Node name="PythonConsolePlugin" expanded="True" />
         <Node name="SearchPlugin" expanded="True" />
       </Node>
@@ -30,11 +24,11 @@
       <Node expanded="True" />
     </ViewMemento>
     <ViewMemento id="MonoDevelop.NUnit.TestPad">
-      <Node expanded="True" selected="True" />
+      <Node expanded="True" />
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PythonConsolePlugin/PythonConsole.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HistogramPlugin/Histogram.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

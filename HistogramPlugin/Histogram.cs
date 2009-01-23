@@ -6,9 +6,112 @@ using System.Drawing.Drawing2D;
 using System.Text;
 using System.ComponentModel;
 
-namespace HistogramPlugin
+namespace StatisticsPlugin
 {
-	public class Histogram
+	public class StatisticsWorker : BackgroundWorker
+	{
+		private class ProgressInfo
+		{
+			public string Message;
+			public long[] Counts;
+			public ProgressInfo(string msg, long[] counts) { Message = msg; Counts = counts; }
+		}
+		
+		private readonly Document Document;
+		private readonly long StartPosition;
+		private readonly long EndPosition;
+		private readonly Statistics Statistics;
+
+		private bool _Cancelled;
+		public bool Cancelled { get { return _Cancelled; } }
+		
+		public readonly ProgressNotification Progress;
+		
+
+		public StatisticsWorker(Document document, long startPosition, long endPosition, Statistics statistics, ProgressNotification progress)
+		{
+			Document = document;
+			StartPosition = startPosition;
+			EndPosition = endPosition;
+			Statistics = statistics;
+			Progress = progress;
+			
+			WorkerReportsProgress = true;
+			WorkerSupportsCancellation = true;
+		}
+		
+		protected override void OnDoWork(DoWorkEventArgs e)
+		{
+			const int BLOCK_SIZE = 4096*1024;
+
+			long total;
+			long offset;
+			long lastReportTime = System.Environment.TickCount;
+			long lastReportBytes = 0;
+			long[] counts = new long[256];
+			byte[] bytes = new byte[BLOCK_SIZE];
+			
+			if(StartPosition == -1 && EndPosition == -1)
+			{
+				total = Document.Length;
+				offset = 0;
+			}
+			else
+			{
+				total = (EndPosition - StartPosition) / 8;
+				offset = StartPosition / 8;
+			}
+
+			long len = total;			
+			while(len > 0)
+			{
+				int partLen = BLOCK_SIZE > len ? (int)len : BLOCK_SIZE;
+				Document.GetBytes(offset, bytes, partLen);
+
+				for(int i = 0; i < partLen; ++i)
+					counts[bytes[i]] += 1;
+				
+				len -= partLen;
+				offset += partLen;
+				
+				if(System.Environment.TickCount > lastReportTime + 500)
+				{
+					float MBps = (float)(offset - lastReportBytes) / (1024 * 1024);
+					MBps /= (float)(System.Environment.TickCount - lastReportTime) / 1000;
+					ReportProgress((int)((100.0 / total) * (total - len)), new ProgressInfo(String.Format("Calculating statistics...  ({0:0.##} MB/s)", MBps), counts));
+					counts = new long[256];
+					lastReportBytes = offset;
+					lastReportTime = System.Environment.TickCount;
+				}
+				
+				if(CancellationPending)
+				{
+					_Cancelled = true;
+					return;
+				}
+			}
+			
+			ReportProgress(100, new ProgressInfo("", counts));
+		}
+
+		protected override void OnProgressChanged(ProgressChangedEventArgs e)
+		{
+			ProgressInfo progress = (ProgressInfo)e.UserState;
+			for(int i = 0; i < progress.Counts.Length; ++i)
+				Statistics[i] += progress.Counts[i];
+			
+			base.OnProgressChanged(e);
+			Progress.Update(e.ProgressPercentage, progress.Message);
+		}
+		
+		protected override void OnRunWorkerCompleted(RunWorkerCompletedEventArgs e)
+		{
+			base.OnRunWorkerCompleted(e);
+		}
+	}
+	
+
+	public class Statistics : IHistogramDataSource
 	{
 		protected BackgroundWorker _Worker;
 		public BackgroundWorker Worker
@@ -111,7 +214,7 @@ namespace HistogramPlugin
 			get { return _Sum; }
 		}
 		
-		public Histogram()
+		public Statistics()
 		{
 		}
 		
@@ -123,13 +226,22 @@ namespace HistogramPlugin
 		}
 	}
 	
+
+	public interface IHistogramDataSource
+	{
+		long Min { get; }
+		long Max { get; }
+		int Length { get; }
+		long this[int index] { get; }
+	}
+	
 	public class HistogramControl : UserControl
 	{
 		protected int MouseHighlightIndex = -1;
 		protected ToolTip Tip = new ToolTip();
 		
-		protected Histogram _Data;
-		public Histogram Data
+		protected IHistogramDataSource _Data;
+		public IHistogramDataSource Data
 		{
 			get { return _Data; }
 			set { _Data = value; Invalidate(); }
@@ -217,43 +329,13 @@ namespace HistogramPlugin
 		}
 	}
 	
-	public class WorkerArgs
+	public class StatisticsState
 	{
-		public BackgroundWorker Worker;
-		public Document Document;
-		public Histogram Histogram;
-		public long StartPosition;
-		public long EndPosition;
-		
-		public WorkerArgs(BackgroundWorker worker, Document document, Histogram histogram, long start, long end)
-		{
-			Worker = worker;
-			Document = document;
-			Histogram = histogram;
-			StartPosition = start;
-			EndPosition = end;
-		}
+		public StatisticsWorker Worker;
+		public ProgressNotification Progress;
 	}
-	
-	public class WorkerProgress
-	{
-		public WorkerArgs Args;
-		public long BytesTotal;
-		public long BytesDone;
-		public long[] Counts;
-		public float MBps;
 		
-		public WorkerProgress(WorkerArgs args, long[] counts, long bytesTotal, long bytesDone, float mbps)
-		{
-			Args = args;
-			Counts = counts;
-			BytesTotal = bytesTotal;
-			BytesDone = bytesDone;
-			MBps = mbps;
-		}
-	}
-	
-	public class HistogramPanel : Panel
+	public class StatisticsPanel : Panel
 	{
 		IPluginHost Host;
 		ToolStrip ToolBar = new ToolStrip();
@@ -261,6 +343,7 @@ namespace HistogramPlugin
 		ToolStripButton GraphButton;
 		ToolStripButton TableButton;
 		ToolStripButton StatsButton;
+		ToolStripButton RefreshButton;
 		HistogramControl Graph = new HistogramControl();
 		ListView List = new ListView();
 		ListView StatsList = new ListView();
@@ -270,10 +353,11 @@ namespace HistogramPlugin
 		ListViewItem StatsItemMedian;
 		DocumentRangeIndicator RangeIndicator = new DocumentRangeIndicator();
 		Document Document;
-		Histogram Histogram;
+		StatisticsState State;
+		Statistics Statistics;
 		
 		
-		public HistogramPanel(IPluginHost host)
+		public StatisticsPanel(IPluginHost host)
 		{
 			Host = host;
 			Host.ActiveViewChanged += OnActiveViewChanged;
@@ -334,12 +418,15 @@ namespace HistogramPlugin
 			SelectionComboBox.SelectedIndex = 0;
 			SelectionComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
 			ToolBar.Items.Add(SelectionComboBox);
-			ToolBar.Items.Add(Host.Settings.Image("go_16.png")).Click += OnCalculate;
+			RefreshButton = new ToolStripButton(Host.Settings.Image("go_16.png"));
+			RefreshButton.Click += OnCalculate;
+			RefreshButton.Enabled = false;
+			ToolBar.Items.Add(RefreshButton);
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
 			Controls.Add(ToolBar);			
 		}
 
-		protected void PopulateList(Histogram data)
+		protected void PopulateList(Statistics data)
 		{
 			List.BeginUpdate();
 			foreach(ListViewItem i in List.Items)
@@ -365,7 +452,7 @@ namespace HistogramPlugin
 			List.EndUpdate();
 		}
 		
-		protected void PopulateStatsList(Histogram data)
+		protected void PopulateStatsList(Statistics data)
 		{
 			StatsList.BeginUpdate();
 			StatsItemMin.SubItems[1].Text = data.Min.ToString();
@@ -384,36 +471,62 @@ namespace HistogramPlugin
 		
 		protected void OnActiveViewChanged(object sender, EventArgs e)
 		{
-			Histogram = null;
 			Document = null;
+			State = null;
+			Statistics = null;
+			
 			if(Host.ActiveView != null)
+			{
 				Document = Host.ActiveView.Document;
 			
-			if(Document != null)
-			{
 				object o;
-				if(!Document.MetaData.TryGetValue(typeof(Histogram).FullName, out o))
+				if(!Document.MetaData.TryGetValue("Statistics", out o))
 				{
-					Histogram = new Histogram();
-					Histogram.Length = 256;
-					Document.MetaData.Add(typeof(Histogram).FullName, Histogram);
+					Statistics = new Statistics();
+					Statistics.Length = 256;
+					Document.MetaData.Add("Statistics", Statistics);
 				}
 				else
-					Histogram = (Histogram)o;
+					Statistics = (Statistics)o;
+				
+				if(!Document.PluginState.TryGetValue(this.GetType().FullName, out o))
+				{
+					State = new StatisticsState();
+					Document.PluginState.Add(this.GetType().FullName, State);
+				}
+				else
+					State = (StatisticsState)o;
 			}
 
-			if(Histogram != null)
+			if(Statistics != null)
 			{
-				PopulateList(Histogram);
-				PopulateStatsList(Histogram);
+				if(State.Worker != null && State.Worker.IsBusy)
+				{
+					RefreshButton.Image = Host.Settings.Image("stop_16.png");
+					if(State.Worker.CancellationPending)
+						RefreshButton.Enabled = false;
+					else
+						RefreshButton.Enabled = true;
+				}
+				else
+				{
+					RefreshButton.Image = Host.Settings.Image("go_16.png");
+					RefreshButton.Enabled = true;
+				}
+
+				PopulateList(Statistics);
+				PopulateStatsList(Statistics);
 			}
 			else
 			{
+				RefreshButton.Image = Host.Settings.Image("go_16.png");
+				RefreshButton.Enabled = false;
+
 				ClearList();
 				ClearStatsList();
 			}
 			
-			Graph.Data = Histogram;			
+			Graph.Data = Statistics;			
 		}
 		
 		protected void OnShowGraph(object sender, EventArgs e)
@@ -448,138 +561,83 @@ namespace HistogramPlugin
 		
 		public void OnCalculate(object sender, EventArgs e)
 		{
-			Histogram.Clear();
-			Histogram.Worker = new BackgroundWorker();
-			Histogram.Worker.WorkerReportsProgress = true;
-			Histogram.Worker.WorkerSupportsCancellation = true;
-			Histogram.Worker.DoWork += OnDoWork;
-			Histogram.Worker.ProgressChanged += OnProgressChanged;
-			Histogram.Worker.RunWorkerCompleted += OnCompleted;
-			
-			Histogram.Progress = new ProgressNotification();
-			Host.ProgressNotifications.Add(Histogram.Progress);
-			
-			if(SelectionComboBox.SelectedIndex != 0)
+			if(State.Worker != null && State.Worker.IsBusy)
 			{
-				Histogram.Worker.RunWorkerAsync(new WorkerArgs(Histogram.Worker,
-				                                               Host.ActiveView.Document,
-				                                               Histogram,
-				                                               -1, 
-				                                               -1));
+				RefreshButton.Enabled = false;
+				State.Worker.CancelAsync();
+				return;
 			}
-			else
+			
+			Statistics.Clear();
+			RefreshButton.Image = Host.Settings.Image("stop_16.png");
+			
+			long startPos = -1;
+			long endPos = -1;
+			if(SelectionComboBox.SelectedIndex == 0)
 			{
-				Histogram.Worker.RunWorkerAsync(new WorkerArgs(Histogram.Worker,
-				                                               Host.ActiveView.Document,
-				                                               Histogram,
-				                                               Host.ActiveView.Selection.Start, 
-				                                               Host.ActiveView.Selection.End));
+				startPos = Host.ActiveView.Selection.Start; 
+				endPos = Host.ActiveView.Selection.End;
 			}
+
+			State.Progress = new ProgressNotification();
+			Host.ProgressNotifications.Add(State.Progress);
+			State.Worker = new StatisticsWorker(Document, startPos, endPos, Statistics, State.Progress);
+			State.Worker.ProgressChanged += OnProgressChanged;
+			State.Worker.RunWorkerCompleted += OnCompleted;
+			State.Worker.RunWorkerAsync();
 		}
 		
-		public void OnDoWork(object sender, DoWorkEventArgs e)
-		{
-			const int BLOCK_SIZE = 4096*1024;
-			WorkerArgs args = (WorkerArgs)e.Argument;
-
-			long total;
-			long offset;
-			long lastReportTime = System.Environment.TickCount;
-			long lastReportBytes = 0;
-			long[] counts = new long[256];
-			byte[] bytes = new byte[BLOCK_SIZE];
-			
-			if(args.StartPosition == -1 && args.EndPosition == -1)
-			{
-				total = args.Document.Length;
-				offset = 0;
-			}
-			else
-			{
-				total = (args.EndPosition - args.StartPosition) / 8;
-				offset = args.StartPosition / 8;
-			}
-			
-			long len = total;			
-			while(len > 0)
-			{
-				int partLen = BLOCK_SIZE > len ? (int)len : BLOCK_SIZE;
-				args.Document.GetBytes(offset, bytes, partLen);
-
-				for(int i = 0; i < partLen; ++i)
-					counts[bytes[i]] += 1;
-				
-				len -= partLen;
-				offset += partLen;
-				
-				if(System.Environment.TickCount > lastReportTime + 500)
-				{
-					float MBps = (float)(offset - lastReportBytes) / (1024 * 1024);
-					MBps /= (float)(System.Environment.TickCount - lastReportTime) / 1000;
-					args.Worker.ReportProgress((int)((100.0 / total) * (total - len)), new WorkerProgress(args, counts, total, total - len, MBps));
-					counts = new long[256];
-					lastReportBytes = offset;
-					lastReportTime = System.Environment.TickCount;
-				}
-				
-				if(args.Worker.CancellationPending)
-				{
-					e.Cancel = true;
-					return;
-				}
-			}
-			
-			args.Worker.ReportProgress(100, new WorkerProgress(args, counts, total, total, 0));
-			e.Result = new WorkerProgress(args, counts, total, total, 0);
-		}
 
 		public void OnProgressChanged(object sender, ProgressChangedEventArgs e)
 		{
-			WorkerProgress progress = (WorkerProgress)e.UserState;
-			Histogram data = progress.Args.Histogram;
-
-			float percentDone = (float)progress.BytesDone / progress.BytesTotal;
-			percentDone *= 100.0f;
-			data.Progress.Update((int)percentDone, String.Format("Calculating statistics... ({0:0.##} MB/s)", progress.MBps));
+			StatisticsWorker worker = (StatisticsWorker)sender;
 			
-			List.BeginUpdate();
-			foreach(ListViewItem i in List.Items)
+			if(worker == State.Worker)
 			{
-				int index = i.Index;
-				long val = data[index] + progress.Counts[index];
-				float percent = (float)val / progress.BytesDone;
-				percent *= 100.0f;
+				List.BeginUpdate();
+				foreach(ListViewItem i in List.Items)
+				{
+					int index = i.Index;
+					long val = Statistics[index];
+					float percent = (float)val / Statistics.Sum;
+					percent *= 100.0f;
+					
+					Statistics[index] = val;
+					i.SubItems[3].Text = val.ToString();
+					i.SubItems[4].Text = percent.ToString("0.00");
+				}
+				List.EndUpdate();
 				
-				data[index] = val;
-				i.SubItems[3].Text = val.ToString();
-				i.SubItems[4].Text = percent.ToString("0.00");
-			}
-			List.EndUpdate();
-			
-			if(Graph.Data == data)
 				Graph.Invalidate();
-			
-			StatsList.BeginUpdate();
-			StatsItemMin.SubItems[1].Text = data.Min.ToString();
-			StatsItemMax.SubItems[1].Text = data.Max.ToString();
-			StatsItemMean.SubItems[1].Text = ((float)progress.BytesDone / 256).ToString("0.##");
-			StatsList.EndUpdate();
+				
+				StatsList.BeginUpdate();
+				StatsItemMin.SubItems[1].Text = Statistics.Min.ToString();
+				StatsItemMax.SubItems[1].Text = Statistics.Max.ToString();
+				StatsItemMean.SubItems[1].Text = ((float)Statistics.Sum / 256).ToString("0.##");
+				StatsList.EndUpdate();
+			}
 		}
 		
 		public void OnCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
-			WorkerProgress progress = (WorkerProgress)e.Result;
-			Histogram histogram = progress.Args.Histogram;
-			histogram.Worker.Dispose();
-			histogram.Worker = null;
-			Host.ProgressNotifications.Remove(histogram.Progress);
-			histogram.Progress = null;
+			StatisticsWorker worker = (StatisticsWorker)sender;
+			
+			Host.ProgressNotifications.Remove(worker.Progress);
+			
+			worker.Dispose();
+			if(State.Worker == worker)
+			{
+				RefreshButton.Image = Host.Settings.Image("go_16.png");
+				RefreshButton.Enabled = true;
+				State.Worker = null;
+				State.Progress = null;
+			}
 		}
 	}
 	
-	public class HistogramPlugin : IPlugin
+	public class StatisticsPlugin : IPlugin
 	{
-		string IPlugin.Name { get { return "Histogram"; } }
+		string IPlugin.Name { get { return "Statistics"; } }
 		string IPlugin.Author { get { return "Stephen Robinson"; } }
 		string IPlugin.Version { get { return "1.0"; } }
 
@@ -588,7 +646,7 @@ namespace HistogramPlugin
 		void IPlugin.Initialize(IPluginHost host)
 		{
 			Host = host;
-			Host.AddWindow(new HistogramPanel(host), "Histogram", Host.Settings.Image("histogram_16.png"), DefaultWindowPosition.BottomRight, true);
+			Host.AddWindow(new StatisticsPanel(host), "Statistics", Host.Settings.Image("histogram_16.png"), DefaultWindowPosition.BottomRight, true);
 		}
 		
 		void IPlugin.Dispose()

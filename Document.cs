@@ -21,10 +21,10 @@ public class Document : PieceBuffer
 		get { return _MetaData; }
 	}
 	
-	protected Dictionary<string, object> _State = new Dictionary<string,object>();
-	public Dictionary<string, object> State
+	protected Dictionary<string, object> _PluginState = new Dictionary<string,object>();
+	public Dictionary<string, object> PluginState
 	{
-		get { return _State; }
+		get { return _PluginState; }
 	}
 	
 	public Document()
