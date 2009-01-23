@@ -21,6 +21,12 @@ public class Document : PieceBuffer
 		get { return _MetaData; }
 	}
 	
+	protected Dictionary<string, object> _State = new Dictionary<string,object>();
+	public Dictionary<string, object> State
+	{
+		get { return _State; }
+	}
+	
 	public Document()
 	{
 	}
