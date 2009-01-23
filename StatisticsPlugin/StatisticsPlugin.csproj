@@ -4,7 +4,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>Library</OutputType>
-    <RootNamespace>HistogramPlugin</RootNamespace>
+    <RootNamespace>StatisticsPlugin</RootNamespace>
     <AssemblyName>HistogramPlugin</AssemblyName>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
@@ -19,8 +19,8 @@
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <OutputType>Library</OutputType>
-    <AssemblyName>HistogramPlugin</AssemblyName>
-    <RootNamespace>HistogramPlugin</RootNamespace>
+    <AssemblyName>StatisticsPlugin</AssemblyName>
+    <RootNamespace>StatisticsPlugin</RootNamespace>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -32,8 +32,8 @@
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <OutputType>Library</OutputType>
-    <AssemblyName>HistogramPlugin</AssemblyName>
-    <RootNamespace>HistogramPlugin</RootNamespace>
+    <AssemblyName>StatisticsPlugin</AssemblyName>
+    <RootNamespace>StatisticsPlugin</RootNamespace>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -53,7 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Histogram.cs" />
+    <Compile Include="Statistics.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\hexed.csproj">
