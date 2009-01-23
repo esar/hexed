@@ -36,13 +36,16 @@ public partial class PieceBuffer
 		
 		public static Block Create(byte constant)
 		{
-			Block block;
-			if(!OpenBlocks.TryGetValue("Constant" + constant, out block))
+			lock(OpenBlocks)
 			{
-				block = new ConstantBlock(constant);
-				OpenBlocks.Add("Constant" + constant, block);
+				Block block;
+				if(!OpenBlocks.TryGetValue("Constant" + constant, out block))
+				{
+					block = new ConstantBlock(constant);
+					OpenBlocks.Add("Constant" + constant, block);
+				}
+				return block;
 			}
-			return block;
 		}
 		
 		public override void GetBytes(long start, long length, byte[] dst, long dstOffset)
@@ -64,24 +67,28 @@ public partial class PieceBuffer
 		private uint		BufferedLength = 0;
 		private uint		MaxLength = 4096;
 		private long		StartAddress = 0;
+		private object      Lock = new object();
 				
 		public override byte this[long i]
 		{
 			get	
 			{
-				if(i < StartAddress || i >= StartAddress + BufferedLength)
+				lock(Lock)
 				{
-					StartAddress = i - MaxLength / 2;
-					if(StartAddress < 0)
-						StartAddress = 0;
-					FS.Seek(StartAddress, SeekOrigin.Begin);
-					BufferedLength = (uint)FS.Read(Buffer, 0, (int)MaxLength);
-				}
+					if(i < StartAddress || i >= StartAddress + BufferedLength)
+					{
+						StartAddress = i - MaxLength / 2;
+						if(StartAddress < 0)
+							StartAddress = 0;
+						FS.Seek(StartAddress, SeekOrigin.Begin);
+						BufferedLength = (uint)FS.Read(Buffer, 0, (int)MaxLength);
+					}
 
-				if(i < StartAddress || i >= StartAddress + BufferedLength)
-					return 0;
-				else
-					return Buffer[i - StartAddress];				
+					if(i < StartAddress || i >= StartAddress + BufferedLength)
+						return 0;
+					else
+						return Buffer[i - StartAddress];
+				}
 			}
 			set	{ }
 		}
@@ -95,35 +102,41 @@ public partial class PieceBuffer
 		
 		public static Block Create(string filename)
 		{
-			Block block;
-			if(!OpenBlocks.TryGetValue("File" + filename, out block))
+			lock(OpenBlocks)
 			{
-				block = new FileBlock(filename);
-				OpenBlocks.Add("File" + filename, block);
+				Block block;
+				if(!OpenBlocks.TryGetValue("File" + filename, out block))
+				{
+					block = new FileBlock(filename);
+					OpenBlocks.Add("File" + filename, block);
+				}
+				return block;
 			}
-			return block;
 		}
 		
 		public override void GetBytes(long start, long length, byte[] dst, long dstOffset)
 		{
-			while(length > 0)
+			lock(Lock)
 			{
-				if(start < StartAddress || start >= StartAddress + BufferedLength)
+				while(length > 0)
 				{
-					StartAddress = start;
-					FS.Seek(StartAddress, SeekOrigin.Begin);
-					BufferedLength = (uint)FS.Read(Buffer, 0, (int)MaxLength);
+					if(start < StartAddress || start >= StartAddress + BufferedLength)
+					{
+						StartAddress = start;
+						FS.Seek(StartAddress, SeekOrigin.Begin);
+						BufferedLength = (uint)FS.Read(Buffer, 0, (int)MaxLength);
+					}
+
+					if(start < StartAddress || start >= StartAddress + BufferedLength)
+						throw new Exception("Failed to read from stream");
+
+					long offset = start - StartAddress;
+					long len = length > BufferedLength - offset ? BufferedLength - offset : length;
+					Array.Copy(Buffer, offset, dst, dstOffset, len);
+					dstOffset += len;
+					length -= len;
+					start += len;
 				}
-
-				if(start < StartAddress || start >= StartAddress + BufferedLength)
-					throw new Exception("Failed to read from stream");
-
-				long offset = start - StartAddress;
-				long len = length > BufferedLength - offset ? BufferedLength - offset : length;
-				Array.Copy(Buffer, offset, dst, dstOffset, len);
-				dstOffset += len;
-				length -= len;
-				start += len;
 			}
 		}
 		
