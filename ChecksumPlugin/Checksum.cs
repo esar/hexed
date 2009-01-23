@@ -326,6 +326,7 @@ namespace ChecksumPlugin
 			RefreshButton.ToolTipText = "Calculate";
 			RefreshButton.Click += OnCalculate;
 			RefreshButton.Overflow = ToolStripItemOverflow.Never;
+			RefreshButton.Enabled = false;
 			ToolBar.Items.Add(RefreshButton);
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
 			Controls.Add(ToolBar);
@@ -363,18 +364,26 @@ namespace ChecksumPlugin
 			}
 			
 			TreeView.Model = Checksums;
-			if(State.Worker != null && State.Worker.IsBusy)
+			if(State != null)
 			{
-				RefreshButton.Image = Host.Settings.Image("stop_16.png");
-				if(State.Worker.CancellationPending)
-					RefreshButton.Enabled = false;
+				if(State.Worker != null && State.Worker.IsBusy)
+				{
+					RefreshButton.Image = Host.Settings.Image("stop_16.png");
+					if(State.Worker.CancellationPending)
+						RefreshButton.Enabled = false;
+					else
+						RefreshButton.Enabled = true;
+				}
 				else
+				{
+					RefreshButton.Image = Host.Settings.Image("go_16.png");
 					RefreshButton.Enabled = true;
+				}
 			}
 			else
 			{
 				RefreshButton.Image = Host.Settings.Image("go_16.png");
-				RefreshButton.Enabled = true;
+				RefreshButton.Enabled = false;
 			}
 		}
 		

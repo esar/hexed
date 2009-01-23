@@ -354,12 +354,31 @@ namespace HistogramPlugin
 			List.EndUpdate();			
 		}
 		
+		protected void ClearList()
+		{
+			List.BeginUpdate();
+			foreach(ListViewItem i in List.Items)
+			{
+				i.SubItems[3].Text = String.Empty;
+				i.SubItems[4].Text = String.Empty;
+			}
+			List.EndUpdate();
+		}
+		
 		protected void PopulateStatsList(Histogram data)
 		{
 			StatsList.BeginUpdate();
 			StatsItemMin.SubItems[1].Text = data.Min.ToString();
 			StatsItemMax.SubItems[1].Text = data.Max.ToString();
 			StatsItemMean.SubItems[1].Text = ((float)data.Sum / 256).ToString("0.##");
+			StatsList.EndUpdate();
+		}
+		
+		protected void ClearStatsList()
+		{
+			StatsList.BeginUpdate();
+			foreach(ListViewItem i in StatsList.Items)
+				i.SubItems[1].Text = String.Empty;
 			StatsList.EndUpdate();
 		}
 		
@@ -382,9 +401,18 @@ namespace HistogramPlugin
 				else
 					Histogram = (Histogram)o;
 			}
-				
-			PopulateList(Histogram);
-			PopulateStatsList(Histogram);
+
+			if(Histogram != null)
+			{
+				PopulateList(Histogram);
+				PopulateStatsList(Histogram);
+			}
+			else
+			{
+				ClearList();
+				ClearStatsList();
+			}
+			
 			Graph.Data = Histogram;			
 		}
 		
