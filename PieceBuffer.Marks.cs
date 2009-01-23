@@ -129,50 +129,53 @@ public partial class PieceBuffer
 	
 	public class MarkCollection
 	{
-		private PieceBuffer		Buffer;
-		private InternalMark	_Sentinel;
-		public Mark		Sentinel
-		{
-			get { return _Sentinel; }
-		}
-		private Piece			Pieces;
-		private InternalMark	_Start;
+//		public Mark		Sentinel
+//		{
+//			get { return (Mark)_Sentinel; }
+//		}
+
+		protected Mark	_Start;
 		public Mark	Start
 		{
 			get { return _Start; }
 		}
-		private InternalMark	_Insert;
-		public Mark	Insert
-		{
-			get { return _Insert; }
-		}
-		private InternalMark	_End;
+
+		protected Mark	_End;
 		public Mark	End
 		{
 			get { return _End; }
 		}
-		
-		public MarkCollection(PieceBuffer buffer, Piece pieces, Piece firstPiece, long endPosition)
+
+		protected Mark	_Insert;
+		public Mark	Insert
 		{
-			Buffer = buffer;
-			Pieces = pieces;
-			_Sentinel = new InternalMark(this);
-			
-			_End = new InternalMark(this, pieces, 0, endPosition);
-			ListInsert(_Sentinel, _End);
-			_Insert = new InternalMark(this, firstPiece, 0, 0);
-			ListInsert(_Sentinel, _Insert);
-			_Start = new InternalMark(this, firstPiece, 0, 0);
-			ListInsert(_Sentinel, _Start);			
+			get { return _Insert; }
 		}
+
+		protected object _Pieces;
+		private Piece Pieces
+		{
+			get { return (Piece)_Pieces; }
+			set { _Pieces = value; }
+		}
+		protected object _Sentinel;
+		private InternalMark Sentinel
+		{
+			get { return (InternalMark)_Sentinel; }
+			set { _Sentinel = value; }
+		}
+		protected PieceBuffer		Buffer;
+		
+		protected MarkCollection() {}
+
 		
 		public Mark Add()
 		{
 			Debug.Assert(DebugMarkChainIsValid(), "CreateMark: Enter: Invalid mark chain");
 			
 			InternalMark mark = new InternalMark(this);
-			_Insert.CopyTo(mark);
-			ListInsert(_Insert, mark);
+			((InternalMark)_Insert).CopyTo(mark);
+			ListInsert((InternalMark)_Insert, mark);
 
 			Debug.Assert(DebugMarkChainIsValid(), "CreateMark: Leave: Invalid mark chain");
 			return mark;
@@ -323,6 +326,113 @@ public partial class PieceBuffer
 			return mark.Position;
 		}
 		
+		public override string ToString()
+		{
+			System.Text.StringBuilder tmp = new System.Text.StringBuilder();
+			
+			InternalMark mark = Sentinel;
+			while((mark = mark.Next) != _Sentinel)
+				tmp.AppendFormat("{{{0},{1}}}", mark.Offset, mark.Position);
+			
+			return tmp.ToString();		
+		}
+		
+		protected static void ListInsert(Mark list, Mark item)
+		{
+			((InternalMark)item).Next = ((InternalMark)list).Next;
+			((InternalMark)item).Prev = (InternalMark)list;
+			((InternalMark)list).Next.Prev = (InternalMark)item;
+			((InternalMark)list).Next = (InternalMark)item;
+		}
+
+		protected static void ListInsertRange(Mark list, Mark first, Mark last)
+		{
+			((InternalMark)last).Next = ((InternalMark)list).Next;
+			((InternalMark)first).Prev = (InternalMark)list;
+			((InternalMark)last).Next.Prev = (InternalMark)last;
+			((InternalMark)first).Prev.Next = (InternalMark)first;
+		}
+
+		protected static void ListRemove(Mark item)
+		{
+			((InternalMark)item).Prev.Next = ((InternalMark)item).Next;
+			((InternalMark)item).Next.Prev = ((InternalMark)item).Prev;
+		}
+												
+		protected static void ListRemoveRange(Mark first, Mark last)
+		{
+			((InternalMark)first).Prev.Next = ((InternalMark)last).Next;
+			((InternalMark)last).Next.Prev = ((InternalMark)first).Prev;
+		}		
+
+		public bool DebugMarkChainIsValid()
+		{
+			InternalMark m = Sentinel;
+			
+			// List sentinal's values must never change
+			Debug.Assert(m.Piece == null, "Mark chain sentinel's piece is not null");
+			Debug.Assert(m.Offset == Int64.MaxValue, "Mark chain sentinel's offset wrong");
+			Debug.Assert(m.Position == Int64.MaxValue, "Mark chain sentinel's position wrong");
+			
+			// Sentinal links must be valid
+			Debug.Assert(m.Next.Prev == m, "Mark chain sentinel's next pointer is bad");
+			Debug.Assert(m.Prev.Next == m, "Mark chain sentinel's prev pointer is bad");
+			
+			// List must never be empty, insert_mark always exists
+			Debug.Assert(m.Prev != _Sentinel, "Mark chain is empty");
+			
+			while((m = m.Prev) != _Sentinel)
+			{
+				// List links must be valid
+				Debug.Assert(m.Next.Prev == m, "Mark chain node's next pointer is bad");
+				Debug.Assert(m.Prev.Next == m, "Mark chain node's prev pointer is bad");
+			
+				// Each mark should be in sorted order
+				Debug.Assert(m.Position <= m.Next.Position, "Mark chain node's position is out of order");
+				
+				if(m.Piece == m.Next.Piece)
+				{
+					// Each mark that shares the same piece must have their
+					// offsets in sorted order
+					Debug.Assert(m.Offset <= m.Next.Offset, "Mark chain node's offset is out of order");
+					
+					// Each mark that shares the same piece must have the
+					// same distance between offsets as positions
+					Debug.Assert(m.Next.Offset - m.Offset == m.Next.Position - m.Position, "Mark chain node's position/offset don't match");
+				}
+			}
+			
+			return true;
+		}
+	}
+	
+	protected class InternalMarkCollection : MarkCollection
+	{
+		public InternalMark Sentinel
+		{
+			get { return (InternalMark)_Sentinel; }
+		}
+		
+		protected Piece Pieces
+		{
+			get { return (Piece)_Pieces; }
+			set { _Pieces = value; }
+		}
+		
+		public InternalMarkCollection(PieceBuffer buffer, Piece pieces, Piece firstPiece, long endPosition)
+		{
+			Buffer = buffer;
+			Pieces = pieces;
+			_Sentinel = new InternalMark(this);
+			
+			_End = new InternalMark(this, pieces, 0, endPosition);
+			ListInsert(Sentinel, (InternalMark)_End);
+			_Insert = new InternalMark(this, firstPiece, 0, 0);
+			ListInsert(Sentinel, (InternalMark)_Insert);
+			_Start = new InternalMark(this, firstPiece, 0, 0);
+			ListInsert(Sentinel, (InternalMark)_Start);			
+		}
+
 		public void UpdateAfterReplace(Mark start, Mark end, long removedLength, long insertedLength, Piece firstInsertedPiece)
 		{
 			InternalMark curStart = (InternalMark)start;
@@ -388,98 +498,19 @@ public partial class PieceBuffer
 			// and make sure the start mark is still at the start
 			if(_Insert != curEnd)
 			{
-				ListRemove(_Insert);
-				curEnd.CopyTo(_Insert);
-				ListInsert(curEnd, _Insert);
+				ListRemove((InternalMark)_Insert);
+				curEnd.CopyTo((InternalMark)_Insert);
+				ListInsert(curEnd, (InternalMark)_Insert);
 			
 			}
 			if(_Start.Position != 0)
 			{		
 				ListRemove(_Start);
-				_Start.Piece = Pieces.Next;
-				_Start.Offset = 0;
-				_Start.Position = 0;
-				ListInsert(_Sentinel, _Start);
+				((InternalMark)_Start).Piece = Pieces.Next;
+				((InternalMark)_Start).Offset = 0;
+				((InternalMark)_Start).Position = 0;
+				ListInsert(Sentinel, (InternalMark)_Start);
 			}
-		}
-		
-		public override string ToString()
-		{
-			System.Text.StringBuilder tmp = new System.Text.StringBuilder();
-			
-			InternalMark mark = _Sentinel;
-			while((mark = mark.Next) != _Sentinel)
-				tmp.AppendFormat("{{{0},{1}}}", mark.Offset, mark.Position);
-			
-			return tmp.ToString();		
-		}
-		
-		private static void ListInsert(InternalMark list, InternalMark item)
-		{
-			item.Next = list.Next;
-			item.Prev = list;
-			list.Next.Prev = item;
-			list.Next = item;
-		}
-
-		private static void ListInsertRange(InternalMark list, InternalMark first, InternalMark last)
-		{
-			last.Next = list.Next;
-			first.Prev = list;
-			last.Next.Prev = last;
-			first.Prev.Next = first;
-		}
-
-		private static void ListRemove(InternalMark item)
-		{
-			item.Prev.Next = item.Next;
-			item.Next.Prev = item.Prev;
-		}
-												
-		private static void ListRemoveRange(InternalMark first, InternalMark last)
-		{
-			first.Prev.Next = last.Next;
-			last.Next.Prev = first.Prev;
-		}		
-
-		public bool DebugMarkChainIsValid()
-		{
-			InternalMark m = _Sentinel;
-			
-			// List sentinal's values must never change
-			Debug.Assert(m.Piece == null, "Mark chain sentinel's piece is not null");
-			Debug.Assert(m.Offset == Int64.MaxValue, "Mark chain sentinel's offset wrong");
-			Debug.Assert(m.Position == Int64.MaxValue, "Mark chain sentinel's position wrong");
-			
-			// Sentinal links must be valid
-			Debug.Assert(m.Next.Prev == m, "Mark chain sentinel's next pointer is bad");
-			Debug.Assert(m.Prev.Next == m, "Mark chain sentinel's prev pointer is bad");
-			
-			// List must never be empty, insert_mark always exists
-			Debug.Assert(m.Prev != _Sentinel, "Mark chain is empty");
-			
-			while((m = m.Prev) != _Sentinel)
-			{
-				// List links must be valid
-				Debug.Assert(m.Next.Prev == m, "Mark chain node's next pointer is bad");
-				Debug.Assert(m.Prev.Next == m, "Mark chain node's prev pointer is bad");
-			
-				// Each mark should be in sorted order
-				Debug.Assert(m.Position <= m.Next.Position, "Mark chain node's position is out of order");
-				
-				if(m.Piece == m.Next.Piece)
-				{
-					// Each mark that shares the same piece must have their
-					// offsets in sorted order
-					Debug.Assert(m.Offset <= m.Next.Offset, "Mark chain node's offset is out of order");
-					
-					// Each mark that shares the same piece must have the
-					// same distance between offsets as positions
-					Debug.Assert(m.Next.Offset - m.Offset == m.Next.Position - m.Position, "Mark chain node's position/offset don't match");
-				}
-			}
-			
-			return true;
 		}
 
 		public bool DebugMarkChainDoesntReferenceRemovePieces(Piece removedStart, Piece removedEnd)
@@ -487,8 +518,8 @@ public partial class PieceBuffer
 			Piece p = removedStart;
 			while(true)
 			{
-				InternalMark m = _Sentinel;
-				while((m = m.Next) != _Sentinel)
+				InternalMark m = Sentinel;
+				while((m = m.Next) != Sentinel)
 					Debug.Assert(m.Piece != p, "Mark references removed piece");
 				
 				if(p == removedEnd)

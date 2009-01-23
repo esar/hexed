@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 
 public partial class PieceBuffer
@@ -30,19 +31,33 @@ public partial class PieceBuffer
 	}
 	
 	
-	
 	public class ClipboardRange
+	{
+		protected long _Length;
+		public long Length
+		{
+			get { return _Length; }
+		}
+		
+		protected ClipboardRange() {}
+	}
+	
+	protected class InternalClipboardRange : ClipboardRange
 	{
 		public Piece StartPiece;
 		public long StartOffset;
 		public Piece EndPiece;
 		public long EndOffset;
-		public long Length;
+		public long Length
+		{
+			get { return _Length; }
+			set { _Length = value; }
+		}
 	}
 	
 	
 	
-	public class Piece
+	protected class Piece
 	{
 		public readonly Block Block;
 		public readonly long Start;
@@ -122,21 +137,104 @@ public partial class PieceBuffer
 	
 	public class HistoryItem
 	{
-		public bool Active;
-		public DateTime Date;
-		public HistoryOperation Operation;
-		public long StartPosition;
-		public long Length;
+		protected bool _Active;
+		public bool Active { get { return _Active; } }
 		
-		public Piece Head;
-		public Piece Tail;
-		public int GroupLevel;
+		protected DateTime _Date;
+		public DateTime Date { get { return _Date; } }
 		
-		public HistoryItem Parent;
-		public HistoryItem FirstChild;
-		public HistoryItem NextSibling;
+		protected HistoryOperation _Operation;
+		public HistoryOperation Operation { get { return _Operation; } }
 		
-		public HistoryItem(DateTime date, HistoryOperation op, long startPosition, long length, Piece head, Piece tail, int groupLevel)
+		protected long _StartPosition;
+		public long StartPosition { get { return _StartPosition; } }
+		
+		protected long _Length;
+		public long Length { get { return _Length; } }
+		
+		protected HistoryItem _Parent;
+		public HistoryItem Parent { get { return _Parent; } }
+		
+		protected HistoryItem _FirstChild;
+		public HistoryItem FirstChild { get { return _FirstChild; } }
+		
+		protected HistoryItem _NextSibling;
+		public HistoryItem NextSibling { get { return _NextSibling; } }
+		
+		protected HistoryItem() {}
+	}
+	
+	protected class InternalHistoryItem : HistoryItem
+	{
+		public bool Active 
+		{
+			get { return _Active; }
+			set { _Active = value; } 
+		}
+		public DateTime Date 
+		{
+			get { return _Date; }
+			set { _Date = value; } 
+		}
+		public HistoryOperation Operation 
+		{
+			get { return _Operation; }
+			set { _Operation = value; } 
+		}
+		public long StartPosition 
+		{
+			get { return _StartPosition; }
+			set { _StartPosition = value; } 
+		}
+		public long Length 
+		{
+			get { return _Length; }
+			set { _Length = value; } 
+		}
+		
+		public HistoryItem Parent 
+		{
+			get { return _Parent; }
+			set { _Parent = value; } 
+		}
+		public HistoryItem FirstChild 
+		{
+			get { return _FirstChild; }
+			set { _FirstChild = value; } 
+		}
+		public HistoryItem NextSibling 
+		{
+			get { return _NextSibling; }
+			set { _NextSibling = value; } 
+		}
+		
+		public InternalHistoryItem InternalParent { get { return (InternalHistoryItem)_Parent; } }
+		public InternalHistoryItem InternalFirstChild { get { return (InternalHistoryItem)_FirstChild; } }
+		public InternalHistoryItem InternalNextSibling { get { return (InternalHistoryItem)_NextSibling; } }
+		
+		protected Piece _Head;
+		public Piece Head
+		{
+			get { return _Head; }
+			set { _Head = value; }
+		}
+		
+		protected Piece _Tail;
+		public Piece Tail
+		{
+			get { return _Tail; }
+			set { _Tail = value; }
+		}
+		
+		protected int _GroupLevel;
+		public int GroupLevel
+		{
+			get { return _GroupLevel; }
+			set { _GroupLevel = value; }
+		}
+		
+		
+		public InternalHistoryItem(DateTime date, HistoryOperation op, long startPosition, long length, Piece head, Piece tail, int groupLevel)
 		{
 			Active = true;
 			Date = date;
@@ -152,12 +250,15 @@ public partial class PieceBuffer
 	
 	
 	
-	public Piece		Pieces = new Piece();
-	public MarkCollection	Marks;
-	public Block		CurrentBlock;
-	public HistoryItem	History;
-	public HistoryItem	HistoryRoot;
-	public int			HistoryGroupLevel;
+	protected Piece		Pieces = new Piece();
+	protected InternalMarkCollection	_Marks;
+	public MarkCollection Marks { get { return _Marks; } }
+	protected Block		CurrentBlock;
+	protected InternalHistoryItem	_History;
+	public HistoryItem History { get { return _History; } }
+	protected InternalHistoryItem	_HistoryRoot;
+	public HistoryItem HistoryRoot { get { return _HistoryRoot; } }
+	protected int			HistoryGroupLevel;
 	
 	const int IndexCacheSize = 4096;
 	long IndexCacheStartOffset;
@@ -172,36 +273,54 @@ public partial class PieceBuffer
 	public event HistoryEventHandler HistoryRedone;
 	public event HistoryEventHandler HistoryJumped;
 	
+	protected object Lock = new object();
+	
 	public byte this[long index]
 	{
 		get
-		{			
-			if(index < IndexCacheStartOffset ||
-			   index >= IndexCacheStartOffset + IndexCacheSize)
+		{
+			lock(Lock)
 			{
-				if(index < 0)
-					index = 0;				
-				IndexCacheStartOffset = index;
-				GetBytes(index, IndexCacheBytes, IndexCacheSize);
+				if(index < IndexCacheStartOffset ||
+				   index >= IndexCacheStartOffset + IndexCacheSize)
+				{
+					if(index < 0)
+						index = 0;				
+					IndexCacheStartOffset = index;
+					GetBytes(index, IndexCacheBytes, IndexCacheSize);
+				}
+				return IndexCacheBytes[index - IndexCacheStartOffset];
 			}
-			return IndexCacheBytes[index - IndexCacheStartOffset];
 		}
 		
-		// TODO: Implement set
+		set
+		{
+			Mark m1 = Marks.Add(index);
+			Mark m2 = Marks.Add(index + 1);
+			Insert(m1, m2, new byte[] { value }, 1);
+			Marks.Remove(m1);
+			Marks.Remove(m2);
+		}
 	}
 
 	public long	Length
 	{
-		get { return Marks.End.Position; }
+		get 
+		{ 
+			lock(Lock)
+			{
+				return Marks.End.Position; 
+			}
+		}
 	}
 	
 	public PieceBuffer()
 	{
-		Marks = new MarkCollection(this, Pieces, Pieces, 0);
+		_Marks = new InternalMarkCollection(this, Pieces, Pieces, 0);
 		
 		CurrentBlock = new MemoryBlock(4096);
 		
-		HistoryRoot = History = new HistoryItem(DateTime.Now, HistoryOperation.New, 0, 0, null, null, 0);
+		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.New, 0, 0, null, null, 0);
 		HistoryGroupLevel = 0;
 		
 		IndexCacheBytes = new byte[IndexCacheSize];
@@ -215,11 +334,11 @@ public partial class PieceBuffer
 		Piece piece = new Piece(block, 0, block.Length);
 		Piece.ListInsert(Pieces, piece);
 
-		Marks = new MarkCollection(this, Pieces, piece, block.Length);
+		_Marks = new InternalMarkCollection(this, Pieces, piece, block.Length);
 		
 		CurrentBlock = new MemoryBlock(4096);
 		
-		HistoryRoot = History = new HistoryItem(DateTime.Now, HistoryOperation.Open, 0, block.Length, null, null, 0);
+		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.Open, 0, block.Length, null, null, 0);
 		HistoryGroupLevel = 0;
 		
 		IndexCacheBytes = new byte[IndexCacheSize];
@@ -275,7 +394,7 @@ public partial class PieceBuffer
 				m.Offset -= A.End - A.Start;
 				m = m.Next;
 			}
-			while(m != Marks.Sentinel && m.Piece == old)
+			while(m != _Marks.Sentinel && m.Piece == old)
 			{
 				m.Piece = C;
 				m.Offset -= (A.End - A.Start) + (B.End - B.Start);
@@ -307,7 +426,7 @@ public partial class PieceBuffer
 					m.Piece = A;
 					m = m.Next;
 				}
-				while(m != Marks.Sentinel && m.Piece == old)
+				while(m != _Marks.Sentinel && m.Piece == old)
 				{
 					m.Piece = B;
 					m.Offset -= (A.End - A.Start);
@@ -338,7 +457,7 @@ public partial class PieceBuffer
 					m.Piece = A;
 					m = m.Next;
 				}
-				while(m != Marks.Sentinel && m.Piece == old)
+				while(m != _Marks.Sentinel && m.Piece == old)
 				{
 					m.Piece = B;
 					m.Offset -= (A.End - A.Start);
@@ -425,13 +544,13 @@ public partial class PieceBuffer
 			}
 		}
 		
-		Marks.UpdateAfterReplace(curStart, curEnd, removedLength, newLength, firstInsertedPiece);
+		_Marks.UpdateAfterReplace(curStart, curEnd, removedLength, newLength, firstInsertedPiece);
 		
 		OnChanged(change);
 		
 		Debug.Assert(firstRemovedPiece == null || lastRemovedPiece == null || 
-		             Marks.DebugMarkChainDoesntReferenceRemovePieces(firstRemovedPiece, lastRemovedPiece), "Replace: Leave: Mark chain references removed piece");
-		Debug.Assert(Marks.DebugMarkChainIsValid(), "Replace: Leave: Invalid mark chain");
+		             _Marks.DebugMarkChainDoesntReferenceRemovePieces(firstRemovedPiece, lastRemovedPiece), "Replace: Leave: Mark chain references removed piece");
+		Debug.Assert(_Marks.DebugMarkChainIsValid(), "Replace: Leave: Invalid mark chain");
 	}
 	
 	//
@@ -439,82 +558,109 @@ public partial class PieceBuffer
 	//
 	public void Insert(Mark destStart, Mark destEnd, byte[] text, long length)
 	{
-		long textOffset = 0;
-		long origLength = length;
-		Piece head = null;
-		Piece tail = null;
-		
-		// Add the new text to the current block, create new blocks as necessary
-		// to contain all of the text
-		while(length != 0)
+		lock(Lock)
 		{
-			// Work out how much will fit in the current block
-			long len = Math.Min(length, CurrentBlock.Length - CurrentBlock.Used);
-		
-			// Create a new piece covering the inserted text, chaining it
-			// to any we've already created
-			Piece piece = new Piece(CurrentBlock, CurrentBlock.Used, CurrentBlock.Used + len);
-			if(head == null)
-				head = piece;
-			else
-				Piece.ListInsert(tail, piece);
-			tail = piece;
-		
-			// Copy the text into the block and account for it
-			CurrentBlock.SetBytes(CurrentBlock.Used, len, text, textOffset);
-			length -= len;
-			textOffset += len;
-			CurrentBlock.Used += len;
+			long textOffset = 0;
+			long origLength = length;
+			Piece head = null;
+			Piece tail = null;
 			
-			// Make a new block if we've used all of the current one
-			if(CurrentBlock.Used == CurrentBlock.Length)
+			// Add the new text to the current block, create new blocks as necessary
+			// to contain all of the text
+			while(length != 0)
 			{
-				Block block = new MemoryBlock(4096);
-				CurrentBlock = block;
+				// Work out how much will fit in the current block
+				long len = Math.Min(length, CurrentBlock.Length - CurrentBlock.Used);
+			
+				// Create a new piece covering the inserted text, chaining it
+				// to any we've already created
+				Piece piece = new Piece(CurrentBlock, CurrentBlock.Used, CurrentBlock.Used + len);
+				if(head == null)
+					head = piece;
+				else
+					Piece.ListInsert(tail, piece);
+				tail = piece;
+			
+				// Copy the text into the block and account for it
+				CurrentBlock.SetBytes(CurrentBlock.Used, len, text, textOffset);
+				length -= len;
+				textOffset += len;
+				CurrentBlock.Used += len;
+				
+				// Make a new block if we've used all of the current one
+				if(CurrentBlock.Used == CurrentBlock.Length)
+				{
+					Block block = new MemoryBlock(4096);
+					CurrentBlock = block;
+				}
 			}
+			
+			Replace(HistoryOperation.Insert, (InternalMark)destStart, (InternalMark)destEnd, head, tail, origLength);
 		}
-		
-		Replace(HistoryOperation.Insert, (InternalMark)destStart, (InternalMark)destEnd, head, tail, origLength);
 	}
 
 	public void Insert(Mark dest, byte[] text, long length)
 	{
-		Insert((InternalMark)dest, (InternalMark)dest, text, length);
+		lock(Lock)
+		{
+			Insert((InternalMark)dest, (InternalMark)dest, text, length);
+		}
 	}
 	
 	public void Insert(Mark destStart, Mark destEnd, byte c)
 	{
-		Insert((InternalMark)destStart, (InternalMark)destEnd, new byte[] {c}, 1);
+		lock(Lock)
+		{
+			Insert((InternalMark)destStart, (InternalMark)destEnd, new byte[] {c}, 1);
+		}
 	}
 	
 	public void Insert(Mark dest, byte c)
 	{
-		Insert((InternalMark)dest, new byte[] {c}, 1);
+		lock(Lock)
+		{
+			Insert((InternalMark)dest, new byte[] {c}, 1);
+		}
 	}
 	
 	public void Insert(byte[] text, long length)
 	{
-		Insert((InternalMark)Marks.Insert, text, length);
+		lock(Lock)
+		{
+			Insert((InternalMark)Marks.Insert, text, length);
+		}
 	}
 	
 	public void Insert(byte c)
 	{
-		Insert((InternalMark)Marks.Insert, new byte[] {c}, 1);
+		lock(Lock)
+		{
+			Insert((InternalMark)Marks.Insert, new byte[] {c}, 1);
+		}
 	}
 	
 	public void Insert(string text)
 	{
-		Insert(System.Text.Encoding.ASCII.GetBytes(text), text.Length);
+		lock(Lock)
+		{
+			Insert(System.Text.Encoding.ASCII.GetBytes(text), text.Length);
+		}
 	}
 	
 	public void Insert(Mark destStart, Mark destEnd, string text)
 	{
-		Insert((InternalMark)destStart, (InternalMark)destEnd, System.Text.Encoding.ASCII.GetBytes(text), text.Length);
+		lock(Lock)
+		{
+			Insert((InternalMark)destStart, (InternalMark)destEnd, System.Text.Encoding.ASCII.GetBytes(text), text.Length);
+		}
 	}
 	
 	public void Insert(Mark dest, string text)
 	{
-		Insert((InternalMark)dest, System.Text.Encoding.ASCII.GetBytes(text), text.Length);
+		lock(Lock)
+		{
+			Insert((InternalMark)dest, System.Text.Encoding.ASCII.GetBytes(text), text.Length);
+		}
 	}
 
 	
@@ -524,9 +670,12 @@ public partial class PieceBuffer
 	
 	public void InsertFile(Mark destStart, Mark destEnd, string filename, long offset, long length)
 	{
-		Block block = FileBlock.Create(filename);
-		Piece piece = new Piece(block, offset, offset + length);
-		Replace(HistoryOperation.InsertFile, (InternalMark)destStart, (InternalMark)destEnd, piece, piece, length);
+		lock(Lock)
+		{
+			Block block = FileBlock.Create(filename);
+			Piece piece = new Piece(block, offset, offset + length);
+			Replace(HistoryOperation.InsertFile, (InternalMark)destStart, (InternalMark)destEnd, piece, piece, length);
+		}
 	}
 	
 	//
@@ -534,12 +683,13 @@ public partial class PieceBuffer
 	//
 	public void FillConstant(Mark destStart, Mark destEnd, byte constant, long length)
 	{
-		Piece piece = null;
-		Block block = ConstantBlock.Create(constant);
-		
-		piece = new Piece(block, 0, length);
-		
-		Replace(HistoryOperation.FillConstant, (InternalMark)destStart, (InternalMark)destEnd, piece, piece, length);
+		lock(Lock)
+		{
+			Piece piece = null;
+			Block block = ConstantBlock.Create(constant);
+			piece = new Piece(block, 0, length);
+			Replace(HistoryOperation.FillConstant, (InternalMark)destStart, (InternalMark)destEnd, piece, piece, length);
+		}
 	}
 	
 	
@@ -549,28 +699,40 @@ public partial class PieceBuffer
 	//
 	public void Remove(Mark start, Mark end)
 	{
-		Replace(HistoryOperation.Remove, (InternalMark)start, (InternalMark)end, null, null, 0);
+		lock(Lock)
+		{
+			Replace(HistoryOperation.Remove, (InternalMark)start, (InternalMark)end, null, null, 0);
+		}
 	}
 	
 	public void Remove(long length)
 	{
-		Mark end = Marks.Add(Marks.Insert.Position + length); 
-		Replace(HistoryOperation.Remove, (InternalMark)Marks.Insert, (InternalMark)end, null, null, 0); 
-		Marks.Remove(end);
+		lock(Lock)
+		{
+			Mark end = Marks.Add(Marks.Insert.Position + length); 
+			Replace(HistoryOperation.Remove, (InternalMark)Marks.Insert, (InternalMark)end, null, null, 0); 
+			Marks.Remove(end);
+		}
 	}
 	
 	public void Remove(Range range)
 	{
-		Replace(HistoryOperation.Remove, (InternalMark)range.Start, (InternalMark)range.End, null, null, 0);
+		lock(Lock)
+		{
+			Replace(HistoryOperation.Remove, (InternalMark)range.Start, (InternalMark)range.End, null, null, 0);
+		}
 	}
 	
 	public void Remove(long start, long end)
 	{
-		Mark s = Marks.Add(start);
-		Mark e = Marks.Add(end);
-		Replace(HistoryOperation.Remove, (InternalMark)s, (InternalMark)e, null, null, 0);
-		Marks.Remove(s);
-		Marks.Remove(e);
+		lock(Lock)
+		{
+			Mark s = Marks.Add(start);
+			Mark e = Marks.Add(end);
+			Replace(HistoryOperation.Remove, (InternalMark)s, (InternalMark)e, null, null, 0);
+			Marks.Remove(s);
+			Marks.Remove(e);
+		}
 	}
 	
 	
@@ -616,38 +778,56 @@ public partial class PieceBuffer
 	
 	public void Copy(Mark destStart, Mark destEnd, Mark srcStart, Mark srcEnd)
 	{
-		Copy((InternalMark)destStart, (InternalMark)destEnd, 
-		     ((InternalMark)srcStart).Piece, ((InternalMark)srcStart).Offset, 
-		     ((InternalMark)srcEnd).Piece, ((InternalMark)srcEnd).Offset, srcEnd.Position - srcStart.Position);
+		lock(Lock)
+		{
+			Copy((InternalMark)destStart, (InternalMark)destEnd, 
+			     ((InternalMark)srcStart).Piece, ((InternalMark)srcStart).Offset, 
+			     ((InternalMark)srcEnd).Piece, ((InternalMark)srcEnd).Offset, srcEnd.Position - srcStart.Position);
+		}
 	}
 	
 	public void Copy(Mark start, Mark end)
 	{
-		Copy(Marks.Insert, Marks.Insert, start, end);
+		lock(Lock)
+		{
+			Copy(Marks.Insert, Marks.Insert, start, end);
+		}
 	}
 	
 	public void Copy(Mark dest, Range range)
 	{
-		Copy(dest, dest, range.Start, range.End);
+		lock(Lock)
+		{
+			Copy(dest, dest, range.Start, range.End);
+		}
 	}
 	
 	public void Copy(Range range)
 	{
-		Copy(Marks.Insert, Marks.Insert, range.Start, range.End);
+		lock(Lock)
+		{
+			Copy(Marks.Insert, Marks.Insert, range.Start, range.End);
+		}
 	}
 	
 	public void Copy(Mark dest, long start, long end)
 	{
-		Mark s = Marks.Add(start);
-		Mark e = Marks.Add(end);
-		Copy(dest, dest, s, e);
-		Marks.Remove(s);
-		Marks.Remove(e);
+		lock(Lock)
+		{
+			Mark s = Marks.Add(start);
+			Mark e = Marks.Add(end);
+			Copy(dest, dest, s, e);
+			Marks.Remove(s);
+			Marks.Remove(e);
+		}
 	}
 	
 	public void Copy(long start, long end)
 	{
-		Copy(Marks.Insert, start, end);
+		lock(Lock)
+		{
+			Copy(Marks.Insert, start, end);
+		}
 	}
 
 	
@@ -656,51 +836,69 @@ public partial class PieceBuffer
 	//	
 	public void Move(Mark destStart, Mark destEnd, Mark srcStart, Mark srcEnd)
 	{
-		BeginHistoryGroup();
-		Copy(destStart, destEnd, srcStart, srcEnd);
-		Remove(srcStart, srcEnd);
-		EndHistoryGroup();
+		lock(Lock)
+		{
+			BeginHistoryGroup();
+			Copy(destStart, destEnd, srcStart, srcEnd);
+			Remove(srcStart, srcEnd);
+			EndHistoryGroup();
+		}
 	}
 	
 	public void Move(Mark dest, Range range)
 	{
-		BeginHistoryGroup();
-		Copy(dest, dest, range.Start, range.End);
-		Remove(range.Start, range.End);
-		EndHistoryGroup();
+		lock(Lock)
+		{
+			BeginHistoryGroup();
+			Copy(dest, dest, range.Start, range.End);
+			Remove(range.Start, range.End);
+			EndHistoryGroup();
+		}
 	}
 	
 	public void Move(Mark dest, long start, long end)
 	{
-		Mark s = Marks.Add(start);
-		Mark e = Marks.Add(end);
-		BeginHistoryGroup();
-		Copy(dest, dest, s, e);
-		Remove(s, e);
-		EndHistoryGroup();
-		Marks.Remove(s);
-		Marks.Remove(e);
+		lock(Lock)
+		{
+			Mark s = Marks.Add(start);
+			Mark e = Marks.Add(end);
+			BeginHistoryGroup();
+			Copy(dest, dest, s, e);
+			Remove(s, e);
+			EndHistoryGroup();
+			Marks.Remove(s);
+			Marks.Remove(e);
+		}
 	}
 	
 	public void Move(Mark start, Mark end)
 	{
-		BeginHistoryGroup();
-		Copy(Marks.Insert, Marks.Insert, start, end);
-		Remove(start, end);
-		EndHistoryGroup();
+		lock(Lock)
+		{
+			BeginHistoryGroup();
+			Copy(Marks.Insert, Marks.Insert, start, end);
+			Remove(start, end);
+			EndHistoryGroup();
+		}
 	}
 	
 	public void Move(Range range)
 	{
-		BeginHistoryGroup();
-		Copy(Marks.Insert, Marks.Insert, range.Start, range.End);
-		Remove(range.Start, range.End);
-		EndHistoryGroup();
+		lock(Lock)
+		{
+			BeginHistoryGroup();
+			Copy(Marks.Insert, Marks.Insert, range.Start, range.End);
+			Remove(range.Start, range.End);
+			EndHistoryGroup();
+		}
 	}
 	
 	public void Move(long start, long end)
 	{
-		Move(Marks.Insert, start, end);
+		lock(Lock)
+		{
+			Move(Marks.Insert, start, end);
+		}
 	}
 	
 	
@@ -709,27 +907,37 @@ public partial class PieceBuffer
 	//
 	public ClipboardRange ClipboardCopy(Mark start, Mark end)
 	{
-		ClipboardRange range = new ClipboardRange();
-		
-		range.StartPiece = ((InternalMark)start).Piece;
-		range.StartOffset = ((InternalMark)start).Offset;
-		range.EndPiece = ((InternalMark)end).Piece;
-		range.EndOffset = ((InternalMark)end).Offset;
-		range.Length = end.Position - start.Position;
-		
-		return range;
+		lock(Lock)
+		{
+			InternalClipboardRange range = new InternalClipboardRange();
+			
+			range.StartPiece = ((InternalMark)start).Piece;
+			range.StartOffset = ((InternalMark)start).Offset;
+			range.EndPiece = ((InternalMark)end).Piece;
+			range.EndOffset = ((InternalMark)end).Offset;
+			range.Length = end.Position - start.Position;
+			
+			return range;
+		}
 	}
 	
 	public ClipboardRange ClipboardCut(Mark start, Mark end)
 	{
-		ClipboardRange range = ClipboardCopy(start, end);
-		Remove(start, end);
-		return range;
+		lock(Lock)
+		{
+			ClipboardRange range = ClipboardCopy(start, end);
+			Remove(start, end);
+			return range;
+		}
 	}
 	
 	public void ClipboardPaste(Mark dstStart, Mark dstEnd, ClipboardRange range)
 	{
-		Copy((InternalMark)dstStart, (InternalMark)dstEnd, range.StartPiece, range.StartOffset, range.EndPiece, range.EndOffset, range.Length);
+		lock(Lock)
+		{
+			InternalClipboardRange r = (InternalClipboardRange)range;
+			Copy((InternalMark)dstStart, (InternalMark)dstEnd, r.StartPiece, r.StartOffset, r.EndPiece, r.EndOffset, r.Length);
+		}
 	}
 	
 	
@@ -738,18 +946,18 @@ public partial class PieceBuffer
 	// History
 	//
 	
-	public void BeginHistoryGroup() { ++HistoryGroupLevel; }
-	public void EndHistoryGroup() { --HistoryGroupLevel; }
+	protected void BeginHistoryGroup() { ++HistoryGroupLevel; }
+	protected void EndHistoryGroup() { --HistoryGroupLevel; }
 	
-	public void AddHistory(HistoryOperation operation, long startPosition, long length, Piece start, Piece end)
+	protected void AddHistory(HistoryOperation operation, long startPosition, long length, Piece start, Piece end)
 	{
-		HistoryItem oldItem = History;
-		HistoryItem newItem = new HistoryItem(DateTime.Now, operation, startPosition, length, start, end, HistoryGroupLevel);
+		InternalHistoryItem oldItem = _History;
+		InternalHistoryItem newItem = new InternalHistoryItem(DateTime.Now, operation, startPosition, length, start, end, HistoryGroupLevel);
 		
 		newItem.NextSibling = History.FirstChild;
-		History.FirstChild = newItem;
+		_History.FirstChild = newItem;
 		newItem.Parent = History;
-		History = newItem;
+		_History = newItem;
 		
 		if(HistoryAdded != null)
 			HistoryAdded(this, new HistoryEventArgs(oldItem, newItem));
@@ -763,11 +971,11 @@ public partial class PieceBuffer
 
 		if(History != null)
 		{
-			Piece removeHead = History.Head.Prev.Next;
-			Piece removeTail = History.Tail.Next.Prev;
-			Piece insertHead = History.Head;
-			Piece insertTail = History.Tail;
-			Piece insertAfter = History.Head.Prev;
+			Piece removeHead = _History.Head.Prev.Next;
+			Piece removeTail = _History.Tail.Next.Prev;
+			Piece insertHead = _History.Head;
+			Piece insertTail = _History.Tail;
+			Piece insertAfter = _History.Head.Prev;
 			Piece p;
 			long lengthChange = 0;
 			long editPosition = 0;
@@ -793,8 +1001,8 @@ public partial class PieceBuffer
 
 			if(removeHead != insertTail.Next && removeTail != insertHead.Prev)
 			{
-				History.Head = removeHead;
-				History.Tail = removeTail;
+				_History.Head = removeHead;
+				_History.Tail = removeTail;
 				
 				p = removeHead;
 				while(p != removeTail)
@@ -811,8 +1019,8 @@ public partial class PieceBuffer
 				Piece empty = new Piece();
 				empty.Prev = insertAfter;
 				empty.Next = insertAfter.Next;
-				History.Head = empty;
-				History.Tail = empty;
+				_History.Head = empty;
+				_History.Tail = empty;
 			}
 		
 			if(insertHead != insertTail)
@@ -836,9 +1044,9 @@ public partial class PieceBuffer
 				}
 			}
 			
-			Marks.UpdateAfterReplace(editStartMark, editEndMark, 0, lengthChange, null);
-			Marks.Remove(editStartMark);
-			Marks.Remove(editEndMark);
+			_Marks.UpdateAfterReplace(editStartMark, editEndMark, 0, lengthChange, null);
+			_Marks.Remove(editStartMark);
+			_Marks.Remove(editEndMark);
 			
 			OnChanged(change);
 		}
@@ -849,136 +1057,151 @@ public partial class PieceBuffer
 	
 	public void Undo()
 	{
-		if(History.Parent != null)
+		lock(Lock)
 		{
-			HistoryItem oldItem = History;
-			HistoryItem newItem = History.Parent;
-			
-			UndoRedo();
-			History = History.Parent;
-			oldItem.Active = false;
-			
-			if(HistoryUndone != null)
-				HistoryUndone(this, new HistoryEventArgs(oldItem, newItem));
+			if(History.Parent != null)
+			{
+				InternalHistoryItem oldItem = _History;
+				InternalHistoryItem newItem = _History.InternalParent;
+				
+				UndoRedo();
+				_History = _History.InternalParent;
+				oldItem.Active = false;
+				
+				if(HistoryUndone != null)
+					HistoryUndone(this, new HistoryEventArgs(oldItem, newItem));
+			}
 		}
 	}
 	
 	public void Redo()
 	{
-		if(History.FirstChild != null)
+		lock(Lock)
 		{
-			HistoryItem oldItem = History;
-			HistoryItem newItem = History.FirstChild;
-			
-			History = newItem;
-			UndoRedo();
-			newItem.Active = true;
-			
-			if(HistoryRedone != null)
-				HistoryRedone(this, new HistoryEventArgs(oldItem, newItem));
+			if(History.FirstChild != null)
+			{
+				InternalHistoryItem oldItem = _History;
+				InternalHistoryItem newItem = _History.InternalFirstChild;
+				
+				_History = newItem;
+				UndoRedo();
+				newItem.Active = true;
+				
+				if(HistoryRedone != null)
+					HistoryRedone(this, new HistoryEventArgs(oldItem, newItem));
+			}
 		}
 	}
 	
 	public void HistoryJump(HistoryItem destination)
 	{
-		HistoryItem oldItem = History;
-		Stack<HistoryItem> redoPath = new Stack<HistoryItem>();
-		
-		// Find where the destination branch joins the current branch
-		// and record the path from the join point to the destination
-		HistoryItem item = destination;
-		while(!item.Active)
+		lock(Lock)
 		{
-			redoPath.Push(item);
-			item = item.Parent;
-		}
-		HistoryItem commonParent = item;
-		
-		// Undo back to the point where the branches meet
-		while(History != commonParent)
-		{
-			UndoRedo();
-			History.Active = false;
-			History = History.Parent;
-		}
-		
-		// Redo to the destination
-		while(History != destination)
-		{
-			HistoryItem next = redoPath.Pop();
-			HistoryItem prev = History.FirstChild;
+			InternalHistoryItem oldItem = _History;
+			Stack<InternalHistoryItem> redoPath = new Stack<InternalHistoryItem>();
 			
-			item = History.FirstChild;
-			while(item != next)
+			// Find where the destination branch joins the current branch
+			// and record the path from the join point to the destination
+			InternalHistoryItem item = (InternalHistoryItem)destination;
+			while(!item.Active)
 			{
-				prev = item;
-				item = item.NextSibling;
+				redoPath.Push(item);
+				item = item.InternalParent;
 			}
-
-			HistoryItem tmp = next.NextSibling;
-			next.NextSibling = History.FirstChild;
-			History.FirstChild = next;
-			prev.NextSibling = tmp;
+			HistoryItem commonParent = item;
 			
-			History = item;
-			UndoRedo();
-			History.Active = true;
+			// Undo back to the point where the branches meet
+			while(History != commonParent)
+			{
+				UndoRedo();
+				_History.Active = false;
+				_History = _History.InternalParent;
+			}
+			
+			// Redo to the destination
+			while(History != destination)
+			{
+				InternalHistoryItem next = redoPath.Pop();
+				InternalHistoryItem prev = _History.InternalFirstChild;
+				
+				item = _History.InternalFirstChild;
+				while(item != next)
+				{
+					prev = item;
+					item = item.InternalNextSibling;
+				}
+
+				HistoryItem tmp = next.NextSibling;
+				next.NextSibling = History.FirstChild;
+				_History.FirstChild = next;
+				prev.NextSibling = tmp;
+				
+				_History = item;
+				UndoRedo();
+				_History.Active = true;
+			}
+			
+			if(HistoryJumped != null)
+				HistoryJumped(this, new HistoryEventArgs(oldItem, destination));
 		}
-		
-		if(HistoryJumped != null)
-			HistoryJumped(this, new HistoryEventArgs(oldItem, destination));
 	}
 	
 	// TODO: Why does this take a length as well as start/end?
 	public void GetBytes(Mark start, Mark end, byte[] dest, long length)
 	{
-		InternalMark s = (InternalMark)start;
-		InternalMark e = (InternalMark)end;
-		
-		if(s.Piece == e.Piece)
+		lock(Lock)
 		{
-			if(length > e.Position - s.Position)
-				length = e.Position - s.Position;
-				
-			if(s.Piece != Pieces)
-				s.Piece.Block.GetBytes(s.Piece.Start + s.Offset, length, dest, 0);
-		}
-		else
-		{
-			long destOffset = 0;
-			long len = s.Piece.End - s.Piece.Start - s.Offset;
-			if(len > length)
-				len = length;
-			s.Piece.Block.GetBytes(s.Piece.Start + s.Offset, len, dest, destOffset);
-			destOffset += len;
-			length -= len;
+			InternalMark s = (InternalMark)start;
+			InternalMark e = (InternalMark)end;
 			
-			Piece p = s.Piece;
-			while(length > 0 && (p = p.Next) != e.Piece)
+			if(s.Piece == e.Piece)
 			{
-				len = p.End - p.Start;
+				if(length > e.Position - s.Position)
+					length = e.Position - s.Position;
+					
+				if(s.Piece != Pieces)
+					s.Piece.Block.GetBytes(s.Piece.Start + s.Offset, length, dest, 0);
+			}
+			else
+			{
+				long destOffset = 0;
+				long len = s.Piece.End - s.Piece.Start - s.Offset;
 				if(len > length)
 					len = length;
-				p.Block.GetBytes(p.Start, len, dest, destOffset);
+				s.Piece.Block.GetBytes(s.Piece.Start + s.Offset, len, dest, destOffset);
 				destOffset += len;
 				length -= len;
-			}
 				
-			if(length > 0 && p != Pieces)
-				p.Block.GetBytes(p.Start, e.Offset > length ? length : e.Offset, dest, destOffset);
+				Piece p = s.Piece;
+				while(length > 0 && (p = p.Next) != e.Piece)
+				{
+					len = p.End - p.Start;
+					if(len > length)
+						len = length;
+					p.Block.GetBytes(p.Start, len, dest, destOffset);
+					destOffset += len;
+					length -= len;
+				}
+					
+				if(length > 0 && p != Pieces)
+					p.Block.GetBytes(p.Start, e.Offset > length ? length : e.Offset, dest, destOffset);
+			}
 		}
 	}
 	
 	public void GetBytes(long offset, byte[] dest, long length)
 	{
-		Mark start = Marks.Add(offset);
-		Mark end = Marks.Add(offset + length);
-		GetBytes(start, end, dest, length);
-		Marks.Remove(start);
-		Marks.Remove(end);
+		lock(Lock)
+		{
+			Mark start = Marks.Add(offset);
+			Mark end = Marks.Add(offset + length);
+			GetBytes(start, end, dest, length);
+			Marks.Remove(start);
+			Marks.Remove(end);
+		}
 	}
 		
-	public void DebugDumpPieceText(string label, Piece head, Piece tail, bool between)
+	protected void DebugDumpPieceText(string label, Piece head, Piece tail, bool between)
 	{
 		Console.Write(label);
 		Piece p = head;
@@ -1009,7 +1232,7 @@ public partial class PieceBuffer
 		Console.Write("\n");
 	}
 	
-	public void DebugDumpHistory(HistoryItem item, int indent)
+	protected void DebugDumpHistory(InternalHistoryItem item, int indent)
 	{
 		const string padding = "                                                                                ";
 		string pad = padding.Substring(0, indent * 4);
@@ -1039,19 +1262,30 @@ public partial class PieceBuffer
 			else
 				Console.Write("HistoryHead\n");
 				
-			DebugDumpHistory(item.FirstChild, indent + 1);
-			item = item.NextSibling;
+			DebugDumpHistory(item.InternalFirstChild, indent + 1);
+			item = item.InternalNextSibling;
 		}
 	}
-	public void DebugDumpHistory(string msg)
+	protected void DebugDumpHistory(string msg)
 	{
 		return;
 		
 		Console.WriteLine("\n" + msg + "\n========\n");
 	
-		HistoryItem i = History;
-		while(i.Parent != null)
-			i = i.Parent;
+		InternalHistoryItem i = _History;
+		while(i.InternalParent != null)
+			i = i.InternalParent;
 		DebugDumpHistory(i, 1);
+	}
+	
+	public string DebugGetPieces()
+	{
+		System.Text.StringBuilder tmp = new System.Text.StringBuilder();
+	
+		Piece p = Pieces;
+		while((p = p.Next) != Pieces)
+			tmp.AppendFormat("{{{0},{1}}}", p.Start, p.End);
+		
+		return tmp.ToString();
 	}
 }

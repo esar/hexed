@@ -5,7 +5,7 @@ using System.IO;
 
 public partial class PieceBuffer
 {
-	public abstract class Block
+	protected abstract class Block
 	{
 		protected static Dictionary<string, Block> OpenBlocks = new Dictionary<string,Block>(); 
 		
@@ -17,7 +17,7 @@ public partial class PieceBuffer
 		public abstract void SetBytes(long start, long length, byte[] src, long srcOffset);
 	}
 	
-	public class ConstantBlock : Block
+	protected class ConstantBlock : Block
 	{
 		byte Constant;
 		
@@ -57,7 +57,7 @@ public partial class PieceBuffer
 		}
 	}
 	
-	public class FileBlock : Block
+	protected class FileBlock : Block
 	{
 		private FileStream	FS;
 		private byte[]		Buffer = new byte[4096];
@@ -133,7 +133,7 @@ public partial class PieceBuffer
 		}
 	}
 	
-	public class MemoryBlock : Block
+	protected class MemoryBlock : Block
 	{
 		private static int BlockNum = 0;
 		public byte[] Buffer;

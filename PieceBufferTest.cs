@@ -60,6 +60,8 @@ public class PieceBufferTest
 	
 	public string GetPieces()
 	{
+		return b.DebugGetPieces();
+		/*
 		StringBuilder tmp = new StringBuilder();;
 	
 		PieceBuffer.Piece p = b.Pieces;
@@ -67,6 +69,7 @@ public class PieceBufferTest
 			tmp.AppendFormat("{{{0},{1}}}", p.Start, p.End);
 		
 		return tmp.ToString();
+		*/
 	}
 	
 	public string GetText()
