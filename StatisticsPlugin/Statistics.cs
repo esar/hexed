@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Drawing;
@@ -97,8 +98,7 @@ namespace StatisticsPlugin
 		protected override void OnProgressChanged(ProgressChangedEventArgs e)
 		{
 			ProgressInfo progress = (ProgressInfo)e.UserState;
-			for(int i = 0; i < progress.Counts.Length; ++i)
-				Statistics[i] += progress.Counts[i];
+			Statistics.Add(progress.Counts);
 			
 			base.OnProgressChanged(e);
 			Progress.Update(e.ProgressPercentage, progress.Message);
@@ -113,21 +113,6 @@ namespace StatisticsPlugin
 
 	public class Statistics : IHistogramDataSource
 	{
-		protected BackgroundWorker _Worker;
-		public BackgroundWorker Worker
-		{
-			get { return _Worker; }
-			set { _Worker = value; }
-		}
-		
-		protected ProgressNotification _Progress;
-		public ProgressNotification Progress
-		{
-			get { return _Progress; }
-			set { _Progress = value; }
-		}
-
-		
 		protected int _Length;
 		public int Length
 		{
@@ -136,83 +121,32 @@ namespace StatisticsPlugin
 		}
 		
 		protected long[] Buckets;
-		public long this[int index]
-		{
-			get { return Buckets[index]; }
-			set 
-			{
-				_Sum -= Buckets[index];
-				_Sum += value;
-				
-				if(index == _MaxBucket && value < _Max)
-				{
-					_Max = 0;
-					for(int i = 0; i < Buckets.Length; ++i)
-					{
-						if(Buckets[i] > _Max)
-						{
-							_Max = Buckets[i];
-							_MaxBucket = i;
-						}
-					}
-				}
-				else if(value > _Max)
-				{
-					_Max = value;
-					_MaxBucket = index;
-				}
-				
-				if(index == _MinBucket && value > _Min)
-				{
-					_Min = Int64.MaxValue;
-					for(int i = 0; i < Buckets.Length; ++i)
-					{
-						if(Buckets[i] < _Min)
-						{
-							_Min = Buckets[i];
-							_MinBucket = i;
-						}
-					}
-				}
-				else if(value < Min)
-				{
-					_Min = value;
-					_MinBucket = index;
-				}
-				
-				Buckets[index] = value; 
-			}
-		}
+		public long this[int index]	{ get { return Buckets[index]; } }
 
 		protected long _Max;
-		public long Max
-		{
-			get { return _Max; }
-		}
-		
-		protected int _MaxBucket = -1;
-		public int MaxBucket
-		{
-			get { return _MaxBucket; }
-		}
+		public long Max { get { return _Max; } }
+		protected int _MaxCount;
+		public int MaxCount { get { return _MaxCount; } }
 		
 		protected long _Min;
-		public long Min
-		{
-			get { return _Min; }
-		}
-		
-		protected int _MinBucket;
-		public int MinBucket
-		{
-			get { return _MinBucket; }
-		}
+		public long Min	{ get { return _Min; } }
+		protected int _MinCount;
+		public int MinCount { get { return _MinCount; } }
 		
 		protected long _Sum;
-		public long Sum
-		{
-			get { return _Sum; }
-		}
+		public long Sum	{ get { return _Sum; } }
+		
+		protected double _Mean;
+		public double Mean { get { return _Mean; } }
+		
+		protected long _Median;
+		public long Median { get { return _Median; } }
+		
+		protected int _TokenCount;
+		public int TokenCount { get { return _TokenCount; } }
+		
+		protected double _Entropy;
+		public double Entropy { get { return _Entropy; } }
 		
 		public Statistics()
 		{
@@ -222,7 +156,64 @@ namespace StatisticsPlugin
 		{
 			Array.Clear(Buckets, 0, Buckets.Length);
 			_Max = 0;
-			_MaxBucket = 0;
+			_Min = 0;
+			_Sum = 0;
+			_Mean = 0;
+			_MaxCount = 0;
+			_MinCount = 0;
+			_TokenCount = 0;
+			_Entropy = 0;
+		}
+
+		public void Add(long[] counts)
+		{
+			if(counts.Length != Buckets.Length)
+				throw new ArgumentException("The array lengths must match", "counts");
+			
+			_Min = Int64.MaxValue;
+			_Max = Int64.MinValue;
+			_TokenCount = 0;
+			_Sum = 0;
+			for(int i = 0; i < counts.Length; ++i)
+			{
+				Buckets[i] += counts[i];
+				_Sum += Buckets[i];
+				if(Buckets[i] > _Max)
+				{
+					_Max = Buckets[i];
+					_MaxCount = i;
+				}
+				if(Buckets[i] < _Min)
+				{
+					_Min = Buckets[i];
+					_MinCount = i;
+				}
+				
+				if(Buckets[i] > 0)
+				{
+					_TokenCount += 1;
+				}
+			}
+
+			_Mean = _Sum / Buckets.Length;
+			
+			long[] medianArray = new long[Buckets.Length];
+			Array.Copy(Buckets, medianArray, Buckets.Length);
+			Array.Sort(medianArray);
+			if(medianArray.Length % 2 == 0)
+				_Median = (medianArray[medianArray.Length / 2] + medianArray[medianArray.Length / 2 + 1]) / 2;
+			else
+				_Median = medianArray[medianArray.Length / 2];
+			
+			_Entropy = 0;
+			for(int i = 0; i < Buckets.Length; ++i)
+			{
+				if(Buckets[i] > 0)
+				{
+					double probability = (double)Buckets[i] / _Sum;
+					_Entropy -= probability * Math.Log(probability, 2);
+				}
+			}
 		}
 	}
 	
@@ -334,7 +325,121 @@ namespace StatisticsPlugin
 		public StatisticsWorker Worker;
 		public ProgressNotification Progress;
 	}
+
+	public class HexStringComparer : IComparer
+	{
+		public int Compare(object x, object y)
+		{
+			return Convert.ToUInt64(x.ToString(), 16).CompareTo(Convert.ToUInt64(y.ToString(), 16));
+		}
+	}
+	
+	public class NumericStringComparer : IComparer
+	{
+		public int Compare(object x, object y)
+		{
+			return Convert.ToDouble(x.ToString()).CompareTo(Convert.ToDouble(y.ToString()));
+		}
+	}
+	
+	public class NaturalStringComparer : IComparer
+	{
+		public int Compare(object objx, object objy)
+		{
+			string x = objx.ToString();
+			string y = objy.ToString();
+			int xStart = 0;
+			int yStart = 0;
+			int xEnd = x.Length;
+			int yEnd = y.Length;
+			int xPos = 0;
+			int yPos = 0;
+			int result;
+
+			do
+			{
+				if(xPos >= xEnd && yPos >= yEnd)
+					return 0;
+				if(xPos >= xEnd)
+					return -1;
+				if(yPos >= yEnd)
+					return 1;
+
+				bool xIsDigit = Char.IsDigit(x[xPos]);
+				while(xPos < xEnd && Char.IsDigit(x[xPos]) == xIsDigit)
+					++xPos;
+				
+				bool yIsDigit = Char.IsDigit(y[yPos]);
+				while(yPos < yEnd && Char.IsDigit(y[yPos]) == yIsDigit)
+					++yPos;
+				
+				if(xIsDigit && yIsDigit)
+					result = Convert.ToInt64(x.Substring(xStart, xPos - xStart), 10).CompareTo(Convert.ToInt64(y.Substring(yStart, yPos - yStart), 10));
+				else
+					result = String.Compare(x.Substring(xStart, xPos - xStart), y.Substring(yStart, yPos - yStart), true);
+					
+				xStart = xPos;
+				yStart = yPos;
+				
+			} while(result == 0);			
+			
+			return result;
+		}
+	}
+	
+	public class ListViewColumnSorter : System.Collections.IComparer
+	{
+		private IComparer CurrentComparer;
+		private IComparer _DefaultComparer;
+		public IComparer DefaultComparer
+		{
+			get { return _DefaultComparer; }
+			set { _DefaultComparer = value; }
+		}
 		
+		private List<IComparer> _ColumnComparers = new List<IComparer>();
+		public List<IComparer> ColumnComparers { get { return _ColumnComparers; } }
+		
+		private int _SortColumn;
+		public int SortColumn
+		{
+			get { return _SortColumn; }
+			set 
+			{ 
+				_SortColumn = value;
+				if(_ColumnComparers.Count > _SortColumn)
+					CurrentComparer = _ColumnComparers[_SortColumn];
+				else
+					CurrentComparer = _DefaultComparer;
+			}
+		}
+		
+		private SortOrder _SortOrder;
+		public SortOrder SortOrder
+		{
+			get { return _SortOrder; }
+			set { _SortOrder = value; }
+		}
+
+		public ListViewColumnSorter()
+		{
+			_DefaultComparer = new Comparer(System.Globalization.CultureInfo.CurrentUICulture);
+			CurrentComparer = _DefaultComparer;
+		}
+		
+		public int Compare(object x, object y)
+		{
+			ListViewItem itemX = (ListViewItem)x;
+			ListViewItem itemY = (ListViewItem)y;
+
+			int result = CurrentComparer.Compare(itemX.SubItems[_SortColumn].Text, itemY.SubItems[_SortColumn].Text);
+			if(_SortOrder == SortOrder.Descending)
+				return 0 - result;
+			else
+				return result;
+		}
+	}
+	
 	public class StatisticsPanel : Panel
 	{
 		IPluginHost Host;
@@ -351,6 +456,9 @@ namespace StatisticsPlugin
 		ListViewItem StatsItemMax;
 		ListViewItem StatsItemMean;
 		ListViewItem StatsItemMedian;
+		ListViewItem StatsItemSum;
+		ListViewItem StatsItemTokenCount;
+		ListViewItem StatsItemEntropy;
 		DocumentRangeIndicator RangeIndicator = new DocumentRangeIndicator();
 		Document Document;
 		StatisticsState State;
@@ -371,6 +479,7 @@ namespace StatisticsPlugin
 			List.Columns.Add("Char");
 			List.Columns.Add("Count");
 			List.Columns.Add("Percent");
+			
 			for(int i = 0; i < 256; ++i)
 			{
 				ListViewItem item = List.Items.Add(i.ToString("X"));
@@ -379,8 +488,20 @@ namespace StatisticsPlugin
 				item.SubItems.Add(String.Empty);
 				item.SubItems.Add(String.Empty);
 			}
+
 			List.Dock = DockStyle.Fill;
 			List.Visible = false;
+			List.FullRowSelect = true;
+			List.HideSelection = false;
+			ListViewColumnSorter sorter = new ListViewColumnSorter();
+			sorter.ColumnComparers.Add(new HexStringComparer());
+			sorter.ColumnComparers.Add(new NumericStringComparer());
+			sorter.ColumnComparers.Add(new Comparer(System.Globalization.CultureInfo.CurrentCulture));
+			sorter.ColumnComparers.Add(new NumericStringComparer());
+			sorter.SortColumn = 0;
+			sorter.SortOrder = SortOrder.Ascending;
+			List.ListViewItemSorter = sorter;
+			List.ColumnClick += OnColumnClick;
 			Controls.Add(List);
 			
 			StatsList.View = View.Details;
@@ -390,6 +511,9 @@ namespace StatisticsPlugin
 			StatsItemMax = StatsList.Items.Add(new ListViewItem(new string[] {"Max", String.Empty}));
 			StatsItemMean = StatsList.Items.Add(new ListViewItem(new string[] {"Mean", String.Empty}));
 			StatsItemMedian = StatsList.Items.Add(new ListViewItem(new string[] {"Median", String.Empty}));
+			StatsItemSum = StatsList.Items.Add(new ListViewItem(new string[] {"Sum", String.Empty}));
+			StatsItemTokenCount = StatsList.Items.Add(new ListViewItem(new string[] {"Token Count", String.Empty}));
+			StatsItemEntropy = StatsList.Items.Add(new ListViewItem(new string[] {"Entropy", String.Empty}));
 			StatsList.Dock = DockStyle.Fill;
 			StatsList.Visible = false;
 			Controls.Add(StatsList);
@@ -426,6 +550,23 @@ namespace StatisticsPlugin
 			Controls.Add(ToolBar);			
 		}
 
+		protected void OnColumnClick(object sender, ColumnClickEventArgs e)
+		{
+			ListView view = (ListView)sender;
+			ListViewColumnSorter sorter = (ListViewColumnSorter)view.ListViewItemSorter;
+			if(sorter.SortColumn == e.Column)
+			{
+				if(sorter.SortOrder == SortOrder.Ascending)
+					sorter.SortOrder = SortOrder.Descending;
+				else
+					sorter.SortOrder = SortOrder.Ascending;
+			}
+			else
+				sorter.SortColumn = e.Column;
+			
+			view.Sort();
+		}
+		
 		protected void PopulateList(Statistics data)
 		{
 			List.BeginUpdate();
@@ -457,7 +598,11 @@ namespace StatisticsPlugin
 			StatsList.BeginUpdate();
 			StatsItemMin.SubItems[1].Text = data.Min.ToString();
 			StatsItemMax.SubItems[1].Text = data.Max.ToString();
-			StatsItemMean.SubItems[1].Text = ((float)data.Sum / 256).ToString("0.##");
+			StatsItemMean.SubItems[1].Text = data.Mean.ToString("0.##");
+			StatsItemMedian.SubItems[1].Text = data.Median.ToString();
+			StatsItemSum.SubItems[1].Text = data.Sum.ToString();
+			StatsItemTokenCount.SubItems[1].Text = data.TokenCount.ToString();
+			StatsItemEntropy.SubItems[1].Text = data.Entropy.ToString("0.##");
 			StatsList.EndUpdate();
 		}
 		
@@ -594,27 +739,9 @@ namespace StatisticsPlugin
 			
 			if(worker == State.Worker)
 			{
-				List.BeginUpdate();
-				foreach(ListViewItem i in List.Items)
-				{
-					int index = i.Index;
-					long val = Statistics[index];
-					float percent = (float)val / Statistics.Sum;
-					percent *= 100.0f;
-					
-					Statistics[index] = val;
-					i.SubItems[3].Text = val.ToString();
-					i.SubItems[4].Text = percent.ToString("0.00");
-				}
-				List.EndUpdate();
-				
+				PopulateList(Statistics);
+				PopulateStatsList(Statistics);
 				Graph.Invalidate();
-				
-				StatsList.BeginUpdate();
-				StatsItemMin.SubItems[1].Text = Statistics.Min.ToString();
-				StatsItemMax.SubItems[1].Text = Statistics.Max.ToString();
-				StatsItemMean.SubItems[1].Text = ((float)Statistics.Sum / 256).ToString("0.##");
-				StatsList.EndUpdate();
 			}
 		}
 		
