@@ -670,6 +670,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	protected void OnIdle(object sender, EventArgs e)
 	{
 		bool haveChild = (_TabbedGroups.ActiveTabPage != null);
+		bool haveSelection = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View.Selection.Length > 0 : false;
 		
 		Commands["FileSave"].Enabled = haveChild;
 		Commands["FileSaveAs"].Enabled = haveChild;
@@ -680,10 +681,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		Commands["EditUndo"].Enabled = haveChild;
 		Commands["EditRedo"].Enabled = haveChild;
-		Commands["EditCut"].Enabled = haveChild;
-		Commands["EditCopy"].Enabled = haveChild;
+		Commands["EditCut"].Enabled = haveSelection;
+		Commands["EditCopy"].Enabled = haveSelection;
 		Commands["EditPaste"].Enabled = haveChild;
-		Commands["EditDelete"].Enabled = haveChild;
+		Commands["EditDelete"].Enabled = haveSelection;
 		Commands["EditSelectAll"].Enabled = haveChild;
 
 		Commands["ViewAddressRadix"].Enabled = haveChild;
