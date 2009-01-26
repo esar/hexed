@@ -673,7 +673,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		bool haveSelection = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View.Selection.Length > 0 : false;
 		HexView view = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View : null;
 		
-		Commands["FileSave"].Enabled = haveChild;
+		Commands["FileSave"].Enabled = haveChild && view.Document.IsModified;
 		Commands["FileSaveAs"].Enabled = haveChild;
 		Commands["FileSaveAll"].Enabled = haveChild;
 		Commands["FilePrintSetup"].Enabled = haveChild;
@@ -712,6 +712,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		Commands["WindowSplit"].Enabled = haveChild;		
 		Commands["WindowDuplicate"].Enabled = haveChild;
+		
+		ModifiedLabel.ForeColor = haveChild && view.Document.IsModified ? Color.Black : SystemColors.GrayText;
 	}
 	
 	protected override void OnLoad(EventArgs e)

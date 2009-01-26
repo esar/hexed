@@ -260,6 +260,7 @@ public partial class PieceBuffer
 	public HistoryItem HistoryRoot { get { return _HistoryRoot; } }
 	public bool CanUndo { get { return _History.Parent != null; } }
 	public bool CanRedo { get { return _History.FirstChild != null; } }
+	public bool IsModified { get { return _History.Parent != null; } }
 	protected int			HistoryGroupLevel;
 	
 	const int IndexCacheSize = 4096;
