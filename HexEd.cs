@@ -671,6 +671,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		bool haveChild = (_TabbedGroups.ActiveTabPage != null);
 		bool haveSelection = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View.Selection.Length > 0 : false;
+		HexView view = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View : null;
 		
 		Commands["FileSave"].Enabled = haveChild;
 		Commands["FileSaveAs"].Enabled = haveChild;
@@ -679,8 +680,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands["FilePrintPreview"].Enabled = haveChild;
 		Commands["FilePrint"].Enabled = haveChild;
 		
-		Commands["EditUndo"].Enabled = haveChild;
-		Commands["EditRedo"].Enabled = haveChild;
+		Commands["EditUndo"].Enabled = haveChild && view.Document.CanUndo;
+		Commands["EditRedo"].Enabled = haveChild && view.Document.CanRedo;
 		Commands["EditCut"].Enabled = haveSelection;
 		Commands["EditCopy"].Enabled = haveSelection;
 		Commands["EditPaste"].Enabled = haveChild;

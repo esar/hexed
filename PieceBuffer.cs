@@ -258,6 +258,8 @@ public partial class PieceBuffer
 	public HistoryItem History { get { return _History; } }
 	protected InternalHistoryItem	_HistoryRoot;
 	public HistoryItem HistoryRoot { get { return _HistoryRoot; } }
+	public bool CanUndo { get { return _History.Parent != null; } }
+	public bool CanRedo { get { return _History.FirstChild != null; } }
 	protected int			HistoryGroupLevel;
 	
 	const int IndexCacheSize = 4096;
