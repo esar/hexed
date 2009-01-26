@@ -785,7 +785,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		selectionPanel.Update(view);
 	}
 
-	protected void Open(string filename)
+	public void Open(string filename)
 	{
 		string[] filenameParts = filename.Split(new char[] {Path.PathSeparator, Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
 		
@@ -798,6 +798,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
 			_TabbedGroups.ActiveLeaf.TabPages.Add(form);
+			((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 		}
 		catch(System.Security.SecurityException ex)
 		{
@@ -807,6 +808,18 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		{
 			MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
+	}
+	
+	public void New()
+	{
+		Document doc = new Document();
+		HexViewForm form = new HexViewForm(doc);
+		form.Title = "New File";
+		form.Image = Settings.Instance.Image("document_16.png");
+		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
+		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
+		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
+		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 	}
 	
 	protected void OnDragEnter(object sender, DragEventArgs e)
@@ -840,13 +853,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	
 	private void OnFileNew(object sender, EventArgs e)
 	{
-		Document doc = new Document();
-		HexViewForm form = new HexViewForm(doc);
-		form.Title = "New File";
-		form.Image = Settings.Instance.Image("document_16.png");
-		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
-		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
+		New();
 	}
 	
 	private void OnFileOpen(object sender, EventArgs args)
