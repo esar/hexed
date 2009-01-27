@@ -737,11 +737,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 				EditModeLabel.Text = "OVR";
 		}
 		else
-		{
 			AddressLabel.Text = "Addr:";
-			EditModeLabel.Enabled = false;
-		}
 		
+		EditModeLabel.Enabled = haveChild;
 		ModifiedLabel.Enabled = haveChild && view.Document.IsModified;
 	}
 	
