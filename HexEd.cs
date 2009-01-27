@@ -420,7 +420,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		StatusBar.Items.Add(EditModeLabel);
 		StatusBar.Items.Add(new ToolStripSeparator());
 		ModifiedLabel = new ToolStripStatusLabel("MOD");
-		ModifiedLabel.ForeColor = SystemColors.GrayText;
+		ModifiedLabel.Enabled = false;
 		StatusBar.Items.Add(ModifiedLabel);
 		StatusBar.Items.Add(new ToolStripSeparator());
 		
@@ -723,7 +723,23 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands["WindowSplit"].Enabled = haveChild;		
 		Commands["WindowDuplicate"].Enabled = haveChild;
 		
-		ModifiedLabel.ForeColor = haveChild && view.Document.IsModified ? Color.Black : SystemColors.GrayText;
+		if(view != null)
+		{
+			AddressRadixMenu.SelectedRadix = (int)view.AddressRadix;
+			DataRadixMenu.SelectedRadix = (int)view.DataRadix;
+			AddressLabel.Text = String.Format("Addr: {0}", view.Selection.ToString());
+			if(view.EditMode == EditMode.Insert)
+				EditModeLabel.Text = "INS";
+			else
+				EditModeLabel.Text = "OVR";
+		}
+		else
+		{
+			AddressLabel.Text = "Addr:";
+			EditModeLabel.Enabled = false;
+		}
+		
+		ModifiedLabel.Enabled = haveChild && view.Document.IsModified;
 	}
 	
 	protected override void OnLoad(EventArgs e)
@@ -740,45 +756,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			if(view.Selection == sender)
 			{
 				selectionPanel.Update(view);
-				if(view.Selection.Length == 0)
-					AddressLabel.Text = "Addr: " + view.IntToRadixString((ulong)(view.Selection.Start / 8), view.AddressRadix, 0);
-				else
-					AddressLabel.Text = "Addr: " + 
-										view.IntToRadixString((ulong)(view.Selection.Start / 8), view.AddressRadix, 0) + 
-										" -> " + 
-										view.IntToRadixString((ulong)(view.Selection.End / 8), view.AddressRadix, 0);
 			}
 		}
 	}
 
-	protected void OnEditModeChanged(object sender, EventArgs e)
-	{
-		if(_TabbedGroups.ActiveTabPage != null)
-		{
-			if(((HexViewForm)_TabbedGroups.ActiveTabPage).View == sender)
-			{
-				if(((HexViewForm)_TabbedGroups.ActiveTabPage).View.EditMode == EditMode.Insert)
-					EditModeLabel.Text = "INS";
-				else
-					EditModeLabel.Text = "OVR";
-			}
-		}		
-	}
-
-	protected void OnAddressRadixChanged(object sender, EventArgs e)
-	{
-		if(_TabbedGroups.ActiveTabPage != null)
-			if(((HexViewForm)_TabbedGroups.ActiveTabPage).View == sender)
-				AddressRadixMenu.SelectedRadix = (int)((HexViewForm)_TabbedGroups.ActiveTabPage).View.AddressRadix; 
-	}
-
-	protected void OnDataRadixChanged(object sender, EventArgs e)
-	{
-		if(_TabbedGroups.ActiveTabPage != null)
-			if(((HexViewForm)_TabbedGroups.ActiveTabPage).View == sender)
-				DataRadixMenu.SelectedRadix = (int)((HexViewForm)_TabbedGroups.ActiveTabPage).View.DataRadix; 
-	}
-	
 	protected void UpdateWindowTitle(string documentTitle)
 	{
 		string[] parts = Text.Split(new string[] {" - "}, 2, StringSplitOptions.None);
@@ -796,9 +777,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			Commands.RevertMerge();
 		
 		OnSelectionChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
-		OnEditModeChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
-		OnAddressRadixChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
-		OnDataRadixChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
 		
 		UpdateAllPanels();
 		
@@ -827,9 +805,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			form.Title = filenameParts[filenameParts.Length - 1];
 			form.Image = Settings.Instance.Image("document_16.png");
 			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
-			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-			form.View.AddressRadixChanged += new EventHandler(OnAddressRadixChanged);
-			form.View.DataRadixChanged += new EventHandler(OnDataRadixChanged);
 			_TabbedGroups.ActiveLeaf.TabPages.Add(form);
 			((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 		}
@@ -850,9 +825,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		form.Title = "New File";
 		form.Image = Settings.Instance.Image("document_16.png");
 		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
-		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-		form.View.AddressRadixChanged += new EventHandler(OnAddressRadixChanged);
-		form.View.DataRadixChanged += new EventHandler(OnDataRadixChanged);
 		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
 		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 	}

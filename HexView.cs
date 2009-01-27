@@ -211,6 +211,18 @@ public class HexView : Control
 			else
 				throw new InvalidCastException();
 		}
+		
+		public override string ToString()
+		{
+			if(Length > 0)
+			{
+				return String.Format("{0} -> {1}", 
+				                     View.IntToRadixString((ulong)_Range.Start.Position, View.AddressRadix, 0), 
+				                     View.IntToRadixString((ulong)_Range.End.Position, View.AddressRadix, 0));
+			}
+			else
+				return View.IntToRadixString((ulong)_Range.Start.Position, View.AddressRadix, 0);
+		}
 	};
 
 	public class ContextMenuEventArgs : EventArgs
