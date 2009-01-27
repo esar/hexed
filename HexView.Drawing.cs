@@ -110,9 +110,16 @@ public partial class HexView
 					p.Y >= LayoutDimensions.AsciiRect.Top &&
 					p.Y <= LayoutDimensions.AsciiRect.Bottom)
 		{
-			
-
-			return new HexViewHit(HexViewHit.HitType.Ascii);
+			Graphics g = CreateGraphics();
+			int i;
+			for(i = 1; i < LayoutDimensions.BitsPerRow / 8; ++i)
+			{
+				RectangleF r = MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, i, _Font);
+				if(p.X - LayoutDimensions.AsciiRect.Left <= r.Width)
+					break;
+			}
+			g.Dispose();
+			return new HexViewHit(HexViewHit.HitType.Ascii, lineAddress + ((i - 1) * 8));
 		}
 
 		return new HexViewHit(HexViewHit.HitType.Unknown);

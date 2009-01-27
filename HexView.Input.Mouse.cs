@@ -23,19 +23,23 @@ public partial class HexView
 		{
 			DragStartHit = hit;
 			DragStartPos = new Point(e.X, e.Y);
-			if(hit.Type == HexViewHit.HitType.Data || hit.Type == HexViewHit.HitType.DataSelection)
+			switch(hit.Type)
 			{
-				if((ModifierKeys & Keys.Shift) == Keys.Shift)
-					Selection.End = hit.Address;
-				else
-					Selection.Set(hit.Address, hit.Address);
-			}
-			else if(hit.Type == HexViewHit.HitType.Address)
-			{
-				if((ModifierKeys & Keys.Shift) == Keys.Shift)
-					Selection.End = hit.Address + LayoutDimensions.BitsPerRow;
-				else
-					Selection.Set(hit.Address, hit.Address + LayoutDimensions.BitsPerRow);
+				case HexViewHit.HitType.Data:
+				case HexViewHit.HitType.DataSelection:
+				case HexViewHit.HitType.Ascii:
+				case HexViewHit.HitType.AsciiSelection:
+					if((ModifierKeys & Keys.Shift) == Keys.Shift)
+						Selection.End = hit.Address;
+					else
+						Selection.Set(hit.Address, hit.Address);
+					break;
+				case HexViewHit.HitType.Address:
+					if((ModifierKeys & Keys.Shift) == Keys.Shift)
+						Selection.End = hit.Address + LayoutDimensions.BitsPerRow;
+					else
+						Selection.Set(hit.Address, hit.Address + LayoutDimensions.BitsPerRow);
+					break;
 			}
 		}
 	}
@@ -129,14 +133,22 @@ public partial class HexView
 		else
 		{
 			HexViewHit hit = HitTest(new Point(e.X, e.Y));
-			if(hit.Type == HexViewHit.HitType.Data || hit.Type == HexViewHit.HitType.DataSelection)
-				Selection.Set(DragStartHit.Address, hit.Address + (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
-			else if(hit.Type == HexViewHit.HitType.Address)
+			switch(hit.Type)
 			{
-				if(hit.Address >= DragStartHit.Address)
-					Selection.Set(DragStartHit.Address, hit.Address + LayoutDimensions.BitsPerRow);
-				else
-					Selection.Set(DragStartHit.Address + LayoutDimensions.BitsPerRow, hit.Address);
+				case HexViewHit.HitType.Data:
+				case HexViewHit.HitType.DataSelection:
+					Selection.Set(DragStartHit.Address, hit.Address + (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
+					break;
+				case HexViewHit.HitType.Ascii:
+				case HexViewHit.HitType.AsciiSelection:
+					Selection.Set(DragStartHit.Address, hit.Address + 8);
+					break;
+				case HexViewHit.HitType.Address:
+					if(hit.Address >= DragStartHit.Address)
+						Selection.Set(DragStartHit.Address, hit.Address + LayoutDimensions.BitsPerRow);
+					else
+						Selection.Set(DragStartHit.Address + LayoutDimensions.BitsPerRow, hit.Address);
+					break;
 			}
 		}
 	}
