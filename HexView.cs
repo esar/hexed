@@ -327,16 +327,35 @@ public class HexView : Control
 		set { _WordsPerLine = value; RecalcDimensions(); Invalidate(); EnsureVisible(Selection.Start); }
 	}
 	
+	public event EventHandler AddressRadixChanged;
 	public uint AddressRadix
 	{
 		get { return _AddressRadix; }
-		set { _AddressRadix = value; RecalcDimensions(); Invalidate(); EnsureVisible(Selection.Start); }
+		set 
+		{ 
+			_AddressRadix = value; 
+			RecalcDimensions(); 
+			Invalidate(); 
+			EnsureVisible(Selection.Start);
+			if(AddressRadixChanged != null)
+				AddressRadixChanged(this, EventArgs.Empty);
+		}
 	}
 
+	public event EventHandler DataRadixChanged;
 	public uint DataRadix
 	{
 		get { return _DataRadix; }
-		set { BuildDataRadixStringTable(value); _DataRadix = value; RecalcDimensions(); Invalidate(); EnsureVisible(Selection.Start); }
+		set 
+		{ 
+			BuildDataRadixStringTable(value); 
+			_DataRadix = value; 
+			RecalcDimensions(); 
+			Invalidate(); 
+			EnsureVisible(Selection.Start);
+			if(DataRadixChanged != null)
+				DataRadixChanged(this, EventArgs.Empty);
+		}
 	}
 	
 	public override Color ForeColor

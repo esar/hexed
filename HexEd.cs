@@ -232,6 +232,9 @@ class RadixMenu : ToolStripMenuItem
 
 		set
 		{
+			if(SelectedRadix == value)
+				return;
+			
 			ToolStripMenuItem selectedItem = null;
 			
 			for(int i = 2; i <= 36; ++i)
@@ -317,6 +320,9 @@ class HexEdApp : Form, IPluginHost
 	private ImageList			WindowImageList;
 	
 	private Content[]			DefaultWindowPositionContent = new Content[4];
+	
+	private RadixMenu				AddressRadixMenu;
+	private RadixMenu				DataRadixMenu;
 	
 	private ToolStripProgressBar	ProgressBar;
 	private ToolStripStatusLabel	ProgressMessage;
@@ -533,8 +539,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&View");
-		mi.DropDownItems.Add(new RadixMenu("Address Radix", "ViewAddressRadix", OnUiCommand));
-		mi.DropDownItems.Add(new RadixMenu("Data Radix", "ViewDataRadix", OnUiCommand));
+		AddressRadixMenu = new RadixMenu("Address Radix", "ViewAddressRadix", OnUiCommand);
+		mi.DropDownItems.Add(AddressRadixMenu);
+		DataRadixMenu = new RadixMenu("Data Radix", "ViewDataRadix", OnUiCommand);
+		mi.DropDownItems.Add(DataRadixMenu);
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi2 = new ToolStripMenuItem("Go To", null, null, "ViewGoTo");
 		mi2.DropDownItems.Add(CreateMenuItem("Top", null, "ViewGoToTop", Keys.Control | Keys.Home));
@@ -756,6 +764,20 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			}
 		}		
 	}
+
+	protected void OnAddressRadixChanged(object sender, EventArgs e)
+	{
+		if(_TabbedGroups.ActiveTabPage != null)
+			if(((HexViewForm)_TabbedGroups.ActiveTabPage).View == sender)
+				AddressRadixMenu.SelectedRadix = (int)((HexViewForm)_TabbedGroups.ActiveTabPage).View.AddressRadix; 
+	}
+
+	protected void OnDataRadixChanged(object sender, EventArgs e)
+	{
+		if(_TabbedGroups.ActiveTabPage != null)
+			if(((HexViewForm)_TabbedGroups.ActiveTabPage).View == sender)
+				DataRadixMenu.SelectedRadix = (int)((HexViewForm)_TabbedGroups.ActiveTabPage).View.DataRadix; 
+	}
 	
 	protected void UpdateWindowTitle(string documentTitle)
 	{
@@ -764,7 +786,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	}
 	
 	protected void OnTabbedGroupsPageChanged(object sender, Crownwood.DotNetMagic.Controls.TabPage e)
-	{
+	{	
 		if(_TabbedGroups.ActiveTabPage != null)
 		{
 			UpdateWindowTitle(_TabbedGroups.ActiveTabPage.Title);
@@ -772,6 +794,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		}
 		else
 			Commands.RevertMerge();
+		
+		OnSelectionChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
+		OnEditModeChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
+		OnAddressRadixChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
+		OnDataRadixChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
 		
 		UpdateAllPanels();
 		
@@ -801,6 +828,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			form.Image = Settings.Instance.Image("document_16.png");
 			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 			form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
+			form.View.AddressRadixChanged += new EventHandler(OnAddressRadixChanged);
+			form.View.DataRadixChanged += new EventHandler(OnDataRadixChanged);
 			_TabbedGroups.ActiveLeaf.TabPages.Add(form);
 			((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 		}
@@ -822,6 +851,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		form.Image = Settings.Instance.Image("document_16.png");
 		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
+		form.View.AddressRadixChanged += new EventHandler(OnAddressRadixChanged);
+		form.View.DataRadixChanged += new EventHandler(OnDataRadixChanged);
 		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
 		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 	}
