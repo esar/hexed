@@ -314,7 +314,7 @@ class HexEdApp : Form, IPluginHost
 	private ToolStrip			EditToolStrip = new ToolStrip();
 	private ToolStrip			ViewToolStrip = new ToolStrip();
 	private StatusStrip			StatusBar = new StatusStrip();
-	private SelectionPanel		selectionPanel = new SelectionPanel();
+	private SelectionPanel		selectionPanel;
 	private StructurePanel		structurePanel;
 	private HistoryPanel		HistoryPanel;
 	private ImageList			WindowImageList;
@@ -390,6 +390,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		CreateMenus();
 		CreateToolBars();
 		
+		selectionPanel = new SelectionPanel(this);
 		structurePanel = new StructurePanel(this);
 		HistoryPanel = new HistoryPanel(this);
 		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
@@ -748,18 +749,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		LoadPlugins();
 	}
 	
-	protected void OnSelectionChanged(object sender, EventArgs e)
-	{
-		if(_TabbedGroups.ActiveTabPage != null)
-		{
-			HexView view = ((HexViewForm)_TabbedGroups.ActiveTabPage).View;
-			if(view.Selection == sender)
-			{
-				selectionPanel.Update(view);
-			}
-		}
-	}
-
 	protected void UpdateWindowTitle(string documentTitle)
 	{
 		string[] parts = Text.Split(new string[] {" - "}, 2, StringSplitOptions.None);
@@ -776,23 +765,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		else
 			Commands.RevertMerge();
 		
-		OnSelectionChanged(((HexViewForm)_TabbedGroups.ActiveTabPage).View, EventArgs.Empty);
-		
-		UpdateAllPanels();
-		
 		if(ActiveViewChanged != null)
 			ActiveViewChanged(this, new EventArgs());
 	}
 
-	protected void UpdateAllPanels()
-	{
-		HexView view = null;
-
-		if(_TabbedGroups.ActiveTabPage != null)
-			view = ((HexViewForm)_TabbedGroups.ActiveTabPage).View;
-
-		selectionPanel.Update(view);
-	}
 
 	public void Open(string filename)
 	{
@@ -804,7 +780,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			HexViewForm form = new HexViewForm(doc);
 			form.Title = filenameParts[filenameParts.Length - 1];
 			form.Image = Settings.Instance.Image("document_16.png");
-			form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 			_TabbedGroups.ActiveLeaf.TabPages.Add(form);
 			((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 		}
@@ -824,7 +799,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		HexViewForm form = new HexViewForm(doc);
 		form.Title = "New File";
 		form.Image = Settings.Instance.Image("document_16.png");
-		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
 		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
 		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 	}

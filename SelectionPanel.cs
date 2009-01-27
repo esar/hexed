@@ -5,6 +5,8 @@ using System.Windows.Forms;
 
 class SelectionPanel : Panel
 {
+	protected IPluginHost Host;
+	protected HexView CurrentView;
 	protected ToolStrip ToolBar = new ToolStrip();
 	protected ListView  List = new ListView();
 	protected ListViewItem.ListViewSubItem	lengthItem = null;
@@ -14,8 +16,10 @@ class SelectionPanel : Panel
 	protected ListViewItem.ListViewSubItem	unicodeItem = null;
 	protected ListViewItem.ListViewSubItem	utf8Item = null;
 
-	public SelectionPanel()
+	public SelectionPanel(IPluginHost host)
 	{
+		Host = host;
+		
 		List.View = View.Details;
 		List.AllowColumnReorder = true;
 		List.FullRowSelect = true;
@@ -66,10 +70,31 @@ class SelectionPanel : Panel
 		ToolBar.Items.Add("|").ToolTipText = "OR";
 		ToolBar.Items.Add("^").ToolTipText = "XOR";
 		Controls.Add(ToolBar);
+		
+		
+		Host.ActiveViewChanged += OnActiveViewChanged;
 	}
 
-	public void Update(HexView view)
+	protected void OnActiveViewChanged(object sender, EventArgs e)
 	{
+		if(CurrentView != null)
+			CurrentView.Selection.Changed -= OnSelectionChanged;
+		CurrentView = Host.ActiveView;
+		if(CurrentView != null)
+			CurrentView.Selection.Changed += OnSelectionChanged;
+		
+		Update();
+	}
+	
+	protected void OnSelectionChanged(object sender, EventArgs e)
+	{
+		Update();
+	}
+	
+	protected void Update()
+	{
+		HexView view = Host.ActiveView;
+		
 		if(view == null)
 		{
 			foreach(ListViewItem i in List.Items)
