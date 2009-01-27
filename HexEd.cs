@@ -698,6 +698,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands["EditPaste"].Enabled = haveChild;
 		Commands["EditDelete"].Enabled = haveSelection;
 		Commands["EditSelectAll"].Enabled = haveChild;
+		Commands["EditInsertFile"].Enabled = haveChild;
+		Commands["EditInsertPattern"].Enabled = haveChild;
 
 		Commands["ViewAddressRadix"].Enabled = haveChild;
 		Commands["ViewDataRadix"].Enabled = haveChild;
