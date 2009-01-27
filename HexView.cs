@@ -299,7 +299,7 @@ public class HexView : Control
 				InsertCaret.Size = new Size((int)(LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits) + 1, 
 		                            		(int)LayoutDimensions.WordSize.Height);
 			if(EditModeChanged != null) 
-				EditModeChanged(this, new EventArgs()); 
+				EditModeChanged(this, new EventArgs());
 		}
 	}
 	
@@ -992,6 +992,13 @@ public class HexView : Control
 				else
 					Selection.Set(hit.Address, hit.Address);
 			}
+			else if(hit.Type == HexViewHit.HitType.Address)
+			{
+				if((ModifierKeys & Keys.Shift) == Keys.Shift)
+					Selection.End = hit.Address + LayoutDimensions.BitsPerRow;
+				else
+					Selection.Set(hit.Address, hit.Address + LayoutDimensions.BitsPerRow);
+			}
 		}
 	}
 
@@ -1023,6 +1030,9 @@ public class HexView : Control
 
 		switch(hit.Type)
 		{
+			case HexViewHit.HitType.Address:
+				Cursor = Cursors.Hand;
+				break;
 			case HexViewHit.HitType.Data:
 			case HexViewHit.HitType.Ascii:
 				Cursor = Cursors.IBeam;
@@ -1060,6 +1070,11 @@ public class HexView : Control
 			Capture = true;
 			Selection.Set(hit.Address, hit.Address);
 		}
+		else if(hit.Type == HexViewHit.HitType.Address)
+		{
+			Capture = true;
+			Selection.Set(hit.Address, hit.Address + LayoutDimensions.BitsPerRow);
+		}
 	}
 
 	protected void OnDrag(MouseEventArgs e)
@@ -1078,6 +1093,13 @@ public class HexView : Control
 			HexViewHit hit = HitTest(new Point(e.X, e.Y));
 			if(hit.Type == HexViewHit.HitType.Data || hit.Type == HexViewHit.HitType.DataSelection)
 				Selection.Set(DragStartHit.Address, hit.Address + (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
+			else if(hit.Type == HexViewHit.HitType.Address)
+			{
+				if(hit.Address >= DragStartHit.Address)
+					Selection.Set(DragStartHit.Address, hit.Address + LayoutDimensions.BitsPerRow);
+				else
+					Selection.Set(DragStartHit.Address + LayoutDimensions.BitsPerRow, hit.Address);
+			}
 		}
 	}
 
@@ -1086,8 +1108,13 @@ public class HexView : Control
 		HexViewHit hit = HitTest(new Point(e.X, e.Y));
 
 		if(hit.Type == HexViewHit.HitType.Data)
-		{
 			Selection.End = hit.Address;
+		else if(hit.Type == HexViewHit.HitType.Address)
+		{
+			if(hit.Address >= DragStartHit.Address)
+				Selection.End = hit.Address + LayoutDimensions.BitsPerRow;
+			else
+				Selection.End = hit.Address;
 		}
 		
 		Capture = false;
