@@ -114,10 +114,10 @@ public class HexView : Control
 
 			_Start = start;
 			if(_Start >= View.Document.Length * 8)
-				_Start = View.Document.Length * 8 - 1;
+				_Start = View.Document.Length * 8;// - 1;
 			_End = end;
 			if(_End >= View.Document.Length * 8)
-				_End = View.Document.Length * 8 - 1;
+				_End = View.Document.Length * 8;// - 1;
 			_Range.Start.Position = _Start / 8;
 			_Range.End.Position = _End / 8;
 
@@ -918,8 +918,11 @@ public class HexView : Control
 			VScroll.Visible = true;
 		}
 
-		InsertCaret.Size = new Size((int)(LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits) + 1, 
-		                            (int)LayoutDimensions.WordSize.Height); //new Size(1, (int)LayoutDimensions.WordSize.Height);
+		if(_EditMode == EditMode.Insert)
+			InsertCaret.Size = new Size(2, (int)LayoutDimensions.WordSize.Height);
+		else
+			InsertCaret.Size = new Size((int)(LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits) + 1, 
+	                            		(int)LayoutDimensions.WordSize.Height);
 
 		g.Dispose();
 	}
@@ -1312,14 +1315,23 @@ public class HexView : Control
 				switch(_EditMode)
 				{
 					case EditMode.OverWrite:
-						UpdateWord(Selection.Start, x);
-						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
+						if(Selection.Start / 8 < Document.Length)
+						{
+							UpdateWord(Selection.Start, x);
+							Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
+						}
 						break;
 					case EditMode.Insert:
 						if(Selection.Start % (_BytesPerWord * 8) == 0)
+						{
+							Console.WriteLine("Inserting at " + Selection.Start); 
 							Document.Insert((byte)(x << (_BytesPerWord * 8 - LayoutDimensions.BitsPerDigit)));
+						}
 						else
+						{
+							Console.WriteLine("Updating at " + Selection.Start);
 							UpdateWord(Selection.Start, x);
+						}
 						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
 						break;
 				}
