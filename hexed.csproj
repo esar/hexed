@@ -74,6 +74,9 @@
     <Compile Include="PieceBuffer.Blocks.cs" />
     <Compile Include="DocumentRangeIndicator.cs" />
     <Compile Include="ProgressNotification.cs" />
+    <Compile Include="HexView.Drawing.cs" />
+    <Compile Include="HexView.Input.Keyboard.cs" />
+    <Compile Include="HexView.Input.Mouse.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
