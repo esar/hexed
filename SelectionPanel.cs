@@ -107,7 +107,7 @@ class SelectionPanel : Panel
 		
 		try
 		{
-			integerItem.Text = view.Selection.AsInteger().ToString();
+			integerItem.Text = view.IntToRadixString((ulong)view.Selection.AsInteger(), view.DataRadix, 1);
 			integerItem.ForeColor = Color.FromKnownColor(KnownColor.WindowText);
 		}
 		catch(Exception)
