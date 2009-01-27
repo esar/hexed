@@ -206,12 +206,14 @@ class RadixMenu : ToolStripMenuItem
 		DropDownItems.Add(HexItem);
 		
 		DropDownItems.Add("-");
+		
+		ToolStripMenuItem others = (ToolStripMenuItem)DropDownItems.Add("Others");
 
 		for(int i = 2; i <= 36; ++i)
 		{
 			RadixItems[i] = new ToolStripMenuItem(i.ToString(), null, OnSelectItem, name);
 			RadixItems[i].Tag = i;
-			DropDownItems.Add(RadixItems[i]);
+			others.DropDownItems.Add(RadixItems[i]);
 		}
 		
 		Handler = handler;
