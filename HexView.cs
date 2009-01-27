@@ -217,11 +217,11 @@ public class HexView : Control
 			if(Length > 0)
 			{
 				return String.Format("{0} -> {1}", 
-				                     View.IntToRadixString((ulong)_Range.Start.Position, View.AddressRadix, 0), 
-				                     View.IntToRadixString((ulong)_Range.End.Position, View.AddressRadix, 0));
+				                     View.IntToRadixString((ulong)_Range.Start.Position, View.AddressRadix, 1), 
+				                     View.IntToRadixString((ulong)_Range.End.Position, View.AddressRadix, 1));
 			}
 			else
-				return View.IntToRadixString((ulong)_Range.Start.Position, View.AddressRadix, 0);
+				return View.IntToRadixString((ulong)_Range.Start.Position, View.AddressRadix, 1);
 		}
 	};
 
