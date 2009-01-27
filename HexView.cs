@@ -412,6 +412,7 @@ public class HexView : Control
 										'.', '.', '.', '.', '.', '.', '.', '.',
 										'.', '.', '.', '.', '.', '.', '.', '.' };
 
+	private long CurrentDocumentLength = 0;
 	private Dimensions	LayoutDimensions = new Dimensions();
 
 
@@ -989,6 +990,12 @@ public class HexView : Control
 	
 	protected void OnBufferChanged(object sender, PieceBuffer.BufferChangedEventArgs e)
 	{
+		if(Document.Length != CurrentDocumentLength)
+		{
+			CurrentDocumentLength = Document.Length;
+			RecalcDimensions();
+		}
+		
 		// TODO: Only invalidate changed region (and only if it's on screen)
 		Invalidate();
 	}
