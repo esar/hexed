@@ -142,6 +142,12 @@ namespace StatisticsPlugin
 		protected long _Median;
 		public long Median { get { return _Median; } }
 		
+		protected double _StdDev;
+		public double StdDev { get { return _StdDev; } }
+		
+		protected double _Skewness;
+		public double Skewness { get { return _Skewness; } }
+		
 		protected int _TokenCount;
 		public int TokenCount { get { return _TokenCount; } }
 		
@@ -204,16 +210,27 @@ namespace StatisticsPlugin
 				_Median = (medianArray[medianArray.Length / 2] + medianArray[medianArray.Length / 2 + 1]) / 2;
 			else
 				_Median = medianArray[medianArray.Length / 2];
+
+			_StdDev = 0;
+			for(int i = 0; i < Buckets.Length; ++i)
+			{
+				_StdDev += Math.Pow(Buckets[i] - _Mean, 2);
+			}
+			_StdDev = Math.Sqrt(_StdDev / Buckets.Length);
 			
+			_Skewness = 0;
 			_Entropy = 0;
 			for(int i = 0; i < Buckets.Length; ++i)
 			{
+				_Skewness = Math.Pow(Buckets[i] - _Mean, 3);
 				if(Buckets[i] > 0)
 				{
 					double probability = (double)Buckets[i] / _Sum;
 					_Entropy -= probability * Math.Log(probability, 2);
 				}
 			}
+			
+			_Skewness = _Skewness / (Buckets.Length * Math.Pow(_StdDev, 3));
 		}
 	}
 	
@@ -451,11 +468,14 @@ namespace StatisticsPlugin
 		ToolStripButton RefreshButton;
 		HistogramControl Graph = new HistogramControl();
 		ListView List = new ListView();
+		ListViewItem[] ListItems;
 		ListView StatsList = new ListView();
 		ListViewItem StatsItemMin;
 		ListViewItem StatsItemMax;
 		ListViewItem StatsItemMean;
 		ListViewItem StatsItemMedian;
+		ListViewItem StatsItemStdDev;
+		ListViewItem StatsItemSkewness;
 		ListViewItem StatsItemSum;
 		ListViewItem StatsItemTokenCount;
 		ListViewItem StatsItemEntropy;
@@ -480,13 +500,15 @@ namespace StatisticsPlugin
 			List.Columns.Add("Count");
 			List.Columns.Add("Percent");
 			
+			ListItems = new ListViewItem[256];
 			for(int i = 0; i < 256; ++i)
 			{
-				ListViewItem item = List.Items.Add(i.ToString("X"));
-				item.SubItems.Add(i.ToString());
-				item.SubItems.Add(Encoding.ASCII.GetString(new byte[] {(byte)i}));
-				item.SubItems.Add(String.Empty);
-				item.SubItems.Add(String.Empty);
+				ListItems[i] = new ListViewItem(new string[] {i.ToString("X2"), 
+					                                          i.ToString(), 
+					                                          Encoding.ASCII.GetString(new byte[] {(byte)i}),
+				                                              String.Empty,
+				                                              String.Empty});
+				List.Items.Add(ListItems[i]);
 			}
 
 			List.Dock = DockStyle.Fill;
@@ -511,6 +533,8 @@ namespace StatisticsPlugin
 			StatsItemMax = StatsList.Items.Add(new ListViewItem(new string[] {"Max", String.Empty}));
 			StatsItemMean = StatsList.Items.Add(new ListViewItem(new string[] {"Mean", String.Empty}));
 			StatsItemMedian = StatsList.Items.Add(new ListViewItem(new string[] {"Median", String.Empty}));
+			StatsItemStdDev = StatsList.Items.Add(new ListViewItem(new string[] {"Standard Deviation", String.Empty}));
+			StatsItemSkewness = StatsList.Items.Add(new ListViewItem(new string[] {"Skewness", String.Empty}));
 			StatsItemSum = StatsList.Items.Add(new ListViewItem(new string[] {"Sum", String.Empty}));
 			StatsItemTokenCount = StatsList.Items.Add(new ListViewItem(new string[] {"Token Count", String.Empty}));
 			StatsItemEntropy = StatsList.Items.Add(new ListViewItem(new string[] {"Entropy", String.Empty}));
@@ -570,14 +594,14 @@ namespace StatisticsPlugin
 		protected void PopulateList(Statistics data)
 		{
 			List.BeginUpdate();
-			foreach(ListViewItem i in List.Items)
+			for(int i = 0; i < 256; ++i)
 			{
-				long count = data[i.Index];
+				long count = data[i];
 				float percent = (float)count / data.Sum;
 				percent *= 100.0f;
 				
-				i.SubItems[3].Text = count.ToString();
-				i.SubItems[4].Text = percent.ToString("0.00");
+				ListItems[i].SubItems[3].Text = count.ToString();
+				ListItems[i].SubItems[4].Text = percent.ToString("0.00");
 			}
 			List.EndUpdate();			
 		}
@@ -585,10 +609,10 @@ namespace StatisticsPlugin
 		protected void ClearList()
 		{
 			List.BeginUpdate();
-			foreach(ListViewItem i in List.Items)
+			for(int i = 0; i < 256; ++i)
 			{
-				i.SubItems[3].Text = String.Empty;
-				i.SubItems[4].Text = String.Empty;
+				ListItems[i].SubItems[3].Text = String.Empty;
+				ListItems[i].SubItems[4].Text = String.Empty;
 			}
 			List.EndUpdate();
 		}
@@ -600,6 +624,8 @@ namespace StatisticsPlugin
 			StatsItemMax.SubItems[1].Text = data.Max.ToString();
 			StatsItemMean.SubItems[1].Text = data.Mean.ToString("0.##");
 			StatsItemMedian.SubItems[1].Text = data.Median.ToString();
+			StatsItemStdDev.SubItems[1].Text = data.StdDev.ToString("0.##");
+			StatsItemSkewness.SubItems[1].Text = data.Skewness.ToString("0.##");
 			StatsItemSum.SubItems[1].Text = data.Sum.ToString();
 			StatsItemTokenCount.SubItems[1].Text = data.TokenCount.ToString();
 			StatsItemEntropy.SubItems[1].Text = data.Entropy.ToString("0.##");
