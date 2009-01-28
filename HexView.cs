@@ -285,6 +285,7 @@ public partial class HexView : Control
 	private Point		DragStartPos		= new Point(0, 0);
 	private HexViewHit	DragStartHit		= new HexViewHit(HexViewHit.HitType.Unknown);
 	private bool		Dragging			= false;
+	private Timer		DragScrollTimer		= new Timer();
 
 	public SelectionRange		Selection;
 	private List<SelectionRange>	Highlights = new List<SelectionRange>();
@@ -453,6 +454,9 @@ public partial class HexView : Control
 		VScroll.Scroll += new ScrollEventHandler(OnScroll);
 		Controls.Add(VScroll);
 
+		DragScrollTimer.Interval = 10;
+		DragScrollTimer.Tick += OnDragScrollTimer;
+		
 		InsertCaret = new ManagedCaret(this);
 		Selection = new SelectionRange(this);
 		Selection.Changed += new EventHandler(OnSelectionChanged);
@@ -686,6 +690,11 @@ public partial class HexView : Control
 			Address = address;
 			Character = character;
 			CharacterOrigin = origin;
+		}
+		
+		public override string ToString()
+		{
+			return String.Format("{0}: {1}", Type, Address);
 		}
 	}
 

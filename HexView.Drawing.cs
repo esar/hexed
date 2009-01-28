@@ -65,64 +65,123 @@ public partial class HexView
 
 	public HexViewHit HitTest(Point p)
 	{
-		long line = (long)((double)(p.Y + ScrollPosition) / LayoutDimensions.WordSize.Height);
-		long lineAddress = line * LayoutDimensions.BitsPerRow;
-
 		if(	p.X >= LayoutDimensions.AddressRect.Left &&
 			p.X <= LayoutDimensions.AddressRect.Right &&
 			p.Y >= LayoutDimensions.AddressRect.Top &&
 			p.Y <= LayoutDimensions.AddressRect.Bottom)
 		{
-			return new HexViewHit(HexViewHit.HitType.Address, lineAddress);
+			return HitTestAddress(p);
 		}
-		else if(	p.X >= LayoutDimensions.DataRect.Left &&
-					p.X <= LayoutDimensions.DataRect.Right &&
-					p.Y >= LayoutDimensions.DataRect.Top &&
-					p.Y <= LayoutDimensions.DataRect.Bottom)
+		else if(p.X >= LayoutDimensions.DataRect.Left &&
+				p.X <= LayoutDimensions.DataRect.Right &&
+				p.Y >= LayoutDimensions.DataRect.Top &&
+				p.Y <= LayoutDimensions.DataRect.Bottom)
 		{
-			float x = p.X;// - LayoutDimensions.DataRect.Left;
-			int word = 0;
-			while(word < LayoutDimensions.WordRects.Length && x > LayoutDimensions.WordRects[word].Right)
-				++word;
-			if(x < LayoutDimensions.WordRects[word].Left)
-				--word;
-			x -= LayoutDimensions.WordRects[word].Left;
-			int digitAddress = word * _BytesPerWord * 8;
-			
-			Graphics g = CreateGraphics();
-			int i;
-			for(i = 1; i < LayoutDimensions.NumWordDigits; ++i)
-			{
-				RectangleF r = MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, i, _Font);
-				if(x <= r.Width)
-					break;
-			}
-			g.Dispose();
-			digitAddress += (i - 1) * ((_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
-			
-			if(lineAddress + (long)digitAddress >= Selection.Start && lineAddress + (long)digitAddress < Selection.End)
-				return new HexViewHit(HexViewHit.HitType.DataSelection, lineAddress + (int)digitAddress, i, new Point(0, 0));
-			else
-				return new HexViewHit(HexViewHit.HitType.Data, lineAddress + (int)digitAddress, i, new Point(0, 0));
+			return HitTestData(p);
 		}
-		else if(	p.X >= LayoutDimensions.AsciiRect.Left &&
-					p.X <= LayoutDimensions.AsciiRect.Right &&
-					p.Y >= LayoutDimensions.AsciiRect.Top &&
-					p.Y <= LayoutDimensions.AsciiRect.Bottom)
+		else if(p.X >= LayoutDimensions.AsciiRect.Left &&
+				p.X <= LayoutDimensions.AsciiRect.Right &&
+				p.Y >= LayoutDimensions.AsciiRect.Top &&
+				p.Y <= LayoutDimensions.AsciiRect.Bottom)
 		{
-			Graphics g = CreateGraphics();
-			int i;
-			for(i = 1; i < LayoutDimensions.BitsPerRow / 8; ++i)
-			{
-				RectangleF r = MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, i, _Font);
-				if(p.X - LayoutDimensions.AsciiRect.Left <= r.Width)
-					break;
-			}
-			g.Dispose();
-			return new HexViewHit(HexViewHit.HitType.Ascii, lineAddress + ((i - 1) * 8));
+			return HitTestAscii(p);
 		}
+		else
+			return new HexViewHit(HexViewHit.HitType.Unknown);
+	}
+	
+	public HexViewHit HitTest(Point p, HexViewHit.HitType type)
+	{
+		switch(type)
+		{
+			case HexViewHit.HitType.Address:
+				return HitTestAddress(p);
+			case HexViewHit.HitType.Data:
+			case HexViewHit.HitType.DataSelection:
+				return HitTestData(p);
+			case HexViewHit.HitType.Ascii:
+			case HexViewHit.HitType.AsciiSelection:
+				return HitTestAscii(p);
+			default:
+				return new HexViewHit(HexViewHit.HitType.Unknown);
+		}
+	}
+	
+	protected HexViewHit HitTestAddress(Point p)
+	{
+		long line = (long)((double)(p.Y + ScrollPosition) / LayoutDimensions.WordSize.Height);
+		long lineAddress = line * LayoutDimensions.BitsPerRow;
+		if(lineAddress < 0)
+			lineAddress = 0;
+		else if(lineAddress > Document.Length)
+			lineAddress = Document.Length;
+		return new HexViewHit(HexViewHit.HitType.Address, lineAddress);
+	}
+	
+	protected HexViewHit HitTestData(Point p)
+	{
+		long line = (long)((double)(p.Y + ScrollPosition) / LayoutDimensions.WordSize.Height);
+		long lineAddress = line * LayoutDimensions.BitsPerRow;
+		float halfDigitWidth = LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits / 2;
+		
+		float x = p.X;// - LayoutDimensions.DataRect.Left;
+		int word = 0;
+		while(word < LayoutDimensions.WordRects.Length && x > LayoutDimensions.WordRects[word].Right)
+			++word;
+		if(word >= LayoutDimensions.WordRects.Length || (word > 0 && x < LayoutDimensions.WordRects[word].Left))
+			--word;
+		x -= LayoutDimensions.WordRects[word].Left;
+		long digitAddress = word * _BytesPerWord * 8;
+		
+		Graphics g = CreateGraphics();
+		int i;
+		for(i = 1; i <= LayoutDimensions.NumWordDigits; ++i)
+		{
+			RectangleF r = MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, i, _Font);
+			if(x <= r.Width - halfDigitWidth)
+				break;
+		}
+		g.Dispose();
+		digitAddress += (i - 1) * ((_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
+		
+		digitAddress += lineAddress;
+		if(digitAddress < 0)
+			digitAddress = 0;
+		else if(digitAddress > Document.Length)
+			digitAddress = Document.Length;
+		
+		if(digitAddress >= Selection.Start && digitAddress < Selection.End)
+			return new HexViewHit(HexViewHit.HitType.DataSelection, digitAddress, i, new Point(0, 0));
+		else
+			return new HexViewHit(HexViewHit.HitType.Data, digitAddress, i, new Point(0, 0));
+	}
+	
+	protected HexViewHit HitTestAscii(Point p)
+	{
+		long line = (long)((double)(p.Y + ScrollPosition) / LayoutDimensions.WordSize.Height);
+		long lineAddress = line * LayoutDimensions.BitsPerRow;
+		float halfDigitWidth = LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits / 2;
 
-		return new HexViewHit(HexViewHit.HitType.Unknown);
+		Graphics g = CreateGraphics();
+		int i;
+		for(i = 1; i <= LayoutDimensions.BitsPerRow / 8; ++i)
+		{
+			RectangleF r = MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, i, _Font);
+			if(p.X - LayoutDimensions.AsciiRect.Left + halfDigitWidth <= r.Width)
+				break;
+		}
+		g.Dispose();
+		
+		long address = lineAddress + ((i - 1) * 8);
+		if(address < 0)
+			address = 0;
+		else if(address > Document.Length)
+			address = Document.Length;
+		
+		if(address >= Selection.Start && address < Selection.End)
+			return new HexViewHit(HexViewHit.HitType.AsciiSelection, address, i, new Point(0, 0));
+		else
+			return new HexViewHit(HexViewHit.HitType.Ascii, address, i, new Point(0, 0));
 	}
 
 

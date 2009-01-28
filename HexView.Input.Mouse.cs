@@ -121,38 +121,45 @@ public partial class HexView
 
 	protected void OnDrag(MouseEventArgs e)
 	{
+		HexViewHit hit = HitTest(new Point(e.X, e.Y), DragStartHit.Type);
+		
 		if(e.Y < 0)
 		{
 			OnScroll(this, new ScrollEventArgs(ScrollEventType.SmallDecrement, 1));
+			DragScrollTimer.Enabled = true;
 		}
 		else if(e.Y > ClientRectangle.Height)
 		{
 			OnScroll(this, new ScrollEventArgs(ScrollEventType.SmallIncrement, 1));
-//			Selection.Set(DragStartHit.Address, Selection.End + (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
+			DragScrollTimer.Enabled = true;
 		}
 		else
+			DragScrollTimer.Enabled = false;
+
+		switch(hit.Type)
 		{
-			HexViewHit hit = HitTest(new Point(e.X, e.Y));
-			switch(hit.Type)
-			{
-				case HexViewHit.HitType.Data:
-				case HexViewHit.HitType.DataSelection:
-					Selection.Set(DragStartHit.Address, hit.Address + (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
-					break;
-				case HexViewHit.HitType.Ascii:
-				case HexViewHit.HitType.AsciiSelection:
-					Selection.Set(DragStartHit.Address, hit.Address + 8);
-					break;
-				case HexViewHit.HitType.Address:
-					if(hit.Address >= DragStartHit.Address)
-						Selection.Set(DragStartHit.Address, hit.Address + LayoutDimensions.BitsPerRow);
-					else
-						Selection.Set(DragStartHit.Address + LayoutDimensions.BitsPerRow, hit.Address);
-					break;
-			}
+			case HexViewHit.HitType.Data:
+			case HexViewHit.HitType.DataSelection:
+			case HexViewHit.HitType.Ascii:
+			case HexViewHit.HitType.AsciiSelection:
+				Selection.Set(DragStartHit.Address, hit.Address);
+				break;
+			case HexViewHit.HitType.Address:
+				if(hit.Address >= DragStartHit.Address)
+					Selection.Set(DragStartHit.Address, hit.Address + LayoutDimensions.BitsPerRow);
+				else
+					Selection.Set(DragStartHit.Address + LayoutDimensions.BitsPerRow, hit.Address);
+				break;
 		}
 	}
 
+	protected void OnDragScrollTimer(object sender, EventArgs e)
+	{
+		Point p = PointToClient(Control.MousePosition);
+		if(p.Y < 0 || p.Y > ClientRectangle.Height)
+			OnDrag(new MouseEventArgs(MouseButtons.None, 0, p.X, p.Y, 0));
+	}
+	
 	protected void OnEndDrag(MouseEventArgs e)
 	{
 		HexViewHit hit = HitTest(new Point(e.X, e.Y));
@@ -168,5 +175,6 @@ public partial class HexView
 		}
 		
 		Capture = false;
+		DragScrollTimer.Enabled = false;
 	}
 }
