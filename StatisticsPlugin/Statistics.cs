@@ -481,6 +481,7 @@ namespace StatisticsPlugin
 		ListViewItem StatsItemEntropy;
 		DocumentRangeIndicator RangeIndicator = new DocumentRangeIndicator();
 		Document Document;
+		HexView CurrentView;
 		StatisticsState State;
 		Statistics Statistics;
 		
@@ -640,8 +641,25 @@ namespace StatisticsPlugin
 			StatsList.EndUpdate();
 		}
 		
+		protected void OnViewSelectionChanged(object sender, EventArgs e)
+		{
+			if(CurrentView.Selection.Length == 0)
+				SelectionComboBox.SelectedIndex = 1;
+			else
+				SelectionComboBox.SelectedIndex = 0;
+		}
+		
 		protected void OnActiveViewChanged(object sender, EventArgs e)
 		{
+			if(CurrentView != null)
+				CurrentView.Selection.Changed -= OnViewSelectionChanged;
+			CurrentView = Host.ActiveView;
+			if(CurrentView != null)
+			{
+				CurrentView.Selection.Changed += OnViewSelectionChanged;
+				OnViewSelectionChanged(CurrentView.Selection, EventArgs.Empty);
+			}
+			
 			Document = null;
 			State = null;
 			Statistics = null;
@@ -697,7 +715,7 @@ namespace StatisticsPlugin
 				ClearStatsList();
 			}
 			
-			Graph.Data = Statistics;			
+			Graph.Data = Statistics;
 		}
 		
 		protected void OnShowGraph(object sender, EventArgs e)
