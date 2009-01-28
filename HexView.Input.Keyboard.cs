@@ -38,6 +38,8 @@ public partial class HexView
 				{
 					if(Selection.Length > 0)
 						Selection.Set(Selection.End, Selection.End);
+					else if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
+				        Selection.Set(Selection.End + 8, Selection.End + 8);
 					else
 						Selection.Set(Selection.End + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
 				}
@@ -50,6 +52,8 @@ public partial class HexView
 				{
 					if(Selection.Length > 0)
 						Selection.Set(Selection.Start, Selection.Start);
+					else if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
+						Selection.Set(Selection.Start - 8, Selection.Start - 8);
 					else
 						Selection.Set(Selection.Start - LayoutDimensions.BitsPerDigit, Selection.Start - LayoutDimensions.BitsPerDigit);
 				}
@@ -139,15 +143,47 @@ public partial class HexView
 	{
 		int x = -1;
 		
-		if(e.KeyChar >= '0' && e.KeyChar <= '9')
-			x = e.KeyChar - '0';
-		else if(e.KeyChar >= 'a' && e.KeyChar <= 'z')
-			x = e.KeyChar - 'a' + 10;
-		else if(e.KeyChar >= 'A' && e.KeyChar <= 'Z')
-			x = e.KeyChar - 'A' + 10;
-		
-		if(x >= 0 && x < _DataRadix)
+		if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
 		{
+			x = e.KeyChar;
+
+			if(Selection.Length != 0)
+			{
+				Document.Insert(Selection.BufferRange.Start, Selection.BufferRange.End, (byte)x);
+				Selection.Set(Selection.End, Selection.End);
+			}
+			else
+			{
+				switch(_EditMode)
+				{
+					case EditMode.OverWrite:
+						if(Selection.Start / 8 < Document.Length)
+						{
+							PieceBuffer.Mark end = Document.Marks.Add(Selection.BufferRange.Start.Position + 1);
+							Document.Insert(Selection.BufferRange.Start, end, (byte)x);
+							Document.Marks.Remove(end);
+							Selection.Set(Selection.Start + 8, Selection.End + 8);
+						}
+						break;
+					case EditMode.Insert:
+						Document.Insert((byte)x);
+						Selection.Set(Selection.Start + 8, Selection.Start + 8);
+						break;
+				}
+			}
+		}
+		else
+		{
+			if(e.KeyChar >= '0' && e.KeyChar <= '9')
+				x = e.KeyChar - '0';
+			else if(e.KeyChar >= 'a' && e.KeyChar <= 'z')
+				x = e.KeyChar - 'a' + 10;
+			else if(e.KeyChar >= 'A' && e.KeyChar <= 'Z')
+				x = e.KeyChar - 'A' + 10;
+			
+			if(x < 0 || x >= _DataRadix)
+				return;
+		
 			if(Selection.Length != 0)
 			{
 				Document.Insert(Selection.BufferRange.Start, Selection.BufferRange.End, (byte)x);

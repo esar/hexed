@@ -1,13 +1,11 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="SearchPlugin/SearchDialog.cs" line="12" column="33" />
-    <File name="SearchPlugin/Search.cs" line="181" column="72" />
-    <File name="HexEd.cs" line="802" column="1" />
-    <File name="ChecksumPlugin/Checksum.cs" line="261" column="32" />
-    <File name="Document.cs" line="27" column="23" />
-    <File name="HexView.cs" line="263" column="10" />
-    <File name="HexViewForm.cs" line="162" column="29" />
+    <File name="HexEd.cs" line="737" column="32" />
+    <File name="HexView.cs" line="15" column="21" />
+    <File name="HexView.Drawing.cs" line="122" column="74" />
+    <File name="HexView.Input.Keyboard.cs" line="2" column="28" />
+    <File name="HexView.Input.Mouse.cs" line="131" column="89" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
@@ -24,7 +22,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexView.Drawing.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

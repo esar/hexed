@@ -719,7 +719,10 @@ public partial class HexView : Control
 		else
 		{
 			InsertCaret.Visible = true;
-			InsertCaret.Position = AddressToClientPoint(Selection.End);
+			if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
+			   InsertCaret.Position = AddressToClientPointAscii(Selection.Start);
+			else
+				InsertCaret.Position = AddressToClientPoint(Selection.Start);
 		}
 	}
 	
