@@ -2,10 +2,11 @@
   <Files>
     <File name="Welcome" />
     <File name="HexEd.cs" line="737" column="32" />
-    <File name="HexView.cs" line="15" column="21" />
-    <File name="HexView.Drawing.cs" line="122" column="74" />
-    <File name="HexView.Input.Keyboard.cs" line="2" column="28" />
-    <File name="HexView.Input.Mouse.cs" line="131" column="89" />
+    <File name="HexView.cs" line="724" column="8" />
+    <File name="HexView.Drawing.cs" line="108" column="3" />
+    <File name="HexView.Input.Keyboard.cs" line="11" column="2" />
+    <File name="HexView.Input.Mouse.cs" line="21" column="1" />
+    <File name="StatisticsPlugin/Statistics.cs" line="661" column="5" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
@@ -22,7 +23,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexView.Drawing.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/StatisticsPlugin/Statistics.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

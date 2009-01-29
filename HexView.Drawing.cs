@@ -521,30 +521,39 @@ public partial class HexView
 		int visibleLines = (int)Math.Ceiling((e.ClipRectangle.Bottom - drawingOffset) / LayoutDimensions.WordSize.Height) + 1;
 		if(visibleLines > ((Document.Length - dataOffset) / (LayoutDimensions.BitsPerRow / 8)) + 1)
 			visibleLines = (int)((Document.Length - dataOffset) / (LayoutDimensions.BitsPerRow / 8)) + 1;
+		long dataEndOffset = dataOffset + (visibleLines * (LayoutDimensions.BitsPerRow / 8));
+		if(dataEndOffset > Document.Length)
+			dataEndOffset = Document.Length;
 
 		e.Graphics.FillRectangle(new SolidBrush(Color.FromKnownColor(KnownColor.ButtonFace)), 0, 0, LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, LayoutDimensions.AddressRect.Height);
 		e.Graphics.DrawLine(new Pen(Color.FromKnownColor(KnownColor.ButtonShadow)), LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, 0, LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, LayoutDimensions.AddressRect.Height);
 
 		foreach(SelectionRange sel in Highlights)
 		{
-			GraphicsPath p = CreateRoundedSelectionPath(sel.Start, sel.End, (float)0, AddressToClientPoint);
-			e.Graphics.FillPath(new SolidBrush(sel.BackColor), p);
-			e.Graphics.DrawPath(new Pen(sel.BorderColor, sel.BorderWidth), p);
+			if(sel.Start / 8 < dataEndOffset && sel.End / 8 > dataOffset)
+			{
+				GraphicsPath p = CreateRoundedSelectionPath(sel.Start, sel.End, (float)0, AddressToClientPoint);
+				e.Graphics.FillPath(new SolidBrush(sel.BackColor), p);
+				e.Graphics.DrawPath(new Pen(sel.BorderColor, sel.BorderWidth), p);
 
-			p = CreateRoundedSelectionPath(sel.Start, sel.End, (float)0, AddressToClientPointAscii);
-			e.Graphics.FillPath(new SolidBrush(sel.BackColor), p);
-			e.Graphics.DrawPath(new Pen(sel.BorderColor, sel.BorderWidth), p);
+				p = CreateRoundedSelectionPath(sel.Start, sel.End, (float)0, AddressToClientPointAscii);
+				e.Graphics.FillPath(new SolidBrush(sel.BackColor), p);
+				e.Graphics.DrawPath(new Pen(sel.BorderColor, sel.BorderWidth), p);
+			}
 		}
 		
 		if(Selection.Length != 0)
 		{
-			GraphicsPath p = CreateRoundedSelectionPath(Selection.Start, Selection.End, (float)0, AddressToClientPoint);
-			e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 200, 255, 200)), p);
-			e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);
+			if(Selection.Start / 8 < dataEndOffset && Selection.End / 8 > dataOffset)
+			{
+				GraphicsPath p = CreateRoundedSelectionPath(Selection.Start, Selection.End, (float)0, AddressToClientPoint);
+				e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 200, 255, 200)), p);
+				e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);
 
-			p = CreateRoundedSelectionPath(Selection.Start, Selection.End, (float)0, AddressToClientPointAscii);
-			e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 200, 255, 200)), p);
-			e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);			
+				p = CreateRoundedSelectionPath(Selection.Start, Selection.End, (float)0, AddressToClientPointAscii);
+				e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 200, 255, 200)), p);
+				e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);			
+			}
 		}
 
 		string str;
