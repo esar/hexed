@@ -3,10 +3,13 @@
     <File name="Welcome" />
     <File name="HexEd.cs" line="737" column="32" />
     <File name="HexView.cs" line="724" column="8" />
-    <File name="HexView.Drawing.cs" line="108" column="3" />
+    <File name="HexView.Drawing.cs" line="542" column="5" />
     <File name="HexView.Input.Keyboard.cs" line="11" column="2" />
     <File name="HexView.Input.Mouse.cs" line="21" column="1" />
-    <File name="StatisticsPlugin/Statistics.cs" line="661" column="5" />
+    <File name="StatisticsPlugin/Statistics.cs" line="15" column="4" />
+    <File name="PieceBuffer.cs" line="1" column="1" />
+    <File name="PatternDialog.cs" line="12" column="27" />
+    <File name="HexViewForm.cs" line="146" column="100" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
@@ -23,7 +26,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/StatisticsPlugin/Statistics.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PatternDialog.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
