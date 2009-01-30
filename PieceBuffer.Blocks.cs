@@ -5,12 +5,27 @@ using System.IO;
 
 public partial class PieceBuffer
 {
-	protected abstract class Block
+	public interface IBlock
+	{
+		long Length { get; }
+		long Used { get; set; }
+		byte this[long index] { get; set; }
+		void GetBytes(long start, long length, byte[] dst, long dstOffset);
+		void SetBytes(long start, long length, byte[] src, long srcOffset);
+	}
+	
+	protected abstract class Block : IBlock
 	{
 		protected static Dictionary<string, Block> OpenBlocks = new Dictionary<string,Block>(); 
 		
-		public long Length;
-		public long Used;
+		protected long _Length;
+		public long Length { get { return _Length; } }
+		protected long _Used;
+		public long Used
+		{
+			get { return _Used; }
+			set { _Used = value; }
+		}
 		
 		public abstract byte this[long index] { get; set; }
 		public abstract void GetBytes(long start, long length, byte[] dst, long dstOffset);
@@ -30,8 +45,8 @@ public partial class PieceBuffer
 		private ConstantBlock(byte constant)
 		{
 			Constant = constant;
-			Length = Int64.MaxValue;
-			Used = Length;
+			_Length = Int64.MaxValue;
+			_Used = _Length;
 		}
 		
 		public static Block Create(byte constant)
@@ -96,8 +111,8 @@ public partial class PieceBuffer
 		private FileBlock(string filename)
 		{
 			FS = new FileStream(filename, FileMode.Open, FileAccess.Read);
-			Length = FS.Length;
-			Used = Length;
+			_Length = FS.Length;
+			_Used = _Length;
 		}
 		
 		public static Block Create(string filename)
@@ -160,8 +175,8 @@ public partial class PieceBuffer
 		public MemoryBlock(long size)
 		{
 			Buffer = new byte[size];
-			Length = size;
-			Used = 0;
+			_Length = size;
+			_Used = 0;
 			
 			OpenBlocks.Add("Memory" + (BlockNum++), this);
 		}

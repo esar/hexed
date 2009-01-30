@@ -55,16 +55,178 @@ public partial class PieceBuffer
 		}
 	}
 	
-	
-	
-	protected class Piece
+	protected class TransformOperationDataSource : IBlock
 	{
-		public readonly Block Block;
+		protected Piece StartPiece;
+		protected long StartOffset;
+		protected Piece EndPiece;
+		protected long EndOffset;
+		protected long _Length;
+		
+		public byte this[long index]
+		{
+			get { return 0; }
+			set {}
+		}
+		
+		public long Length { get { return _Length; } }
+		public long Used { get { return 0; } set {} }
+		
+		
+		public TransformOperationDataSource(Piece startPiece, long startOffset, Piece endPiece, long endOffset, long length)
+		{
+			StartPiece = startPiece;
+			StartOffset = startOffset;
+			EndPiece = endPiece;
+			EndOffset = endOffset;
+			_Length = length;
+		}
+		
+		public void GetBytes(long start, long length, byte[] dst, long dstOffset)
+		{
+			Piece p = StartPiece;
+			
+			while(start >= p.Length)
+			{
+				start -= p.Length;
+				p = p.Next;
+			}
+			
+			while(length > 0)
+			{
+				long len = length > p.Length ? p.Length : length;
+				p.GetBytes(start, len, dst, dstOffset);
+				length -= len;
+				dstOffset += len;
+				p = p.Next;
+			}
+		}
+		
+		public void SetBytes(long start, long length, byte[] src, long srcOffset)
+		{
+		}
+	}
+	
+	public interface ITransformOperation
+	{
+		void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset);
+	}
+	
+	public class TransformOperationOr : ITransformOperation
+	{
+		byte[] Constant;
+		
+		public TransformOperationOr(byte[] constant)
+		{
+			Constant = new byte[constant.Length];
+			Array.Copy(constant, Constant, constant.Length);
+		}
+		
+		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
+		{
+			source.GetBytes(start, length, dest, destOffset);
+			for(int i = (int)destOffset; i < destOffset + length; ++i)
+				dest[i] |= Constant[(start++) % Constant.Length];
+		}
+	}
+	
+	public class TransformOperationAnd : ITransformOperation
+	{
+		byte[] Constant;
+		
+		public TransformOperationAnd(byte[] constant)
+		{
+			Constant = new byte[constant.Length];
+			Array.Copy(constant, Constant, constant.Length);
+		}
+		
+		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
+		{
+			source.GetBytes(start, length, dest, destOffset);
+			for(int i = (int)destOffset; i < destOffset + length; ++i)
+				dest[i] &= Constant[(start++) % Constant.Length];
+		}
+	}
+	
+	public class TransformOperationXor : ITransformOperation
+	{
+		byte[] Constant;
+		
+		public TransformOperationXor(byte[] constant)
+		{
+			Constant = new byte[constant.Length];
+			Array.Copy(constant, Constant, constant.Length);
+		}
+		
+		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
+		{
+			source.GetBytes(start, length, dest, destOffset);
+			for(int i = (int)destOffset; i < destOffset + length; ++i)
+				dest[i] ^= Constant[(start++) % Constant.Length];
+		}
+	}
+
+	public class TransformOperationInvert : ITransformOperation
+	{
+		public TransformOperationInvert()
+		{
+		}
+		
+		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
+		{
+			source.GetBytes(start, length, dest, destOffset);
+			for(int i = (int)destOffset; i < destOffset + length; ++i)
+				dest[i] ^= 0xFF;
+		}
+	}
+	
+	protected class TransformPiece : Piece
+	{
+		protected ITransformOperation Op;
+		
+		public override byte this[long index]
+		{
+			get { return 0; }
+			set { throw new Exception("Can't set data in TransformPiece"); }
+		}
+		
+		public TransformPiece(ITransformOperation op, IBlock source) : base(source, 0, source.Length) 
+		{
+			Op = op;
+		}
+		
+		public override void SetBytes(long start, long length, byte[] src, long srcOffset)
+		{
+			throw new Exception("Can't set data in TransformPiece");
+		}
+		
+		public override void GetBytes(long start, long length, byte[] dst, long dstOffset)
+		{
+			Op.GetTransformedBytes(Block, start, length, dst, dstOffset);
+		}
+	}
+	
+	protected class Piece : IBlock
+	{
+		public readonly IBlock Block;
 		public readonly long Start;
 		public readonly long End;
 		
 		public Piece Next;
 		public Piece Prev;
+
+		public virtual byte this[long index]
+		{
+			get { return Block[index]; }
+			set { throw new Exception("Can't set data in Piece"); }
+		}
+		
+		public long Length { get { return End - Start; } }
+		public long Used
+		{
+			get { return End - Start; }
+			set { throw new Exception("Can't set Used on Piece"); }
+		}
 		
 		public Piece()
 		{
@@ -75,22 +237,23 @@ public partial class PieceBuffer
 			End = Int64.MaxValue;
 		}
 		
-		public Piece(Piece src)
-		{
-			Next = src.Next;
-			Prev = src.Prev;
-			Block = src.Block;
-			Start = src.Start;
-			End = src.End;
-		}
-		
-		public Piece(Block block, long start, long end)
+		public Piece(IBlock block, long start, long end)
 		{
 			Next = this;
 			Prev = this;
 			Block = block;
 			Start = start;
 			End = end;
+		}
+
+		public virtual void SetBytes(long start, long length, byte[] src, long srcOffset)
+		{
+			throw new Exception("Can't set data in Piece");
+		}
+		
+		public virtual void GetBytes(long start, long length, byte[] dst, long dstOffset)
+		{
+			Block.GetBytes(Start + start, length, dst, dstOffset);
 		}
 
 		public static void ListInsert(Piece list, Piece item)
@@ -132,7 +295,15 @@ public partial class PieceBuffer
 		FillConstant,
 		Copy,
 		Remove,
-		Replace
+		Replace,
+		And,
+		Or,
+		Xor,
+		Invert,
+		ShiftLeft,
+		ShiftRight,
+		RotateLeft,
+		RotateRight
 	}
 	
 	public class HistoryItem
@@ -906,6 +1077,80 @@ public partial class PieceBuffer
 	
 	
 	//
+	// Logical Operations
+	//
+	
+	public void Or(Mark start, Mark end, byte[] constant)
+	{
+		InternalMark s = (InternalMark)start;
+		InternalMark e = (InternalMark)end;
+		
+		if(e.Position - s.Position == 0)
+			return;
+		
+		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, e.Piece, e.Offset, e.Position - s.Position);
+		Piece piece = new TransformPiece(new TransformOperationOr(constant), src);
+		Replace(HistoryOperation.Or, s, e, piece, piece, e.Position - s.Position);
+	}
+	
+	public void Or(Mark start, Mark end, byte constant)
+	{
+		Or(start, end, new byte[] { constant });
+	}
+	
+	
+	public void And(Mark start, Mark end, byte[] constant)
+	{
+		InternalMark s = (InternalMark)start;
+		InternalMark e = (InternalMark)end;
+		
+		if(e.Position - s.Position == 0)
+			return;
+		
+		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, e.Piece, e.Offset, e.Position - s.Position);
+		Piece piece = new TransformPiece(new TransformOperationAnd(constant), src);
+		Replace(HistoryOperation.And, s, e, piece, piece, e.Position - s.Position);
+	}		
+	
+	public void And(Mark start, Mark end, byte constant)
+	{
+		And(start, end, new byte[] { constant });
+	}
+	
+	public void Xor(Mark start, Mark end, byte[] constant)
+	{
+		InternalMark s = (InternalMark)start;
+		InternalMark e = (InternalMark)end;
+		
+		if(e.Position - s.Position == 0)
+			return;
+		
+		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, e.Piece, e.Offset, e.Position - s.Position);
+		Piece piece = new TransformPiece(new TransformOperationXor(constant), src);
+		Replace(HistoryOperation.Xor, s, e, piece, piece, e.Position - s.Position);
+	}		
+	
+	public void Xor(Mark start, Mark end, byte constant)
+	{
+		Xor(start, end, new byte[] { constant });
+	}
+
+	public void Invert(Mark start, Mark end)
+	{
+		InternalMark s = (InternalMark)start;
+		InternalMark e = (InternalMark)end;
+		
+		if(e.Position - s.Position == 0)
+			return;
+		
+		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, e.Piece, e.Offset, e.Position - s.Position);
+		Piece piece = new TransformPiece(new TransformOperationInvert(), src);
+		Replace(HistoryOperation.Invert, s, e, piece, piece, e.Position - s.Position);
+	}		
+
+	
+	
+	//
 	// Clipboard Operations
 	//
 	public ClipboardRange ClipboardCopy(Mark start, Mark end)
@@ -1163,7 +1408,7 @@ public partial class PieceBuffer
 					length = e.Position - s.Position;
 					
 				if(s.Piece != Pieces)
-					s.Piece.Block.GetBytes(s.Piece.Start + s.Offset, length, dest, 0);
+					s.Piece.GetBytes(s.Offset, length, dest, 0);
 			}
 			else
 			{
@@ -1171,7 +1416,7 @@ public partial class PieceBuffer
 				long len = s.Piece.End - s.Piece.Start - s.Offset;
 				if(len > length)
 					len = length;
-				s.Piece.Block.GetBytes(s.Piece.Start + s.Offset, len, dest, destOffset);
+				s.Piece.GetBytes(s.Offset, len, dest, destOffset);
 				destOffset += len;
 				length -= len;
 				
@@ -1181,13 +1426,13 @@ public partial class PieceBuffer
 					len = p.End - p.Start;
 					if(len > length)
 						len = length;
-					p.Block.GetBytes(p.Start, len, dest, destOffset);
+					p.GetBytes(0, len, dest, destOffset);
 					destOffset += len;
 					length -= len;
 				}
 					
 				if(length > 0 && p != Pieces)
-					p.Block.GetBytes(p.Start, e.Offset > length ? length : e.Offset, dest, destOffset);
+					p.GetBytes(0, e.Offset > length ? length : e.Offset, dest, destOffset);
 			}
 		}
 	}
@@ -1222,7 +1467,7 @@ public partial class PieceBuffer
 			else
 			{
 				byte[] tmp = new byte[p.End - p.Start];
-				p.Block.GetBytes(p.Start, p.End - p.Start, tmp, 0);
+				p.GetBytes(0, p.End - p.Start, tmp, 0);
 						
 				Console.Write("\"" + System.Text.ASCIIEncoding.ASCII.GetString(tmp) + "\" ");
 			}
