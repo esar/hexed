@@ -86,6 +86,10 @@ public partial class PieceBuffer
 		{
 			Piece p = StartPiece;
 			
+			if(length > _Length)
+				throw new ArgumentOutOfRangeException("length", "The requested length is longer than the available data");
+			
+			start += StartOffset;
 			while(start >= p.Length)
 			{
 				start -= p.Length;
@@ -168,15 +172,20 @@ public partial class PieceBuffer
 
 	public class TransformOperationInvert : ITransformOperation
 	{
-		public TransformOperationInvert()
-		{
-		}
-		
 		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
 		{
 			source.GetBytes(start, length, dest, destOffset);
 			for(int i = (int)destOffset; i < destOffset + length; ++i)
 				dest[i] ^= 0xFF;
+		}
+	}
+
+	public class TransformOperationReverse : ITransformOperation
+	{
+		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
+		{
+			source.GetBytes(source.Length - start - length, length, dest, destOffset);
+			Array.Reverse(dest, (int)destOffset, (int)length);
 		}
 	}
 	
@@ -303,7 +312,8 @@ public partial class PieceBuffer
 		ShiftLeft,
 		ShiftRight,
 		RotateLeft,
-		RotateRight
+		RotateRight,
+		Reverse
 	}
 	
 	public class HistoryItem
@@ -1148,6 +1158,18 @@ public partial class PieceBuffer
 		Replace(HistoryOperation.Invert, s, e, piece, piece, e.Position - s.Position);
 	}		
 
+	public void Reverse(Mark start, Mark end)
+	{
+		InternalMark s = (InternalMark)start;
+		InternalMark e = (InternalMark)end;
+		
+		if(e.Position - s.Position == 0)
+			return;
+		
+		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, e.Piece, e.Offset, e.Position - s.Position);
+		Piece piece = new TransformPiece(new TransformOperationReverse(), src);
+		Replace(HistoryOperation.Reverse, s, e, piece, piece, e.Position - s.Position);
+	}		
 	
 	
 	//
