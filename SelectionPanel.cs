@@ -57,18 +57,32 @@ class SelectionPanel : Panel
 		List.Dock = DockStyle.Fill;
 		Controls.Add(List);
 		
+		ToolStripItem item;
 		ToolBar.GripStyle = ToolStripGripStyle.Hidden;
-		ToolBar.Items.Add(Settings.Instance.Image("byteswap_16.png")).ToolTipText = "Byte Swap";
-		ToolBar.Items.Add(Settings.Instance.Image("invert_16.png")).ToolTipText = "Invert";
+		item = ToolBar.Items.Add(Settings.Instance.Image("byteswap_16.png"));
+		item.ToolTipText = "Byte Swap";
+		item.Click += OnByteSwap;
+		item = ToolBar.Items.Add(Settings.Instance.Image("invert_16.png"));
+		item.ToolTipText = "Invert";
+		item.Click += OnInvert;
 		ToolBar.Items.Add(new ToolStripSeparator());
-		ToolBar.Items.Add(Settings.Instance.Image("shiftleft_16.png")).ToolTipText = "Shift Left";
+		item = ToolBar.Items.Add(Settings.Instance.Image("shiftleft_16.png"));
+		item.ToolTipText = "Shift Left";
 		ToolBar.Items.Add(Settings.Instance.Image("shiftright_16.png")).ToolTipText = "Shift Right";
 		ToolBar.Items.Add(Settings.Instance.Image("rotateleft_16.png")).ToolTipText = "Rotate Left";
 		ToolBar.Items.Add(Settings.Instance.Image("rotateright_16.png")).ToolTipText = "Rotate Right";
 		ToolBar.Items.Add(new ToolStripSeparator());
-		ToolBar.Items.Add("&&").ToolTipText = "AND";
-		ToolBar.Items.Add("|").ToolTipText = "OR";
-		ToolBar.Items.Add("^").ToolTipText = "XOR";
+		item = ToolBar.Items.Add("&&");
+		item.ToolTipText = "AND";
+		item.Click += OnAnd;
+		item = ToolBar.Items.Add("|");
+		item.ToolTipText = "OR";
+		item.Click += OnOr;
+		item = ToolBar.Items.Add("^");
+		item.ToolTipText = "XOR";
+		item.Click += OnXor;
+		foreach(ToolStripItem x in ToolBar.Items)
+			x.Enabled = false;
 		Controls.Add(ToolBar);
 		
 		
@@ -91,9 +105,51 @@ class SelectionPanel : Panel
 		Update();
 	}
 	
+	protected void OnInvert(object sender, EventArgs e)
+	{
+		CurrentView.Document.Invert(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End);
+	}
+	
+	protected void OnByteSwap(object sender, EventArgs e)
+	{
+		CurrentView.Document.Reverse(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End);
+	}
+	
+	protected void OnAnd(object sender, EventArgs e)
+	{
+		PatternDialog dlg = new PatternDialog();
+		if(dlg.ShowDialog() == DialogResult.OK)
+			CurrentView.Document.And(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, dlg.Pattern);
+	}
+	
+	protected void OnOr(object sender, EventArgs e)
+	{
+		PatternDialog dlg = new PatternDialog();
+		if(dlg.ShowDialog() == DialogResult.OK)
+			CurrentView.Document.Or(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, dlg.Pattern);
+	}
+	
+	protected void OnXor(object sender, EventArgs e)
+	{
+		PatternDialog dlg = new PatternDialog();
+		if(dlg.ShowDialog() == DialogResult.OK)
+			CurrentView.Document.Xor(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, dlg.Pattern);
+	}
+	
 	protected void Update()
 	{
 		HexView view = Host.ActiveView;
+
+		if(view == null || view.Selection.BufferRange.Length == 0)
+		{
+			foreach(ToolStripItem i in ToolBar.Items)
+				i.Enabled = false;
+		}
+		else
+		{
+			foreach(ToolStripItem i in ToolBar.Items)
+				i.Enabled = true;
+		}
 		
 		if(view == null)
 		{
