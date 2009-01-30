@@ -221,6 +221,9 @@ public partial class HexView
 
 		int GroupsPerRow = 0;
 		int WordsPerRow = 0;
+		float wordGroupSpacing = LayoutDimensions.WordGroupSpacing;
+		if(_WordsPerGroup == 1)
+			wordGroupSpacing = 0;
 		if(_WordsPerLine < 0)
 		{
 			float width = 0;
@@ -230,7 +233,7 @@ public partial class HexView
 				++GroupsPerRow;
 				WordsPerRow = GroupsPerRow * _WordsPerGroup;
 				LayoutDimensions.BitsPerRow = WordsPerRow * _BytesPerWord * 8;
-				width = (((LayoutDimensions.WordSize.Width + LayoutDimensions.WordSpacing) * _WordsPerGroup) + LayoutDimensions.WordGroupSpacing) * GroupsPerRow;
+				width = (((LayoutDimensions.WordSize.Width + LayoutDimensions.WordSpacing) * _WordsPerGroup) + wordGroupSpacing) * GroupsPerRow;
 				width += LayoutDimensions.RightGutterWidth;
 				width += MeasureSubString(g, digits, 0, LayoutDimensions.BitsPerRow / 8, _Font).Width;
 	
@@ -258,10 +261,11 @@ public partial class HexView
 				LayoutDimensions.WordRects[(group * _WordsPerGroup) + word] = new RectangleF(x, 0, LayoutDimensions.WordSize.Width, LayoutDimensions.WordSize.Height);
 				x += LayoutDimensions.WordSize.Width + LayoutDimensions.WordSpacing;
 			}
-			x -= LayoutDimensions.WordSpacing;
-			x += LayoutDimensions.WordGroupSpacing;
+			if(_WordsPerGroup > 1)
+				x -= LayoutDimensions.WordSpacing;
+			x += wordGroupSpacing;
 		}
-		x -= LayoutDimensions.WordGroupSpacing;
+		x -= wordGroupSpacing;
 			
 		
 		
@@ -528,6 +532,26 @@ public partial class HexView
 		e.Graphics.FillRectangle(new SolidBrush(Color.FromKnownColor(KnownColor.ButtonFace)), 0, 0, LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, LayoutDimensions.AddressRect.Height);
 		e.Graphics.DrawLine(new Pen(Color.FromKnownColor(KnownColor.ButtonShadow)), LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, 0, LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, LayoutDimensions.AddressRect.Height);
 
+		if(_EvenColumnColor != Color.Transparent && _EvenColumnColor != BackColor)
+		{
+			for(int i = 0; i < LayoutDimensions.WordRects.Length; ++i)
+				if(i % 2 == 0)
+					e.Graphics.FillRectangle(new SolidBrush(_EvenColumnColor), new RectangleF(LayoutDimensions.WordRects[i].Left,
+					                                                                          0,
+					                                                                          LayoutDimensions.WordRects[i].Width,
+					                                                                          ClientRectangle.Height));
+		}
+
+		if(_OddColumnColor != Color.Transparent && _OddColumnColor != BackColor)
+		{
+			for(int i = 0; i < LayoutDimensions.WordRects.Length; ++i)
+				if(i % 2 == 0)
+					e.Graphics.FillRectangle(new SolidBrush(_OddColumnColor), new RectangleF(LayoutDimensions.WordRects[i].Left,
+					                                                                         0,
+					                                                                         LayoutDimensions.WordRects[i].Width,
+					                                                                         ClientRectangle.Height));
+		}
+		
 		foreach(SelectionRange sel in Highlights)
 		{
 			if(sel.Start / 8 < dataEndOffset && sel.End / 8 > dataOffset)

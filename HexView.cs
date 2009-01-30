@@ -267,6 +267,8 @@ public partial class HexView : Control
 
 	private Font		_Font				= new Font(FontFamily.GenericMonospace, 10);
 	private Brush		_Brush				= new SolidBrush(Color.Black);
+	private Color		_EvenColumnColor	= Color.Transparent;
+	private Color		_OddColumnColor		= Color.Transparent;
 	private uint		_AddressRadix		= 16;
 	private uint		_DataRadix			= 16;
 
@@ -333,6 +335,18 @@ public partial class HexView : Control
 	{
 		get { return _WordsPerLine; }
 		set { _WordsPerLine = value; RecalcDimensions(); Invalidate(); EnsureVisible(Selection.Start); }
+	}
+	
+	public Color EvenColumnColor
+	{
+		get { return _EvenColumnColor; }
+		set { _EvenColumnColor = value; Invalidate(); }
+	}
+	
+	public Color OddColumnColor
+	{
+		get { return _OddColumnColor; }
+		set { _OddColumnColor = value; Invalidate(); }
 	}
 	
 	public event EventHandler AddressRadixChanged;
