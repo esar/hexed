@@ -189,6 +189,73 @@ public partial class PieceBuffer
 		}
 	}
 	
+	public class TransformOperationShift : ITransformOperation
+	{
+		protected int Distance;
+		
+		public TransformOperationShift(int distance)
+		{
+			Distance = distance;
+		}
+		
+		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
+		{
+			int distance = Distance / 8;
+			
+			// Read into buffer, shifting by whole bytes
+			start -= distance;
+			if(distance > 0)
+			{
+				int off = (int)destOffset;
+				int len = (int)length;
+				
+				if(start < 0)
+				{
+					Array.Clear(dest, off, (int)(0 - start));
+					off -= (int)start;
+					len += (int)start;
+					start = 0;
+				}
+				
+				source.GetBytes(start, len, dest, off);
+			}
+			else if(distance < 0)
+			{
+				int len = (int)length;
+				if(start + len > source.Length)
+					len = (int)(source.Length - start);
+				
+				source.GetBytes(start, len, dest, destOffset);
+				int off = (int)destOffset + len;
+				len = (int)length - len;
+				
+				if(len > 0)
+					Array.Clear(dest, (int)off, (int)len);
+			}
+			
+			// Adjust buffer, shifting by partial bytes
+			distance = Distance % 8;
+			if(distance < 0)
+			{
+				Console.WriteLine("distance: " + distance);
+				Console.WriteLine("dstOff: {0}, len: {1}", destOffset, length);
+				distance = 0 - distance;
+				for(int i = (int)destOffset; i < (int)(destOffset + length) - 1; ++i)
+				{
+					Console.WriteLine("Shifting: " + i + ", by: " + distance);
+					dest[i] = (byte)((dest[i] << distance) | (dest[i + 1] >> (8 - distance)));
+				}
+				dest[destOffset + length - 1] <<= distance;
+			}
+			else if(distance > 0)
+			{
+				dest[destOffset] >>= distance;
+				for(int i = (int)destOffset + 1; i < (int)(destOffset + length); ++i)
+					dest[i] = (byte)((dest[i - 1] << (8 - distance)) | (dest[i] >> distance));
+			}
+		}
+	}
+	
 	protected class TransformPiece : Piece
 	{
 		protected ITransformOperation Op;
@@ -1170,6 +1237,19 @@ public partial class PieceBuffer
 		Piece piece = new TransformPiece(new TransformOperationReverse(), src);
 		Replace(HistoryOperation.Reverse, s, e, piece, piece, e.Position - s.Position);
 	}		
+	
+	public void Shift(Mark start, Mark end, int distance)
+	{
+		InternalMark s = (InternalMark)start;
+		InternalMark e = (InternalMark)end;
+		
+		if(e.Position - s.Position == 0)
+			return;
+		
+		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, e.Piece, e.Offset, e.Position - s.Position);
+		Piece piece = new TransformPiece(new TransformOperationShift(distance), src);
+		Replace(distance > 0 ? HistoryOperation.ShiftRight : HistoryOperation.ShiftLeft, s, e, piece, piece, e.Position - s.Position);
+	}
 	
 	
 	//
