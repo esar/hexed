@@ -2,7 +2,7 @@ using System;
 using System.Windows.Forms;
 
 
-class PatternDialog : Form
+class PatternDialog : DialogBase
 {
 	HexView HexView;
 	
@@ -23,13 +23,11 @@ class PatternDialog : Form
 		HexView.OddColumnColor = System.Drawing.Color.LightGray;
 		HexView.EditMode = EditMode.Insert;
 		HexView.Dock = DockStyle.Fill;
-		Controls.Add(HexView);
-		
-		Button OkButton = new Button();
-		OkButton.Text = "OK";
-		OkButton.Click += OnOK;
-		OkButton.Dock = DockStyle.Bottom;
-		Controls.Add(OkButton);
+		Panel panel = new Panel();
+		panel.BorderStyle = BorderStyle.Fixed3D;
+		panel.Dock = DockStyle.Fill;
+		panel.Controls.Add(HexView);
+		Controls.Add(panel);
 	}
 	
 	protected void OnOK(object sender, EventArgs e)

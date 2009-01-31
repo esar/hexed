@@ -78,6 +78,7 @@
     <Compile Include="HexView.Input.Keyboard.cs" />
     <Compile Include="HexView.Input.Mouse.cs" />
     <Compile Include="PatternDialog.cs" />
+    <Compile Include="DialogBase.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

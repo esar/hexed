@@ -142,8 +142,12 @@ class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
 	protected void OnEditInsertPattern(object sender, EventArgs e)
 	{
 		PatternDialog dlg = new PatternDialog();
-		dlg.ShowDialog();
-		View.Document.FillConstant(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, 0xFF, View.Selection.Length / 8);
+		if(dlg.ShowDialog() == DialogResult.OK)
+		{
+			byte[] pattern = dlg.Pattern;
+			if(pattern.Length > 0)
+				View.Document.FillConstant(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, pattern[0], View.Selection.Length / 8);
+		}
 	}
 	
 	protected void OnEditSelectAll(object sender, EventArgs e)

@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchPlugin", "SearchPlugin\SearchPlugin.csproj", "{FC59CE0A-ECC1-4203-BA52-30457EE010FE}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorPlugin", "CalculatorPlugin\CalculatorPlugin.csproj", "{A4BF13C9-1B17-4D0A-B236-16B740DD9F09}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchPlugin", "SearchPlugin\SearchPlugin.csproj", "{FC59CE0A-ECC1-4203-BA52-30457EE010FE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aga.Controls", "Aga.Controls\Aga.Controls.csproj", "{E73BB233-D88B-44A7-A98F-D71EE158381D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hexed", "hexed.csproj", "{D6F74BFC-29D8-436B-9A93-B7AA58F75A32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookmarkPlugin", "BookmarkPlugin\BookmarkPlugin.csproj", "{721008AD-FE79-4D38-AE9F-F8DE85169F85}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PythonConsolePlugin", "PythonConsolePlugin\PythonConsolePlugin.csproj", "{5B36F055-4A0C-422C-8EC6-DF099E9F2EB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookmarkPlugin", "BookmarkPlugin\BookmarkPlugin.csproj", "{721008AD-FE79-4D38-AE9F-F8DE85169F85}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChecksumPlugin", "ChecksumPlugin\ChecksumPlugin.csproj", "{4DD6D081-0461-4035-9D98-98B6B7C91672}"
 EndProject
@@ -19,10 +19,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StatisticsPlugin", "Statist
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
 		Debug = Debug
 		Release = Release
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4DD6D081-0461-4035-9D98-98B6B7C91672}.Debug.ActiveCfg = Debug
@@ -47,6 +47,10 @@ Global
 		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Release.Build.0 = Release
 		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Release|Any CPU.ActiveCfg = Debug
 		{721008AD-FE79-4D38-AE9F-F8DE85169F85}.Release|Any CPU.Build.0 = Debug
+		{764C2C55-0470-4015-84CC-9198298EB218}.Debug.ActiveCfg = Debug
+		{764C2C55-0470-4015-84CC-9198298EB218}.Debug.Build.0 = Debug
+		{764C2C55-0470-4015-84CC-9198298EB218}.Release.ActiveCfg = Release
+		{764C2C55-0470-4015-84CC-9198298EB218}.Release.Build.0 = Release
 		{A4BF13C9-1B17-4D0A-B236-16B740DD9F09}.Debug.ActiveCfg = Debug
 		{A4BF13C9-1B17-4D0A-B236-16B740DD9F09}.Debug.Build.0 = Debug
 		{A4BF13C9-1B17-4D0A-B236-16B740DD9F09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

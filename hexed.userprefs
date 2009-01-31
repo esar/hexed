@@ -2,14 +2,16 @@
   <Files>
     <File name="Welcome" />
     <File name="HexEd.cs" line="737" column="32" />
-    <File name="HexView.cs" line="724" column="8" />
+    <File name="HexView.cs" line="724" column="1" />
     <File name="HexView.Drawing.cs" line="542" column="5" />
     <File name="HexView.Input.Keyboard.cs" line="11" column="2" />
     <File name="HexView.Input.Mouse.cs" line="21" column="1" />
     <File name="StatisticsPlugin/Statistics.cs" line="15" column="4" />
-    <File name="PieceBuffer.cs" line="1" column="1" />
-    <File name="PatternDialog.cs" line="12" column="27" />
-    <File name="HexViewForm.cs" line="146" column="100" />
+    <File name="PieceBuffer.cs" line="188" column="46" />
+    <File name="PatternDialog.cs" line="18" column="2" />
+    <File name="HexViewForm.cs" line="149" column="108" />
+    <File name="PieceBuffer.Blocks.cs" line="8" column="8" />
+    <File name="SelectionPanel.cs" line="136" column="28" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
@@ -26,7 +28,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PatternDialog.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexViewForm.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
