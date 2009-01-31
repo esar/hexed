@@ -12,3 +12,4 @@ test-results/*
 *.FileList.txt
 NCover/*
 *.orig
+competition/*
