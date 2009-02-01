@@ -514,6 +514,8 @@ public partial class HexView
 
 	protected override void OnPaint(PaintEventArgs e)
 	{
+		base.OnPaint(e);
+		
         e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
 
 		double pixelOffset = ScrollPosition + e.ClipRectangle.Top;
@@ -623,9 +625,7 @@ public partial class HexView
 			}
 
 			dataOffset += LayoutDimensions.BitsPerRow / 8;
-		}
-		
-		this.BeginInvoke((MethodInvoker)delegate() { InsertCaret.Repaint(); } );
+		}		
 	}
 
 

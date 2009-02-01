@@ -24,6 +24,7 @@ public class ManagedCaret
 		_Drawn = false;
 		control.GotFocus += new EventHandler(OnGotFocus);
 		control.LostFocus += new EventHandler(OnLostFocus);
+		control.Paint += new PaintEventHandler(OnPaint);
 		
 		if(control.Focused)
 			OnGotFocus(control, new EventArgs());
@@ -77,7 +78,14 @@ public class ManagedCaret
 		_Control.LostFocus -= new EventHandler(OnLostFocus);
 	}
 
-	public void Repaint()
+	public void OnPaint(object sender, PaintEventArgs e)
+	{
+		// Schedule repainting of the caret after the control has finished painting
+		// i.e. next time we go around the event loop.
+		_Control.BeginInvoke((MethodInvoker)delegate() { Repaint(); } );
+	}
+	
+	private void Repaint()
 	{
 		if(_Visible && _Drawn)
 		{
