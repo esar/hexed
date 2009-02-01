@@ -12,12 +12,9 @@ class PatternMatchBMH
 	{
 	}
 	
-	public void Initialize(string pattern, bool caseSensitive)
+	public void Initialize(byte[] pattern, bool caseSensitive)
 	{
-		if(caseSensitive)
-			Pattern = System.Text.ASCIIEncoding.UTF8.GetBytes(pattern);
-		else
-			Pattern = System.Text.ASCIIEncoding.UTF8.GetBytes(pattern.ToLower());
+		Pattern = pattern;
 
 		PartialText = new byte[Pattern.Length];
 		PartialTextSize = 0;

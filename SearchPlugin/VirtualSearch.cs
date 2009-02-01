@@ -37,12 +37,12 @@ namespace SearchPlugin
 	class WorkerArgs
 	{
 		public Document	Document;
-		public string	Pattern;
+		public byte[]	Pattern;
 		public long		StartDataOffset;
 		public long     StartIndex;
 		public int		MaxResults;
 		
-		public WorkerArgs(Document document, string pattern, long startDataOffset, long startIndex, int maxResults)
+		public WorkerArgs(Document document, byte[] pattern, long startDataOffset, long startIndex, int maxResults)
 		{
 			Document = document;
 			Pattern = pattern;
@@ -95,7 +95,7 @@ namespace SearchPlugin
 		private const int BATCH_SIZE = 10000;
 		
 		private Document  Document;
-		private string    Pattern;
+		private byte[]    Pattern;
 		
 		List<RestartPosition> RestartPositions = new List<RestartPosition>();
 		SearchResult[]   CachedResults;
@@ -142,7 +142,7 @@ namespace SearchPlugin
 			CachedResults = new SearchResult[CACHE_SIZE];
 		}
 		
-		public void Initialize(Document document, string pattern)
+		public void Initialize(Document document, byte[] pattern)
 		{
 			Document = document;
 			Pattern = pattern;
