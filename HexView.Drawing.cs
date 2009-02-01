@@ -598,19 +598,30 @@ public partial class HexView
 			int off = 0;
 			foreach(RectangleF wordRect in LayoutDimensions.WordRects)
 			{
-				if(dataOffset + off >= Document.Length)
-					break;
+				if(dataOffset + off < Document.Length)
+				{
+					str = IntToRadixString(GetWord((dataOffset + off) * 8), _DataRadix, LayoutDimensions.NumWordDigits);
+					e.Graphics.DrawString(str, _Font, _Brush, wordRect.Left, rect.Top);
+				}
+				else
+					e.Graphics.DrawString(String.Empty.PadLeft(LayoutDimensions.NumWordDigits, '.'), _Font, _GrayBrush, wordRect.Left, rect.Top);
 				
-				str = IntToRadixString(GetWord((dataOffset + off) * 8), _DataRadix, LayoutDimensions.NumWordDigits);
-				e.Graphics.DrawString(str, _Font, _Brush, wordRect.Left, rect.Top);
 				off += _BytesPerWord;
 			}
 
-			str = "";
-			for(long i = 0; i < LayoutDimensions.BitsPerRow / 8 && dataOffset + i < Document.Length; ++i)
+			str = String.Empty;
+			long i;
+			for(i = 0; i < LayoutDimensions.BitsPerRow / 8 && dataOffset + i < Document.Length; ++i)
 				str += AsciiChar[Document[dataOffset + i]];
 			rect = new RectangleF(LayoutDimensions.AsciiRect.Left, (float)drawingOffset + line * LayoutDimensions.WordSize.Height, LayoutDimensions.AsciiRect.Width, LayoutDimensions.WordSize.Height);
 			e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
+			
+			if(i < LayoutDimensions.BitsPerRow / 8)
+			{
+				str = String.Empty.PadLeft((int)i, ' ');
+				str = str.PadRight(LayoutDimensions.BitsPerRow / 8, '.');
+				e.Graphics.DrawString(str, _Font, _GrayBrush, rect.Location);
+			}
 
 			dataOffset += LayoutDimensions.BitsPerRow / 8;
 		}

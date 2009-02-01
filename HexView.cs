@@ -266,7 +266,8 @@ public partial class HexView : Control
 
 
 	private Font		_Font				= new Font(FontFamily.GenericMonospace, 10);
-	private Brush		_Brush				= new SolidBrush(Color.Black);
+	private Brush		_Brush				= SystemBrushes.WindowText;
+	private Brush		_GrayBrush			= SystemBrushes.GrayText;
 	private Color		_EvenColumnColor	= Color.Transparent;
 	private Color		_OddColumnColor		= Color.Transparent;
 	private uint		_AddressRadix		= 16;
