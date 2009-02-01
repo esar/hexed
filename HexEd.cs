@@ -451,7 +451,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		Application.Idle += OnIdle;
 		
-		Size = new Size(1024, 768);
+		Size = new Size(1024, 768);		
 	}
 
 	
@@ -465,6 +465,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands.Add("FilePrintSetup", null, OnUpdateUiElement);
 		Commands.Add("FilePrintPreview", null, OnUpdateUiElement);
 		Commands.Add("FilePrint", null, OnUpdateUiElement);
+		Commands.Add("FileFileProperties", OnFileFileProperties, OnUpdateUiElement);
 		Commands.Add("FileExit", OnFileExit, OnUpdateUiElement);
 		
 		Commands.Add("EditUndo", null, OnUpdateUiElement);
@@ -516,6 +517,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi.DropDownItems.Add(CreateMenuItem("Print Setup...", "printsetup_16.png", "FilePrintSetup", Keys.None));
 		mi.DropDownItems.Add(CreateMenuItem("P&rint Preview...", "printpreview_16.png", "FilePrintPreview", Keys.None));
 		mi.DropDownItems.Add(CreateMenuItem("&Print", "print_16.png", "FilePrint", Keys.Control | Keys.P));
+		mi.DropDownItems.Add(new ToolStripSeparator());
+		mi.DropDownItems.Add(CreateMenuItem("File Properties...", null, "FileFileProperties", Keys.None));
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi.DropDownItems.Add(CreateMenuItem("E&xit", null, "FileExit", Keys.None));
 		MainMenuStrip.Items.Add(mi);
@@ -847,6 +850,16 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			Open(ofd.FileName);
 	}
 
+	protected void OnFileFileProperties(object sender, EventArgs e)
+	{
+		if(ActiveView != null && ActiveView.Document.FileName != null)
+		{
+			FilePropertiesDialog dlg = new FilePropertiesDialog(ActiveView.Document.FileName);
+			dlg.StartPosition = FormStartPosition.CenterParent;
+			dlg.ShowDialog();
+		}
+	}
+	
 	private void OnEditPreferences(object sender, EventArgs e)
 	{
 		SettingsDialog dlg = new SettingsDialog();

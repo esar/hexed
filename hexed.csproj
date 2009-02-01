@@ -79,6 +79,7 @@
     <Compile Include="HexView.Input.Mouse.cs" />
     <Compile Include="PatternDialog.cs" />
     <Compile Include="DialogBase.cs" />
+    <Compile Include="FilePropertiesDialog.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

@@ -565,6 +565,13 @@ public partial class PieceBuffer
 		}
 	}
 	
+	protected string _FileName;
+	public string FileName
+	{
+		get { return _FileName; }
+	}
+	
+	
 	public PieceBuffer()
 	{
 		_Marks = new InternalMarkCollection(this, Pieces, Pieces, 0);
@@ -580,6 +587,8 @@ public partial class PieceBuffer
 	
 	public PieceBuffer(string filename)
 	{
+		_FileName = filename;
+		
 		Block block = FileBlock.Create(filename);
 		
 		Piece piece = new Piece(block, 0, block.Length);
