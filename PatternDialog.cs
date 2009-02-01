@@ -16,6 +16,7 @@ public class PatternDialog : DialogBase
 	TextBox  TextBox;
 	Panel    ValuePanel;
 	TableLayoutPanel ExtrasPanel;
+	int      LastSelectedIndex = -1;
 	
 	
 	public virtual byte[] Pattern
@@ -96,7 +97,6 @@ public class PatternDialog : DialogBase
 		
 		HexView = new HexView(new Document());
 		HexView.WordsPerGroup = 1;
-		HexView.OddColumnColor = System.Drawing.Color.LightGray;
 		HexView.EditMode = EditMode.Insert;
 		HexView.Dock = DockStyle.Fill;
 		HexViewPanel = new Panel();
@@ -145,14 +145,16 @@ public class PatternDialog : DialogBase
 		{
 			byte[] data = new byte[HexView.Document.Length];
 			HexView.Document.GetBytes(0, data, data.Length);
-			TextBox.Text = System.Text.Encoding.ASCII.GetString(data);
+			if(LastSelectedIndex != 0)
+				TextBox.Text = System.Text.Encoding.ASCII.GetString(data);
 			HexViewPanel.Visible = false;
 			TextBox.Visible = true;
 			TextBox.Focus();
 		}
 		else
 		{
-			HexView.Document.Insert(HexView.Document.Marks.Start, HexView.Document.Marks.End, TextBox.Text);
+			if(LastSelectedIndex == 0)
+				HexView.Document.Insert(HexView.Document.Marks.Start, HexView.Document.Marks.End, TextBox.Text);
 			TextBox.Visible = false;
 			HexViewPanel.Visible = true;
 			HexView.Focus();
@@ -188,6 +190,8 @@ public class PatternDialog : DialogBase
 			}
 		}
 		ValuePanel.ResumeLayout();
+		
+		LastSelectedIndex = TypeCombo.SelectedIndex;
 	}
 	
 	protected void OnRadixComboSelectedIndexChanged(object sender, EventArgs e)
