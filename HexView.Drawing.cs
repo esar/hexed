@@ -624,6 +624,8 @@ public partial class HexView
 
 			dataOffset += LayoutDimensions.BitsPerRow / 8;
 		}
+		
+		this.BeginInvoke((MethodInvoker)delegate() { InsertCaret.Repaint(); } );
 	}
 
 

@@ -486,6 +486,7 @@ public partial class HexView : Control
 		DragScrollTimer.Tick += OnDragScrollTimer;
 		
 		InsertCaret = new ManagedCaret(this);
+		InsertCaret.Visible = true;
 		Selection = new SelectionRange(this);
 		Selection.Changed += new EventHandler(OnSelectionChanged);
 		Document.Changed += new PieceBuffer.BufferChangedEventHandler(OnBufferChanged);

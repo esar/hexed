@@ -62,7 +62,7 @@ public class ManagedCaret
 		set	
 		{ 
 			_Visible = value;
-			if(_Visible)
+			if(_Visible && Control.Focused)
 				Show();
 			else
 				Hide();
@@ -77,6 +77,15 @@ public class ManagedCaret
 		_Control.LostFocus -= new EventHandler(OnLostFocus);
 	}
 
+	public void Repaint()
+	{
+		if(_Visible && _Drawn)
+		{
+			_Drawn = false;
+			ToggleCaret();
+		}
+	}
+	
 	private void OnGotFocus(object sender, EventArgs e) 
 	{
 		Show();
@@ -97,7 +106,8 @@ public class ManagedCaret
 	{
 		if(_Visible)
 		{
-			ToggleCaret();
+			if(!_Drawn)
+				ToggleCaret();
 			_Timer.Enabled = true;
 		}
 	}
