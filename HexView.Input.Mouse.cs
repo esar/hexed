@@ -21,6 +21,7 @@ public partial class HexView
 
 		if(((int)e.Button & (int)MouseButtons.Left) != 0)
 		{
+			HexViewHit prevHit = DragStartHit;
 			DragStartHit = hit;
 			DragStartPos = new Point(e.X, e.Y);
 			switch(hit.Type)
@@ -41,6 +42,11 @@ public partial class HexView
 						Selection.Set(hit.Address, hit.Address + LayoutDimensions.BitsPerRow);
 					break;
 			}
+
+			// Need to make sure caret moves between data and ascii panes even if the
+			// address doesn't change.
+			if(prevHit != null && prevHit.Address == hit.Address && prevHit.Type != hit.Type)
+				OnSelectionChanged(Selection, EventArgs.Empty);
 		}
 	}
 
