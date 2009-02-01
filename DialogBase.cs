@@ -34,8 +34,6 @@ public class GradientPanel : Panel
 				                               new Point(contentRectangle.Right, contentRectangle.Bottom - 1) });
 			rightShadow.CloseAllFigures();
 			
-			Brush tmp = new SolidBrush(Color.Magenta);
-			
 			Brush pgb = new LinearGradientBrush(new Point(0, contentRectangle.Bottom), new Point(0, contentRectangle.Bottom + ShadowSize.Height), Color.Black, Color.Transparent);
 			e.Graphics.FillPath(pgb, bottomShadow);
 			pgb.Dispose();
@@ -104,12 +102,15 @@ public class DialogBase : Form
 		OkButton = new Button();
 		OkButton.Text = "OK";
 		OkButton.Click += OnOK;
+		OkButton.Margin = new Padding(3, 6, 3, 2);
 		CancelButton = new Button();
 		CancelButton.Text = "Cancel";
 		CancelButton.Click += OnCancel;
+		CancelButton.Margin = new Padding(3, 6, 3, 2);
 		ApplyButton = new Button();
 		ApplyButton.Text = "Apply";
 		ApplyButton.Click += OnApply;
+		ApplyButton.Margin = new Padding(3, 6, 3, 2);
 		
 		ButtonPanel.Controls.Add(ApplyButton);
 		ButtonPanel.Controls.Add(CancelButton);
