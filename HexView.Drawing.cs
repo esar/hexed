@@ -143,13 +143,12 @@ public partial class HexView
 		}
 		g.Dispose();
 		digitAddress += (i - 1) * ((_BytesPerWord * 8) / LayoutDimensions.NumWordDigits);
-		
 		digitAddress += lineAddress;
 		if(digitAddress < 0)
 			digitAddress = 0;
-		else if(digitAddress > Document.Length)
-			digitAddress = Document.Length;
-		
+		else if(digitAddress > Document.Length * 8)
+			digitAddress = Document.Length * 8;
+
 		if(digitAddress >= Selection.Start && digitAddress < Selection.End)
 			return new HexViewHit(HexViewHit.HitType.DataSelection, digitAddress, i, new Point(0, 0));
 		else
@@ -175,8 +174,8 @@ public partial class HexView
 		long address = lineAddress + ((i - 1) * 8);
 		if(address < 0)
 			address = 0;
-		else if(address > Document.Length)
-			address = Document.Length;
+		else if(address > Document.Length * 8)
+			address = Document.Length * 8;
 		
 		if(address >= Selection.Start && address < Selection.End)
 			return new HexViewHit(HexViewHit.HitType.AsciiSelection, address, i, new Point(0, 0));

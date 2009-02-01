@@ -57,6 +57,8 @@ public partial class HexView : Control
 					_Start = value;
 					if(_Start >= View.Document.Length * 8)
 						_Start = View.Document.Length * 8 - 1;
+					if(_Start > _End)
+						Swap();
 					_Range.Start.Position = _Start / 8;
 
 					if(Changed != null)
@@ -79,6 +81,8 @@ public partial class HexView : Control
 					_End = value;
 					if(_End >= View.Document.Length * 8)
 						_End = View.Document.Length * 8 - 1;
+					if(_Start > _End)
+						Swap();
 					_Range.End.Position = _End / 8;
 
 					if(Changed != null)
@@ -113,6 +117,8 @@ public partial class HexView : Control
 			_End = end;
 			if(_End >= View.Document.Length * 8)
 				_End = View.Document.Length * 8;// - 1;
+			if(_Start > _End)
+				Swap();
 			_Range.Start.Position = _Start / 8;
 			_Range.End.Position = _End / 8;
 
@@ -217,6 +223,13 @@ public partial class HexView : Control
 			}
 			else
 				return View.IntToRadixString((ulong)_Range.Start.Position, View.AddressRadix, 1);
+		}
+		
+		protected void Swap()
+		{
+			long tmp = _Start;
+			_Start = _End;
+			_End = tmp;
 		}
 	};
 
@@ -735,7 +748,7 @@ public partial class HexView : Control
 		{
 			InsertCaret.Visible = true;
 			if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
-			   InsertCaret.Position = AddressToClientPointAscii(Selection.Start);
+				InsertCaret.Position = AddressToClientPointAscii(Selection.Start);
 			else
 				InsertCaret.Position = AddressToClientPoint(Selection.Start);
 		}
