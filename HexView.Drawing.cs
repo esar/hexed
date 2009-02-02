@@ -329,9 +329,12 @@ public partial class HexView
 		address /= (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits;
 		if(address >= LayoutDimensions.NumWordDigits)
 			address = LayoutDimensions.NumWordDigits - 1;
-		Graphics g = CreateGraphics();
-		x += MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, (int)address, _Font).Width;
-		g.Dispose();
+		if(address > 0)
+		{
+			Graphics g = CreateGraphics();
+			x += MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, (int)address, _Font).Width;
+			g.Dispose();
+		}
 			
 		return new Point((int)x + 1, (int)(y + LayoutDimensions.WordSize.Height));
 	}
@@ -555,13 +558,20 @@ public partial class HexView
 		
 		foreach(SelectionRange sel in Highlights)
 		{
-			if(sel.Start / 8 < dataEndOffset && sel.End / 8 > dataOffset)
+			long start = sel.Start;
+			long end = sel.End;
+			if(start > end)
 			{
-				GraphicsPath p = CreateRoundedSelectionPath(sel.Start, sel.End, (float)0, AddressToClientPoint);
+				start = sel.End;
+				end = sel.Start;
+			}
+			if(start / 8 <= dataEndOffset && end / 8 >= dataOffset)
+			{
+				GraphicsPath p = CreateRoundedSelectionPath(start, end, (float)0, AddressToClientPoint);
 				e.Graphics.FillPath(new SolidBrush(sel.BackColor), p);
 				e.Graphics.DrawPath(new Pen(sel.BorderColor, sel.BorderWidth), p);
 
-				p = CreateRoundedSelectionPath(sel.Start, sel.End, (float)0, AddressToClientPointAscii);
+				p = CreateRoundedSelectionPath(start, end, (float)0, AddressToClientPointAscii);
 				e.Graphics.FillPath(new SolidBrush(sel.BackColor), p);
 				e.Graphics.DrawPath(new Pen(sel.BorderColor, sel.BorderWidth), p);
 			}
@@ -569,13 +579,20 @@ public partial class HexView
 		
 		if(Selection.Length != 0)
 		{
-			if(Selection.Start / 8 < dataEndOffset && Selection.End / 8 > dataOffset)
+			long start = Selection.Start;
+			long end = Selection.End;
+			if(start > end)
 			{
-				GraphicsPath p = CreateRoundedSelectionPath(Selection.Start, Selection.End, (float)0, AddressToClientPoint);
+				start = Selection.End;
+				end = Selection.Start;
+			}
+			if(start / 8 <= dataEndOffset && end / 8 >= dataOffset)
+			{
+				GraphicsPath p = CreateRoundedSelectionPath(start, end, (float)0, AddressToClientPoint);
 				e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 200, 255, 200)), p);
 				e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);
 
-				p = CreateRoundedSelectionPath(Selection.Start, Selection.End, (float)0, AddressToClientPointAscii);
+				p = CreateRoundedSelectionPath(start, end, (float)0, AddressToClientPointAscii);
 				e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 200, 255, 200)), p);
 				e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);			
 			}

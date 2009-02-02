@@ -25,6 +25,7 @@ public class ManagedCaret
 		control.GotFocus += new EventHandler(OnGotFocus);
 		control.LostFocus += new EventHandler(OnLostFocus);
 		control.Paint += new PaintEventHandler(OnPaint);
+		control.HandleDestroyed += new EventHandler(OnHandleDestroyed);
 		
 		if(control.Focused)
 			OnGotFocus(control, new EventArgs());
@@ -72,17 +73,25 @@ public class ManagedCaret
 
 	public void Dispose() 
 	{
+		_Timer.Stop();
+		_Timer.Dispose();
+		
 		if(_Control.Focused)
 			OnLostFocus(_Control, new EventArgs());
 		_Control.GotFocus -= new EventHandler(OnGotFocus);
 		_Control.LostFocus -= new EventHandler(OnLostFocus);
 	}
 
-	public void OnPaint(object sender, PaintEventArgs e)
+	protected void OnPaint(object sender, PaintEventArgs e)
 	{
 		// Schedule repainting of the caret after the control has finished painting
 		// i.e. next time we go around the event loop.
 		_Control.BeginInvoke((MethodInvoker)delegate() { Repaint(); } );
+	}
+	
+	private void OnHandleDestroyed(object sender, EventArgs e)
+	{
+		Hide();
 	}
 	
 	private void Repaint()
@@ -106,6 +115,12 @@ public class ManagedCaret
 	
 	private void OnTimerTick(object sender, EventArgs e)
 	{
+		if(!Control.Focused)
+		{
+			Hide();
+			return;
+		}
+		
 		if(_Visible)
 			ToggleCaret();
 	}

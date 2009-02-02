@@ -92,22 +92,28 @@ public partial class HexView
 			case Keys.Home:
 			{
 				long addr;
-				if(e.Modifiers == Keys.Control)
+				if((e.Modifiers & Keys.Control) != 0)
 					addr = 0;
 				else
-					addr = (Selection.Start / LayoutDimensions.BitsPerRow) * LayoutDimensions.BitsPerRow;
-				Selection.Set(addr, addr);
+					addr = (Selection.End / LayoutDimensions.BitsPerRow) * LayoutDimensions.BitsPerRow;
+				if(e.Shift)
+					Selection.End = addr;
+				else
+					Selection.Set(addr, addr);
 				EnsureVisible(addr);
 				break;
 			}
 			case Keys.End:
 			{
 				long addr;
-				if(e.Modifiers == Keys.Control)
+				if((e.Modifiers & Keys.Control) != 0)
 					addr = Document.Length * 8;
 				else
-					addr = (((Selection.Start / LayoutDimensions.BitsPerRow) + 1) * LayoutDimensions.BitsPerRow) - LayoutDimensions.BitsPerDigit;
-				Selection.Set(addr, addr);
+					addr = (((Selection.End / LayoutDimensions.BitsPerRow) + 1) * LayoutDimensions.BitsPerRow) - LayoutDimensions.BitsPerDigit;
+				if(e.Shift)
+					Selection.End = addr + LayoutDimensions.BitsPerDigit;
+				else
+					Selection.Set(addr, addr);
 				EnsureVisible(addr);		
 				break;
 			}

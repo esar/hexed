@@ -55,10 +55,10 @@ public partial class HexView : Control
 				if(_Start != value)
 				{
 					_Start = value;
-					if(_Start >= View.Document.Length * 8)
-						_Start = View.Document.Length * 8 - 1;
-					if(_Start > _End)
-						Swap();
+					if(_Start < 0)
+						_Start = 0;
+					else if(_Start > View.Document.Length * 8)
+						_Start = View.Document.Length * 8;
 					_Range.Start.Position = _Start / 8;
 
 					if(Changed != null)
@@ -79,10 +79,10 @@ public partial class HexView : Control
 				if(_End != value)
 				{
 					_End = value;
-					if(_End >= View.Document.Length * 8)
-						_End = View.Document.Length * 8 - 1;
-					if(_Start > _End)
-						Swap();
+					if(_End < 0)
+						_End = 0;
+					else if(_End > View.Document.Length * 8)
+						_End = View.Document.Length * 8;
 					_Range.End.Position = _End / 8;
 
 					if(Changed != null)
@@ -112,13 +112,15 @@ public partial class HexView : Control
 				hasChanged = true;
 
 			_Start = start;
-			if(_Start >= View.Document.Length * 8)
-				_Start = View.Document.Length * 8;// - 1;
+			if(_Start < 0)
+				_Start = 0;
+			else if(_Start > View.Document.Length * 8)
+				_Start = View.Document.Length * 8;
 			_End = end;
-			if(_End >= View.Document.Length * 8)
-				_End = View.Document.Length * 8;// - 1;
-			if(_Start > _End)
-				Swap();
+			if(_End < 0)
+				_End = 0;
+			else if(_End > View.Document.Length * 8)
+				_End = View.Document.Length * 8;
 			_Range.Start.Position = _Start / 8;
 			_Range.End.Position = _End / 8;
 
@@ -223,13 +225,6 @@ public partial class HexView : Control
 			}
 			else
 				return View.IntToRadixString((ulong)_Range.Start.Position, View.AddressRadix, 1);
-		}
-		
-		protected void Swap()
-		{
-			long tmp = _Start;
-			_Start = _End;
-			_End = tmp;
 		}
 	};
 
