@@ -7,6 +7,7 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -17,6 +18,35 @@ using System.Windows.Forms;
 using System.Drawing;
 
 
+public class RecordEnumerator : IEnumerator
+{
+	Record Record;
+	ulong _Current = 0;
+	
+	public RecordEnumerator(Record record)
+	{
+		Record = record;
+	}
+	
+	public object Current
+	{
+		get { return Record.GetArrayElement(_Current); }
+	}
+	
+	public void Reset()
+	{
+		_Current = 0;
+	}
+	
+	public bool MoveNext()
+	{
+		if(_Current + 1 >= Record.Count)
+			return false;
+
+		_Current += 1;		
+		return true;
+	}
+}
 
 	public class RecordCollection
 	{
@@ -97,7 +127,7 @@ using System.Drawing;
 		}
 	}
 
-    public abstract class Record : ICloneable
+    public abstract class Record : ICloneable, IEnumerable
     {
 		public Record Parent;
     	public RecordCollection _Children;
@@ -158,6 +188,11 @@ using System.Drawing;
 			Console.WriteLine("----");
 			for(int i = 0; i < _Children.Count; ++i)
 				_Children[i].Dump();
+		}
+	
+		public IEnumerator GetEnumerator()
+		{
+			return new RecordEnumerator(this);
 		}
     }
     
