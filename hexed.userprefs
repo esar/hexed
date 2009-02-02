@@ -1,20 +1,28 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="HexEd.cs" line="858" column="1" />
+    <File name="HexEd.cs" line="858" column="55" />
     <File name="StatisticsPlugin/Statistics.cs" line="15" column="4" />
     <File name="PieceBuffer.cs" line="574" column="2" />
-    <File name="PatternDialog.cs" line="28" column="31" />
+    <File name="PatternDialog.cs" line="100" column="1" />
+    <File name="SearchPlugin/SearchDialog.cs" line="21" column="1" />
+    <File name="DialogBase.cs" line="103" column="24" />
+    <File name="SearchPlugin/Search.cs" line="14" column="22" />
+    <File name="SearchPlugin/VirtualSearch.cs" line="40" column="16" />
+    <File name="SearchPlugin/PatternMatchBMH.cs" line="18" column="1" />
+    <File name="HexView.cs" line="731" column="36" />
+    <File name="HexView.Drawing.cs" line="589" column="19" />
+    <File name="HexView.Input.Mouse.cs" line="30" column="43" />
+    <File name="ManagedCaret.cs" line="62" column="3" />
+    <File name="HexView.Input.Keyboard.cs" line="114" column="1" />
+    <File name="ShiftDialog.cs" line="100" column="1" />
+    <File name="SelectionPanel.cs" line="128" column="3" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="hexed" expanded="True">
-          <Node name="PatternDialog.cs" selected="True" />
-        </Node>
-        <Node name="SearchPlugin" expanded="True">
-          <Node name="References" expanded="True" />
-        </Node>
+        <Node name="hexed" expanded="True" selected="True" />
+        <Node name="SearchPlugin" expanded="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
@@ -25,7 +33,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/PatternDialog.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/ShiftDialog.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
