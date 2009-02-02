@@ -22,23 +22,30 @@ class StructureTreeModel : Aga.Controls.Tree.ITreeModel
 			for(int i = 0; i < _Host.ActiveView.Document.Structure._Children.Count; ++i)
 			{
 				Record r = _Host.ActiveView.Document.Structure._Children[i];
-				items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
+				if(r.ArrayLength > 1)
+					items.Add(new StructureTreeItem(r.Name + "[" + r.ArrayLength + "]", r.ToString(), r.GetType().ToString(), r, this));
+				else
+					items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
 			}
 		}
 		else
 		{
 			if(((StructureTreeItem)treePath.LastNode).Record.ArrayLength > 1)
 			{
-				if(((StructureTreeItem)treePath.LastNode).Record.ArrayElements != null)
+				Record record = ((StructureTreeItem)treePath.LastNode).Record; 
+				if(record.ArrayElements != null)
 				{
-					foreach(Record r in ((StructureTreeItem)treePath.LastNode).Record.ArrayElements)
-						items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
+					int i = 0;
+					foreach(Record r in record.ArrayElements)
+						items.Add(new StructureTreeItem(r.Name + "[" + (i++) + "]", r.ToString(), r.GetType().ToString(), r, this));
 				}
 				else
 				{
-					Record r = ((StructureTreeItem)treePath.LastNode).Record;
 					for(int i = 0; i < (int)((StructureTreeItem)treePath.LastNode).Record.ArrayLength; ++i)
+					{
+						Record r = record.GetArrayElement((ulong)i);
 						items.Add(new StructureTreeItem(r.Name + "[" + i + "]", r.ToString(), r.GetType().ToString(), r, this));
+					}
 				}
 			}
 			else
@@ -46,7 +53,10 @@ class StructureTreeModel : Aga.Controls.Tree.ITreeModel
 				for(int i = 0; i < ((StructureTreeItem)treePath.LastNode).Record._Children.Count; ++i)
 				{
 					Record r = ((StructureTreeItem)treePath.LastNode).Record._Children[i];
-					items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
+					if(r.ArrayLength > 1)
+						items.Add(new StructureTreeItem(r.Name + "[" + r.ArrayLength + "]", r.ToString(), r.GetType().ToString(), r, this));
+					else
+						items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
 				}
 			}
 		}

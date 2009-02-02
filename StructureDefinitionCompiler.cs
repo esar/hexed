@@ -38,9 +38,9 @@ using System.Drawing;
 					{
 						// If it's an array of duplicate structures, return the last one
 						// as that's what the script probably wants.
-						if(r.ArrayElements != null)
-							return r.ArrayElements[r.ArrayElements.Count - 1];
-						else
+//						if(r.ArrayElements != null)
+//							return r.ArrayElements[r.ArrayElements.Count - 1];
+//						else
 							return r;
 					}
 				}
@@ -71,11 +71,12 @@ using System.Drawing;
 				{
 					if(r.ArrayElements == null)
 					{
-						Record copy = new Record();
-						copy.Name = r.Name;
-						copy.Position = r.Position;
-						copy.Length = r.Length;
-						copy._Children = r._Children;
+						Record copy = (Record)r.Clone();
+//						Record copy = new Record();
+//						copy.Name = r.Name;
+//						copy.Position = r.Position;
+//						copy.Length = r.Length;
+//						copy._Children = r._Children;
 						r._Children = new RecordCollection(r);
 						r.ArrayLength = 2;
 						r.ArrayElements = new List<Record>();
@@ -96,7 +97,7 @@ using System.Drawing;
 		}
 	}
 
-    public class Record
+    public abstract class Record : ICloneable
     {
 		public Record Parent;
     	public RecordCollection _Children;
@@ -123,6 +124,11 @@ using System.Drawing;
     		ArrayLength = arrayLength;
     	}
     	
+		public ulong Count { get { return ArrayLength; } }
+	
+//		public abstract Record this[ulong index] { get; }
+		public abstract Record GetArrayElement(ulong index);
+	
 		public virtual void ApplyStructure(Document doc, ref ulong pos)
 		{
 			Document = doc;
@@ -136,6 +142,11 @@ using System.Drawing;
 		public override string ToString()
 		{
 			return "[unknown]";
+		}
+	
+		public object Clone()
+		{
+			return this.MemberwiseClone();
 		}
 		
 		public void Dump()
@@ -156,11 +167,34 @@ using System.Drawing;
     	                  ulong pos, 
     	                  ulong length, 
     	                  uint arrayLength) : base(name, pos, length, arrayLength) {}
+	
     	public static implicit operator char(CharRecord r)
     	{
     		return (char)r.Document[(long)r.Position / 8];
     	}
-    	
+
+		public CharRecord this[ulong index]
+		{
+			get
+			{
+				if(ArrayLength <= 1)
+					return this;
+				if(index < 0 || index >= ArrayLength)
+					throw new ArgumentOutOfRangeException();
+			
+				if(ArrayElements != null)
+					return (CharRecord)ArrayElements[(int)index];
+			
+				CharRecord newRecord = new CharRecord(Name, Position + (Length * index), Length, 1);
+				newRecord.Document = Document;
+				return newRecord;
+			}
+		}
+		public override Record GetArrayElement(ulong index)
+		{
+			return this[index];
+		}
+	
     	// TODO: Find a better home for this and the copy in HexView
  		static char[]		AsciiChar = {	'.', '.', '.', '.', '.', '.', '.', '.',
 										'.', '.', '.', '.', '.', '.', '.', '.',
@@ -228,7 +262,29 @@ using System.Drawing;
     			x |= (long)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
     		return x;
     	}
-    	
+
+		public IntRecord this[ulong index]
+		{
+			get
+			{
+				if(ArrayLength <= 1)
+					return this;
+				if(index < 0 || index >= ArrayLength)
+					throw new ArgumentOutOfRangeException();
+			
+				if(ArrayElements != null)
+					return (IntRecord)ArrayElements[(int)index];
+			
+				IntRecord newRecord = new IntRecord(Name, Position + (Length * index), Length, 1);
+				newRecord.Document = Document;
+				return newRecord;
+			}
+		}
+		public override Record GetArrayElement(ulong index)
+		{
+			return this[index];
+		}
+	
     	public override string ToString()
     	{
     		return ((long)this).ToString();
@@ -251,6 +307,28 @@ using System.Drawing;
 			return r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
     	}
 
+		public UintRecord this[ulong index]
+		{
+			get
+			{
+				if(ArrayLength <= 1)
+					return this;
+				if(index < 0 || index >= ArrayLength)
+					throw new ArgumentOutOfRangeException();
+			
+				if(ArrayElements != null)
+					return (UintRecord)ArrayElements[(int)index];
+			
+				UintRecord newRecord = new UintRecord(Name, Position + (Length * index), Length, 1);
+				newRecord.Document = Document;
+				return newRecord;
+			}
+		}
+		public override Record GetArrayElement(ulong index)
+		{
+			return this[index];
+		}
+	
     	public override string ToString()
     	{
     		return ((ulong)this).ToString();
@@ -474,6 +552,22 @@ using System.Drawing;
 					if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
 						output.Append(pad + "    public " + KnownTypes[n.TypeName].RecordType + " " + n.Name + "{ get { return (" + KnownTypes[n.TypeName].RecordType + ")_Children[\"" + n.Name + "\"]; } }\n");
 				}
+			
+				output.Append(pad + "    public " + node.TypeName + " this[ulong index]\n");
+				output.Append(pad + "    {\n");
+				output.Append(pad + "        get\n");
+				output.Append(pad + "        {\n");
+				output.Append(pad + "            if(ArrayLength <= 1) return this;\n");
+				output.Append(pad + "            if(index < 0 || index >= ArrayLength) throw new System.ArgumentOutOfRangeException();\n");
+				output.Append(pad + "            if(ArrayElements != null)\n");
+				output.Append(pad + "                return (" + node.TypeName + ")ArrayElements[(int)index];\n");
+				output.Append(pad + "            " + node.TypeName + " newRecord = new " + node.TypeName + "(Name, Position + (Length * index), Length, 1);\n");
+				output.Append(pad + "            newRecord.Document = Document;\n");
+				output.Append(pad + "            return newRecord;\n");
+				output.Append(pad + "        }\n");
+				output.Append(pad + "    }\n");
+				output.Append(pad + "    public override Record GetArrayElement(ulong index) { return this[index]; }\n");
+
 				output.Append(pad + "    public " + node.TypeName + "() : base() {} \n");
 //				output.Append(pad + "    public " + node.TypeName + "(string name, ulong pos) : base(name, pos) { } \n");
 				output.Append(pad + "    public " + node.TypeName + "(string name, ulong pos, ulong length, uint arrayLength) : base(name, pos, length, arrayLength) { } \n");

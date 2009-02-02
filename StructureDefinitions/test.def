@@ -37,12 +37,14 @@ record HU01
 
             } BlockHeader;
 
-            record uint8 huffmanTable[256];
+            record uint4 HuffmanTable1[256];
+            record uint4 HuffmanTable2[256];
+
             record uint8 data[BlockHeader.CompressedLength - 256];
 
         } Block;
 
-        length += Block.BlockHeader.DecompressedLength;
+        length += Block[Block.Count - 1].BlockHeader.DecompressedLength;
     }
 } HU01;
 
