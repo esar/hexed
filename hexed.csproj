@@ -80,6 +80,7 @@
     <Compile Include="PatternDialog.cs" />
     <Compile Include="DialogBase.cs" />
     <Compile Include="FilePropertiesDialog.cs" />
+    <Compile Include="ShiftDialog.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

@@ -68,7 +68,10 @@ class SelectionPanel : Panel
 		ToolBar.Items.Add(new ToolStripSeparator());
 		item = ToolBar.Items.Add(Settings.Instance.Image("shiftleft_16.png"));
 		item.ToolTipText = "Shift Left";
-		ToolBar.Items.Add(Settings.Instance.Image("shiftright_16.png")).ToolTipText = "Shift Right";
+		item.Click += OnShiftLeft;
+		item = ToolBar.Items.Add(Settings.Instance.Image("shiftright_16.png"));
+		item.ToolTipText = "Shift Right";
+		item.Click += OnShiftRight;
 		ToolBar.Items.Add(Settings.Instance.Image("rotateleft_16.png")).ToolTipText = "Rotate Left";
 		ToolBar.Items.Add(Settings.Instance.Image("rotateright_16.png")).ToolTipText = "Rotate Right";
 		ToolBar.Items.Add(new ToolStripSeparator());
@@ -113,6 +116,24 @@ class SelectionPanel : Panel
 	protected void OnByteSwap(object sender, EventArgs e)
 	{
 		CurrentView.Document.Reverse(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End);
+	}
+	
+	protected void OnShiftLeft(object sender, EventArgs e)
+	{
+		ShiftDialog dlg = new ShiftDialog();
+		dlg.StartPosition = FormStartPosition.CenterParent;
+		dlg.Text = "Shift Left";
+		if(dlg.ShowDialog() == DialogResult.OK)
+			CurrentView.Document.Shift(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, 0 - dlg.Value);
+	}
+	
+	protected void OnShiftRight(object sender, EventArgs e)
+	{
+		ShiftDialog dlg = new ShiftDialog();
+		dlg.StartPosition = FormStartPosition.CenterParent;
+		dlg.Text = "Shift Right";
+		if(dlg.ShowDialog() == DialogResult.OK)
+			CurrentView.Document.Shift(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, dlg.Value);
 	}
 	
 	protected void OnAnd(object sender, EventArgs e)

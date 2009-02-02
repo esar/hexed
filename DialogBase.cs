@@ -107,6 +107,7 @@ public class DialogBase : Form
 		CancelButton.Text = "Cancel";
 		CancelButton.Click += OnCancel;
 		CancelButton.Margin = new Padding(3, 6, 3, 2);
+		CancelButton.CausesValidation = false;
 		ApplyButton = new Button();
 		ApplyButton.Text = "Apply";
 		ApplyButton.Click += OnApply;
