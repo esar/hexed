@@ -210,21 +210,25 @@ class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
 	protected void OnViewBytes(object sender, EventArgs e)
 	{
 		View.BytesPerWord = 1;
+		View.WordsPerGroup = 8;
 	}
 	
 	protected void OnViewWords(object sender, EventArgs e)
 	{
 		View.BytesPerWord = 2;
+		View.WordsPerGroup = 4;
 	}
 	
 	protected void OnViewDwords(object sender, EventArgs e)
 	{
 		View.BytesPerWord = 4;
+		View.WordsPerGroup = 2;
 	}
 	
 	protected void OnViewQwords(object sender, EventArgs e)
 	{
 		View.BytesPerWord = 8;
+		View.WordsPerGroup = 1;
 	}
 	
 	protected void OnViewLittleEndian(object sender, EventArgs e)
