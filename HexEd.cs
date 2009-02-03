@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Drawing;
 using System.IO;
-using System.Reflection;
 using System.Collections.Generic;
 
 using Crownwood.DotNetMagic.Docking;
@@ -329,6 +328,9 @@ class HexEdApp : Form, IPluginHost
 	private ToolStripStatusLabel	AddressLabel;
 	private ToolStripStatusLabel	ModifiedLabel;
 
+	protected PluginManager _PluginManager;
+	public PluginManager PluginManager { get { return _PluginManager; } }
+	
 	private static CommandSet	Commands = new CommandSet();
 	
 	protected ContextMenuStrip	SelectionContextMenu	= new ContextMenuStrip();
@@ -362,6 +364,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		Text = "HexEd";
 
+		_PluginManager = new PluginManager(this);
+		
 		CreateCommands();
 		
 		WindowImageList = new ImageList();
@@ -745,7 +749,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	protected override void OnLoad(EventArgs e)
 	{
 		base.OnLoad(e);
-		LoadPlugins();
+		PluginManager.LoadPlugins();
 	}
 	
 	protected void UpdateWindowTitle(string documentTitle)
@@ -858,7 +862,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	
 	private void OnEditPreferences(object sender, EventArgs e)
 	{
-		SettingsDialog dlg = new SettingsDialog();
+		SettingsDialog dlg = new SettingsDialog(this);
 		dlg.ShowDialog();
 	}
 	
@@ -989,38 +993,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	}
 	
 	
-	private void LoadPlugins()
-	{
-		string path = Application.StartupPath;
-		string[] filenames = Directory.GetFiles(path, "*.dll");
-
-		foreach(string filename in filenames)
-		{
-			try
-			{
-				Assembly asm = Assembly.LoadFile(filename);
-				if(asm != null)
-				{
-					Type[] types = asm.GetTypes();
-					foreach(Type type in types)
-					{
-						if(typeof(IPlugin).IsAssignableFrom(type))
-						{
-							Console.WriteLine("Loaded plugin: " + filename + " :: " + type);
-							IPlugin p = (IPlugin)Activator.CreateInstance(type);
-							p.Initialize(this);
-						}
-					}
-				}
-				else
-					Console.WriteLine("Failed to load plugin assembly");
-			}
-			catch(Exception ex)
-			{
-				Console.WriteLine(ex.Message);
-			}		
-        }
-    }
 	
 	public HexView ActiveView 
 	{

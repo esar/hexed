@@ -80,6 +80,8 @@
     <Compile Include="FilePropertiesDialog.cs" />
     <Compile Include="ShiftDialog.cs" />
     <Compile Include="CodeView.cs" />
+    <Compile Include="PluginManager.cs" />
+    <Compile Include="Settings\PluginsSettingsPage.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

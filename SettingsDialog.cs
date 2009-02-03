@@ -159,7 +159,7 @@ class EditorAppearanceSettingsPage : SettingsPage
 		protected TitleLabel	TitleLabel = new TitleLabel();
 
 
-		public SettingsDialog() : base(Buttons.OK | Buttons.Cancel | Buttons.Apply)
+		public SettingsDialog(HexEdApp app) : base(Buttons.OK | Buttons.Cancel | Buttons.Apply)
 		{
 			Text = "Hexed Settings";
 //			Icon = Settings.Instance.Icon("overlays.ico");
@@ -207,6 +207,8 @@ class EditorAppearanceSettingsPage : SettingsPage
 			page = AddPage(new EditorSettingsPage(), 3);
 			AddPage(page, new EditorLayoutSettingsPage(), 3);
 			AddPage(page, new EditorAppearanceSettingsPage(), 3);
+		
+			page = AddPage(new PluginsSettingsPage(app), 3);
 		
 			page = AddPage(new CommandsSettingsPage(), 9);
 			AddPage(page, new RevisionGraphSettingsPage(), 6);
