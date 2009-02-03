@@ -19,350 +19,6 @@ using System.Drawing;
 
 namespace StructurePlugin
 {
-	public class RecordEnumerator : IEnumerator
-	{
-		Record Record;
-		long _Current = 0;
-		
-		public RecordEnumerator(Record record)
-		{
-			Record = record;
-		}
-		
-		public object Current
-		{
-			get { return Record.GetArrayElement(_Current); }
-		}
-		
-		public void Reset()
-		{
-			_Current = 0;
-		}
-		
-		public bool MoveNext()
-		{
-			if(_Current + 1 >= Record.Count)
-				return false;
-
-			_Current += 1;		
-			return true;
-		}
-	}
-
-	public class RecordCollection
-	{
-		Record _Owner;
-		List<Record> Records = new List<Record>();
-		
-		public int Count
-		{
-			get { return Records.Count; }
-		}
-		
-		public Record this[string index]
-		{
-			get
-			{
-				foreach(Record r in Records)
-					if(r.Name == index)
-						return r;
-				return null;
-			}
-		}
-		
-		public Record this[int index]
-		{
-			get
-			{
-				return Records[index];
-			}
-		}
-	
-		public RecordCollection(Record owner)
-		{
-			_Owner = owner;
-		}
-	
-		public void Add(Record record)
-		{
-			record.Parent = _Owner;
-			Records.Add(record);
-		}
-	}
-
-    public abstract class Record : ICloneable, IEnumerable
-    {
-		public Record Parent;
-    	public RecordCollection _Children;
-    	public List<Record> ArrayElements;
-    	public Document Document;
-    	public string Name;
-    	public long Position = -1;
-    	public long Length = 0;
-    	public long ArrayLength = 1;
-		public bool VariableLength = false;
-    	
-    	public Color BackColor = Color.Transparent;
-    	
-    	public Record()
-    	{
-			_Children = new RecordCollection(this);
-    	}
-    	public Record(string name, long pos, long length, int arrayLength)
-    	{
-			_Children = new RecordCollection(this);
-		
-    		Name = name;
-    		Position = pos;
-    		Length = length;
-    		ArrayLength = arrayLength;
-    	}
-    	
-		public long Count { get { return ArrayLength; } }
-	
-		public abstract Record GetArrayElement(long index);
-	
-		public virtual void ApplyStructure(Document doc, ref long pos, bool first)
-		{
-			if(first)
-			{
-				Position = pos;
-				Document = doc;
-			}
-		
-			pos += Length;
-		}
-
-		public virtual void SetValue(string s)
-		{
-		}
-	
-		public override string ToString()
-		{
-			return "[unknown]";
-		}
-	
-		public object Clone()
-		{
-			return this.MemberwiseClone();
-		}
-		
-		public void Dump()
-		{
-			Console.WriteLine(Name);
-			Console.WriteLine("    ArrayLength: " + ArrayLength);
-			Console.WriteLine("    Length: " + Length);
-			Console.WriteLine("    ArrayElements: " + (ArrayElements != null));
-			Console.WriteLine("    VariableLength: " + VariableLength);
-			Console.WriteLine("    Pos: " + Position);
-			Console.WriteLine("----");
-			for(int i = 0; i < _Children.Count; ++i)
-				_Children[i].Dump();
-		}
-	
-		public IEnumerator GetEnumerator()
-		{
-			return new RecordEnumerator(this);
-		}
-    }
-    
-    public class CharRecord : Record
-    {
-    	public CharRecord(string name, 
-    	                  long pos, 
-    	                  long length, 
-    	                  int arrayLength) : base(name, pos, length, arrayLength) {}
-	
-    	public static implicit operator char(CharRecord r)
-    	{
-    		return (char)r.Document[(long)r.Position / 8];
-    	}
-
-		public CharRecord this[long index]
-		{
-			get
-			{
-				if(ArrayLength <= 1)
-					return this;
-				if(index < 0 || index >= ArrayLength)
-					throw new ArgumentOutOfRangeException();
-			
-				if(ArrayElements != null)
-					return (CharRecord)ArrayElements[(int)index];
-			
-				CharRecord newRecord = new CharRecord(Name, Position + (Length * index), Length, 1);
-				newRecord.Document = Document;
-				newRecord.Parent = this;
-				return newRecord;
-			}
-		}
-		public override Record GetArrayElement(long index)
-		{
-			return this[index];
-		}
-	
-    	// TODO: Find a better home for this and the copy in HexView
- 		static char[]		AsciiChar = {	'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '!', '\"', '#', '$', '%', '&', '\'',
-										'(', ')', '*', '+', ',', '-', '.', '/',
-										'0', '1', '2', '3', '4', '5', '6', '7',
-										'8', '9', ':', ';', '<', '=', '>', '?',
-										'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-										'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-										'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-										'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
-										'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
-										'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-										'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
-										'x', 'y', 'z', '{', '|', '}', '~', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.' };   	
-    	public override string ToString()
-    	{
-			
-    		
-    		StringBuilder str = new StringBuilder();
-    		str.Append("\"");
-    		for(long i = 0; i < (Length * ArrayLength) / 8 && i < 32; ++i)
-    			str.Append(AsciiChar[Document[(long)(Position/8 + i)]]);
-    		str.Append("\"");
-    		return str.ToString();
-    	}
-    }
-    
-    public class IntRecord : Record
-    {
-    	public IntRecord(string name, 
-    	                  long pos, 
-    	                  long length,
-    	                  int arrayLength) : base(name, pos, length, arrayLength) {}
-    	public static implicit operator int(IntRecord r)
-    	{
-    		int x = 0;
-    		for(long i = 0; i < r.Length / 8; ++i)
-    			x |= (int)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
-    		return x;
-    	}
-
-    	public static implicit operator long(IntRecord r)
-    	{
-    		long x = 0;
-    		for(long i = 0; i < r.Length / 8; ++i)
-    			x |= (long)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
-    		return x;
-    	}
-
-		public IntRecord this[long index]
-		{
-			get
-			{
-				if(ArrayLength <= 1)
-					return this;
-				if(index < 0 || index >= ArrayLength)
-					throw new ArgumentOutOfRangeException();
-			
-				if(ArrayElements != null)
-					return (IntRecord)ArrayElements[(int)index];
-			
-				IntRecord newRecord = new IntRecord(Name, Position + (Length * index), Length, 1);
-				newRecord.Document = Document;
-				newRecord.Parent = this;
-				return newRecord;
-			}
-		}
-		public override Record GetArrayElement(long index)
-		{
-			return this[index];
-		}
-	
-    	public override string ToString()
-    	{
-    		return ((long)this).ToString();
-    	}
-    }
-    
-    public class UintRecord : Record
-    {
-    	public UintRecord(string name, 
-    	                  long pos, 
-    	                  long length,
-    	                  int arrayLength) : base(name, pos, length, arrayLength) {}
-    	public static implicit operator uint(UintRecord r)
-    	{
-			return (uint)r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
-    	}
-
-    	public static implicit operator ulong(UintRecord r)
-    	{
-			return r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
-    	}
-
-		public UintRecord this[long index]
-		{
-			get
-			{
-				if(ArrayLength <= 1)
-					return this;
-				if(index < 0 || index >= ArrayLength)
-					throw new ArgumentOutOfRangeException();
-			
-				if(ArrayElements != null)
-					return (UintRecord)ArrayElements[(int)index];
-			
-				UintRecord newRecord = new UintRecord(Name, Position + (Length * index), Length, 1);
-				newRecord.Document = Document;
-				newRecord.Parent = this;
-				return newRecord;
-			}
-		}
-		public override Record GetArrayElement(long index)
-		{
-			return this[index];
-		}
-	
-    	public override string ToString()
-    	{
-    		return ((ulong)this).ToString();
-    	}
-
-	
-		public override void SetValue(string s)
-		{
-			ulong x = Convert.ToUInt64(s);
-			byte[] data = new byte[this.Length / 8];
-			for(uint i = 0; i < Length/8; ++i)
-			{
-				data[i] = (byte)(x & 0xFF);
-				x >>= 8;
-			}
-		
-			PieceBuffer.Mark a = Document.Marks.Add((long)(Position/8));
-			PieceBuffer.Mark b = Document.Marks.Add((long)((Position+Length)/8));
-			Document.Insert(a, b, data, (long)Length/8);
-			Document.Marks.Remove(a);
-			Document.Marks.Remove(b);
-		}
-	}
-
-
-
 	class StructureDefinitionCompiler
 	{
 		enum TokenType
@@ -541,26 +197,26 @@ namespace StructurePlugin
 				DumpParseTree(cn, depth + 1);
 		}
 
-	void GenCode(StringBuilder output, ParseNode node, int depth)
-	{
-		string pad = String.Empty.PadLeft(depth * 4, ' ');
-		
-		if(node.Type == ParseNodeType.RecordDefinition)
+		void GenCode(StringBuilder output, ParseNode node, int depth)
 		{
-			foreach(ParseNode n in node.Children)
-				if(n.Type == ParseNodeType.RecordDefinition)
-					GenCode(output, n, depth);
+			string pad = String.Empty.PadLeft(depth * 4, ' ');
 			
-			// Declare record's class
-			output.Append(String.Format("{0}public class {1} : Record\n{{\n", pad, KnownTypes[node.TypeName].RecordType));
-			
-			// Declare record's members
-			foreach(ParseNode n in node.Children)
-				if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
-					output.Append(String.Format("{0}    public readonly {1} {2} = new {1}(\"{2}\", -1, {3}, 1);\n", pad, KnownTypes[n.TypeName].RecordType, n.Name, KnownTypes[n.TypeName].Length));
-			
-			// Declare array accessor
-			output.Append(String.Format(@"
+			if(node.Type == ParseNodeType.RecordDefinition)
+			{
+				foreach(ParseNode n in node.Children)
+					if(n.Type == ParseNodeType.RecordDefinition)
+						GenCode(output, n, depth);
+				
+				// Declare record's class
+				output.Append(String.Format("{0}public class {1} : Record\n{{\n", pad, KnownTypes[node.TypeName].RecordType));
+				
+				// Declare record's members
+				foreach(ParseNode n in node.Children)
+					if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
+						output.Append(String.Format("{0}    public readonly {1} {2} = new {1}(\"{2}\", -1, {3}, 1);\n", pad, KnownTypes[n.TypeName].RecordType, n.Name, KnownTypes[n.TypeName].Length));
+				
+				// Declare array accessor
+				output.Append(String.Format(@"
 {0}    public {1} this[long index]
 {0}    {{
 {0}        get
@@ -569,9 +225,10 @@ namespace StructurePlugin
 {0}            if(index < 0 || index >= ArrayLength) throw new System.ArgumentOutOfRangeException();
 {0}            if(ArrayElements != null)
 {0}                return ({1})ArrayElements[(int)index];
-{0}            {1} newRecord = new {1}(Name, -1, 0, 1);
+{0}            {1} newRecord = new {1}(_Name, -1, 0, 1);
 {0}            long pos = Position + (Length * index);
 {0}            newRecord.ApplyStructure(Document, ref pos, true);
+{0}            newRecord.Index = index;
 {0}            newRecord.Parent = this;
 {0}            return newRecord;
 {0}        }}
@@ -579,14 +236,14 @@ namespace StructurePlugin
 {0}    public override Record GetArrayElement(long index) {{ return this[index]; }}
 ", pad, node.TypeName));
 
-			// Declare constructors
-			output.Append(String.Format(@"
+				// Declare constructors
+				output.Append(String.Format(@"
 {0}    public {1}() : base() {{}}
 {0}    public {1}(string name, long pos, long length, int arrayLength) : base(name, pos, length, arrayLength) {{}}
 ", pad, node.TypeName));
 
-			// Declare application function
-			output.Append(String.Format(@"
+				// Declare application function
+				output.Append(String.Format(@"
 {0}    public override void ApplyStructure(Document doc, ref long pos, bool first)
 {0}    {{
 {0}        if(first)
@@ -595,15 +252,15 @@ namespace StructurePlugin
 {0}            Position = pos;
 ", pad));
 
-			foreach(ParseNode n in node.Children)
-			{
-				if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
+				foreach(ParseNode n in node.Children)
 				{
-					int len;
-					bool isVariableLength = false;
-					if(n.ArrayLength != null)
-						isVariableLength = !int.TryParse(n.ArrayLength, out len);
-					output.Append(String.Format(@"
+					if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
+					{
+						int len;
+						bool isVariableLength = false;
+						if(n.ArrayLength != null)
+							isVariableLength = !int.TryParse(n.ArrayLength, out len);
+						output.Append(String.Format(@"
 {0}            if({1}.Position == -1) _Children.Add({1});
 {0}            for(int count = 0; count < {2}; ++count)
 {0}            {{
@@ -620,6 +277,7 @@ namespace StructurePlugin
 {0}                    Record r = new {4}({1}.Name, -1, 0, 1);
 {0}                    r.ApplyStructure(doc, ref pos, true);
 {0}                    r.Parent = this;
+{0}                    r.Index = {1}.ArrayElements.Count;
 {0}                    {1}.ArrayElements.Add(r);
 {0}                    {1}.ArrayLength += 1;
 {0}                }}
@@ -639,46 +297,46 @@ namespace StructurePlugin
 {0}                Length += {1}.Length;
 {0}            }}
 ", pad, n.Name, n.ArrayLength != null ? n.ArrayLength : "1", isVariableLength ? "true" : "false", KnownTypes[n.TypeName].RecordType));
+					}
+					else if(n.Type == ParseNodeType.CSharp)
+						output.Append(n.Text);
 				}
-				else if(n.Type == ParseNodeType.CSharp)
-					output.Append(n.Text);
-			}
-			
-			output.Append(String.Format(@"
+				
+				output.Append(String.Format(@"
 {0}        }}
 {0}        else
 {0}        {{
 ", pad));
-			
-			foreach(ParseNode n in node.Children)
-			{
-				if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
+				
+				foreach(ParseNode n in node.Children)
 				{
-					output.Append(String.Format(@"
+					if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
+					{
+						output.Append(String.Format(@"
 {0}                    {1}.ApplyStructure(doc, ref pos, false);
 ", pad, n.Name));
+					}
+					else if(n.Type == ParseNodeType.CSharp)
+						output.Append(n.Text);
 				}
-				else if(n.Type == ParseNodeType.CSharp)
-					output.Append(n.Text);
-			}
-			
-			output.Append(String.Format(@"
+				
+				output.Append(String.Format(@"
 {0}        }}
 {0}    }}
 {0}}}
 ", pad));
-		}
-		else if(node.Type == ParseNodeType.Unknown)
-		{
-			foreach(ParseNode n in node.Children)
+			}
+			else if(node.Type == ParseNodeType.Unknown)
 			{
-				if(n.Type == ParseNodeType.CSharp)
-					output.Append(n.Text);
-				else
-					GenCode(output, n, depth + 1);
+				foreach(ParseNode n in node.Children)
+				{
+					if(n.Type == ParseNodeType.CSharp)
+						output.Append(n.Text);
+					else
+						GenCode(output, n, depth + 1);
+				}
 			}
 		}
-	}
 		
 		
 		public Record Parse(string filename)

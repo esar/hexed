@@ -8,58 +8,43 @@ namespace StructurePlugin
 {
 	class StructureTreeModel : Aga.Controls.Tree.ITreeModel
 	{
-		private Document Document;
+		private Record Structure;
 			
-		public StructureTreeModel(Document doc)
+		public StructureTreeModel(Record structure)
 		{
-			Document = doc;
+			Structure = structure;
 		}
 
 		public System.Collections.IEnumerable GetChildren(Aga.Controls.Tree.TreePath treePath)
 		{
-			List<StructureTreeItem> items = new List<StructureTreeItem>();
+			List<Record> items = new List<Record>();
 			
 			if(treePath.IsEmpty())
 			{
-				for(int i = 0; i < ((Record)Document.MetaData["Structure"])._Children.Count; ++i)
-				{
-					Record r = ((Record)Document.MetaData["Structure"])._Children[i];
-					if(r.ArrayLength > 1)
-						items.Add(new StructureTreeItem(r.Name + "[" + r.ArrayLength + "]", r.ToString(), r.GetType().ToString(), r, this));
-					else
-						items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
-				}
+				foreach(Record r in Structure._Children)
+					items.Add(r);
 			}
 			else
 			{
-				if(((StructureTreeItem)treePath.LastNode).Record.ArrayLength > 1)
+				Record parent = (Record)treePath.LastNode; 
+				if(parent.ArrayLength > 1)
 				{
-					Record record = ((StructureTreeItem)treePath.LastNode).Record; 
+					Record record = parent; 
 					if(record.ArrayElements != null)
 					{
-						int i = 0;
 						foreach(Record r in record.ArrayElements)
-							items.Add(new StructureTreeItem(r.Name + "[" + (i++) + "]", r.ToString(), r.GetType().ToString(), r, this));
+							items.Add(r);
 					}
 					else
 					{
-						for(int i = 0; i < (int)((StructureTreeItem)treePath.LastNode).Record.ArrayLength; ++i)
-						{
-							Record r = record.GetArrayElement((long)i);
-							items.Add(new StructureTreeItem(r.Name + "[" + i + "]", r.ToString(), r.GetType().ToString(), r, this));
-						}
+						for(int i = 0; i < (int)parent.ArrayLength; ++i)
+							items.Add(record.GetArrayElement((long)i));
 					}
 				}
 				else
 				{
-					for(int i = 0; i < ((StructureTreeItem)treePath.LastNode).Record._Children.Count; ++i)
-					{
-						Record r = ((StructureTreeItem)treePath.LastNode).Record._Children[i];
-						if(r.ArrayLength > 1)
-							items.Add(new StructureTreeItem(r.Name + "[" + r.ArrayLength + "]", r.ToString(), r.GetType().ToString(), r, this));
-						else
-							items.Add(new StructureTreeItem(r.Name, r.ToString(), r.GetType().ToString(), r, this));
-					}
+					foreach(Record r in parent._Children)
+						items.Add(r);
 				}
 			}
 			
@@ -68,12 +53,12 @@ namespace StructurePlugin
 		
 		public bool IsLeaf(Aga.Controls.Tree.TreePath treePath)
 		{
-			return ((StructureTreeItem)treePath.LastNode).Record._Children.Count == 0 &&
-				   ((StructureTreeItem)treePath.LastNode).Record.ArrayLength <= 1;
+			return ((Record)treePath.LastNode)._Children.Count == 0 &&
+				   ((Record)treePath.LastNode).ArrayLength <= 1;
 		}
 		
 		public event EventHandler<Aga.Controls.Tree.TreeModelEventArgs> NodesChanged;
-		internal void OnNodesChanged(StructureTreeItem item)
+		internal void OnNodesChanged(Record item)
 		{
 	//		if (NodesChanged != null)
 	//		{
@@ -92,53 +77,6 @@ namespace StructurePlugin
 		}
 	}
 
-	class StructureTreeItem
-	{
-		private Image _Icon;
-		private string _Name;
-		private string _Value;
-		private string _Type;
-		private StructureTreeModel _Model;
-		private Record _Record;
-		
-		public Image Icon
-		{
-			get { return _Icon; }
-			set { _Icon = value; }
-		}
-		
-		public string Name
-		{
-			get { return _Name; }
-			set { _Name = value; }
-		}
-		
-		public string Value
-		{
-			get { return _Value; }
-			set { _Value = value; _Record.SetValue(value); }
-		}
-		
-		public string Type
-		{
-			get { return _Type; }
-			set { _Type = value; }
-		}
-		
-		public Record Record
-		{
-			get { return _Record; }
-		}
-		
-		public StructureTreeItem(string name, string value, string type, Record record, StructureTreeModel model)
-		{
-			_Name = name;
-			_Value = value;
-			_Type = type;
-			_Model = model;
-			_Record = record;
-		}
-	}
 
 	class StructurePanel : Panel
 	{
@@ -161,7 +99,7 @@ namespace StructurePlugin
 				List<Record> list = new List<Record>();
 				
 				foreach(Aga.Controls.Tree.TreeNodeAdv n in _TreeView.SelectedNodes)
-					list.Add(((StructureTreeItem)n.Tag).Record);
+					list.Add((Record)n.Tag);
 				return list; 
 			}
 		}
@@ -216,7 +154,7 @@ namespace StructurePlugin
 			_NodeControlName.Trimming = System.Drawing.StringTrimming.EllipsisCharacter;
 			_NodeControlName.UseCompatibleTextRendering = true;
 
-			_NodeControlValue.DataPropertyName = "Value";
+			_NodeControlValue.DataPropertyName = "StringValue";
 			_NodeControlValue.ParentColumn = _TreeColumnValue;
 			
 			_NodeControlType.DataPropertyName = "Type";
@@ -242,22 +180,32 @@ namespace StructurePlugin
 			dlg.Title = "Open Structure Definition";
 			if(dlg.ShowDialog() == DialogResult.OK)
 			{
+				_TreeView.Model = null;
+				
+				ProgressNotification progress = new ProgressNotification(); 
+				Host.ProgressNotifications.Add(progress);
+				
+				progress.Update(0, "Compiling structure definition...");
+				Application.DoEvents();
 				StructureDefinitionCompiler compiler = new StructureDefinitionCompiler();
 				Record structure = compiler.Parse(dlg.FileName);
 				
+				progress.Update(50, "Applying structure definition...");
+				Application.DoEvents();
 				if(structure != null)
 				{
 					long pos = 0;
 					structure.ApplyStructure(Host.ActiveView.Document, ref pos, true);
 					structure.Dump();
+					_TreeView.Model = new StructureTreeModel(structure);
 				}
 				
 				if(Host.ActiveView.Document.MetaData.ContainsKey("Structure"))
 					Host.ActiveView.Document.MetaData["Structure"] = structure;
 				else
 					Host.ActiveView.Document.MetaData.Add("Structure", structure);
-				
-				_TreeView.Model = new StructureTreeModel(Host.ActiveView.Document);
+								
+				Host.ProgressNotifications.Remove(progress);
 			}
 		}
 
