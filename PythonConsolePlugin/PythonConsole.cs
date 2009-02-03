@@ -84,6 +84,7 @@ namespace PythonConsolePlugin
 		PythonConsoleFeederStream StderrStream;
 		PythonConsoleFeederStream StdoutStream;
 		StringBuilder CurrentExpression = new StringBuilder();
+		Document CurrentDocument;
 		List<string> CurrentGlobals = new List<string>();
 		Font ResultFont;
 		Font ErrorFont;
@@ -143,9 +144,16 @@ namespace PythonConsolePlugin
 		
 		protected void OnActiveViewChanged(object sender, EventArgs e)
 		{
+			if(CurrentDocument != null)
+				CurrentDocument.MetaData.ItemChanged -= OnDocumentMetaDataItemChanged;
+			
 			Python.Globals["View"] = Host.ActiveView;
 			if(Host.ActiveView != null)
-				Python.Globals["Doc"] = Host.ActiveView.Document;
+			{
+				CurrentDocument = Host.ActiveView.Document;
+				CurrentDocument.MetaData.ItemChanged += OnDocumentMetaDataItemChanged;
+				Python.Globals["Doc"] = CurrentDocument;
+			}
 			else
 				Python.Globals["Doc"] = null;
 			
@@ -155,12 +163,23 @@ namespace PythonConsolePlugin
 			
 			if(Host.ActiveView != null)
 			{
-				foreach(KeyValuePair<string, object> kvp in Host.ActiveView.Document.MetaData)
+				foreach(KeyValuePair<string, object> kvp in CurrentDocument.MetaData)
 				{
 					CurrentGlobals.Add(kvp.Key);
 					Python.Globals.Add(kvp.Key, kvp.Value);
 				}
 			}
+		}
+		
+		protected void OnDocumentMetaDataItemChanged(object sender, MetaDataItemChangedEventArgs e)
+		{
+			if(Python.Globals.ContainsKey(e.Key))
+				Python.Globals[e.Key] = e.Value;
+			else
+				Python.Globals.Add(e.Key, e.Value);
+			
+			if(!CurrentGlobals.Contains(e.Key))
+				CurrentGlobals.Add(e.Key);
 		}
 		
 		protected override void OnKeyUp(KeyEventArgs e)

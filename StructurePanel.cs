@@ -19,9 +19,9 @@ class StructureTreeModel : Aga.Controls.Tree.ITreeModel
 		
 		if(treePath.IsEmpty())
 		{
-			for(int i = 0; i < _Host.ActiveView.Document.Structure._Children.Count; ++i)
+			for(int i = 0; i < ((Record)_Host.ActiveView.Document.MetaData["Structure"])._Children.Count; ++i)
 			{
-				Record r = _Host.ActiveView.Document.Structure._Children[i];
+				Record r = ((Record)_Host.ActiveView.Document.MetaData["Structure"])._Children[i];
 				if(r.ArrayLength > 1)
 					items.Add(new StructureTreeItem(r.Name + "[" + r.ArrayLength + "]", r.ToString(), r.GetType().ToString(), r, this));
 				else

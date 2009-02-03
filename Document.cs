@@ -1,22 +1,51 @@
 using System;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 
 
 
+public class MetaDataItemChangedEventArgs : EventArgs
+{
+	public string Key;
+	public object Value;
 	
+	public MetaDataItemChangedEventArgs(string key, object val)
+	{
+		Key = key;
+		Value = val;
+	}
+}
+
+public delegate void MetaDataItemChangedEventHandler(object sender, MetaDataItemChangedEventArgs e);
 	
+public class MetaDataCollection : Dictionary<string, object>
+{
+	public event MetaDataItemChangedEventHandler ItemChanged;
+	
+	public new object this[string key]
+	{
+		get { return base[key]; }
+		set 
+		{ 
+			base[key] = value; 
+			if(ItemChanged != null) 
+				ItemChanged(this, new MetaDataItemChangedEventArgs(key, value)); 
+		}
+	}
+	
+	public new void Add(string key, object val)
+	{
+		base.Add(key, val);
+		if(ItemChanged != null)
+			ItemChanged(this, new MetaDataItemChangedEventArgs(key, val));
+	}
+}
 	
 public class Document : PieceBuffer
 {
-	private Record			_Structure;
-	public Record Structure
-	{
-		get { return _Structure; }
-	}
-	
-	protected Dictionary<string, object> _MetaData = new Dictionary<string,object>();
-	public Dictionary<string, object> MetaData
+	protected MetaDataCollection _MetaData = new MetaDataCollection();
+	public MetaDataCollection MetaData
 	{
 		get { return _MetaData; }
 	}
@@ -38,11 +67,19 @@ public class Document : PieceBuffer
 	public void ApplyStructureDefinition(string filename)
 	{
 		StructureDefinitionCompiler compiler = new StructureDefinitionCompiler();
-		_Structure = compiler.Parse(filename);
+		Record structure = compiler.Parse(filename);
 		
-		long pos = 0;
-		_Structure.ApplyStructure(this, ref pos, true);
-		_Structure.Dump();
+		if(structure != null)
+		{
+			long pos = 0;
+			structure.ApplyStructure(this, ref pos, true);
+			structure.Dump();
+		}
+		
+		if(MetaData.ContainsKey("Structure"))
+			MetaData["Structure"] = structure;
+		else
+			MetaData.Add("Structure", structure);
 	}
 	
 	public ulong GetInteger(long offset, int length, Endian endian)
