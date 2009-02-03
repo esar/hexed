@@ -40,8 +40,8 @@ public class Document : PieceBuffer
 		StructureDefinitionCompiler compiler = new StructureDefinitionCompiler();
 		_Structure = compiler.Parse(filename);
 		
-		ulong pos = 0;
-		_Structure.ApplyStructure(this, ref pos);
+		long pos = 0;
+		_Structure.ApplyStructure(this, ref pos, true);
 		_Structure.Dump();
 	}
 	

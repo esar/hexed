@@ -927,10 +927,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 					
 //				((HexViewForm)_TabbedGroups.ActiveTabPage).View.Selection.Set(	(long)record.Position,
 //				                                               (long)( record.Position + (record.Length * record.ArrayLength)));
-				((HexViewForm)_TabbedGroups.ActiveTabPage).View.EnsureVisible((long)record.Position);
 				
 				record = record.Parent;
 			}
+			((HexViewForm)_TabbedGroups.ActiveTabPage).View.EnsureVisible((long)records[0].Position);
 		}
 	}
 

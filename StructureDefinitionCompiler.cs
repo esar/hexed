@@ -21,7 +21,7 @@ using System.Drawing;
 public class RecordEnumerator : IEnumerator
 {
 	Record Record;
-	ulong _Current = 0;
+	long _Current = 0;
 	
 	public RecordEnumerator(Record record)
 	{
@@ -63,17 +63,8 @@ public class RecordEnumerator : IEnumerator
 			get
 			{
 				foreach(Record r in Records)
-				{
 					if(r.Name == index)
-					{
-						// If it's an array of duplicate structures, return the last one
-						// as that's what the script probably wants.
-//						if(r.ArrayElements != null)
-//							return r.ArrayElements[r.ArrayElements.Count - 1];
-//						else
-							return r;
-					}
-				}
+						return r;
 				return null;
 			}
 		}
@@ -94,35 +85,6 @@ public class RecordEnumerator : IEnumerator
 		public void Add(Record record)
 		{
 			record.Parent = _Owner;
-		
-			foreach(Record r in Records)
-			{
-				if(r.Name == record.Name)
-				{
-					if(r.ArrayElements == null)
-					{
-						Record copy = (Record)r.Clone();
-//						Record copy = new Record();
-//						copy.Name = r.Name;
-//						copy.Position = r.Position;
-//						copy.Length = r.Length;
-//						copy._Children = r._Children;
-						r._Children = new RecordCollection(r);
-						r.ArrayLength = 2;
-						r.ArrayElements = new List<Record>();
-						r.ArrayElements.Add(copy);
-						r.ArrayElements.Add(record);
-					}
-					else
-					{
-						r.ArrayLength += 1;
-						r.ArrayElements.Add(record);
-					}
-					
-					return;
-				}
-			}
-			
 			Records.Add(record);
 		}
 	}
@@ -134,9 +96,10 @@ public class RecordEnumerator : IEnumerator
     	public List<Record> ArrayElements;
     	public Document Document;
     	public string Name;
-    	public ulong Position = 0;
-    	public ulong Length = 0;
-    	public ulong ArrayLength = 1;
+    	public long Position = -1;
+    	public long Length = 0;
+    	public long ArrayLength = 1;
+		public bool VariableLength = false;
     	
     	public Color BackColor = Color.Transparent;
     	
@@ -144,7 +107,7 @@ public class RecordEnumerator : IEnumerator
     	{
 			_Children = new RecordCollection(this);
     	}
-    	public Record(string name, ulong pos, ulong length, uint arrayLength)
+    	public Record(string name, long pos, long length, int arrayLength)
     	{
 			_Children = new RecordCollection(this);
 		
@@ -154,15 +117,19 @@ public class RecordEnumerator : IEnumerator
     		ArrayLength = arrayLength;
     	}
     	
-		public ulong Count { get { return ArrayLength; } }
+		public long Count { get { return ArrayLength; } }
 	
-//		public abstract Record this[ulong index] { get; }
-		public abstract Record GetArrayElement(ulong index);
+		public abstract Record GetArrayElement(long index);
 	
-		public virtual void ApplyStructure(Document doc, ref ulong pos)
+		public virtual void ApplyStructure(Document doc, ref long pos, bool first)
 		{
-			Document = doc;
-			pos += Length * ArrayLength;
+			if(first)
+			{
+				Position = pos;
+				Document = doc;
+			}
+		
+			pos += Length;
 		}
 
 		public virtual void SetValue(string s)
@@ -184,6 +151,8 @@ public class RecordEnumerator : IEnumerator
 			Console.WriteLine(Name);
 			Console.WriteLine("    ArrayLength: " + ArrayLength);
 			Console.WriteLine("    Length: " + Length);
+			Console.WriteLine("    ArrayElements: " + (ArrayElements != null));
+			Console.WriteLine("    VariableLength: " + VariableLength);
 			Console.WriteLine("    Pos: " + Position);
 			Console.WriteLine("----");
 			for(int i = 0; i < _Children.Count; ++i)
@@ -199,16 +168,16 @@ public class RecordEnumerator : IEnumerator
     public class CharRecord : Record
     {
     	public CharRecord(string name, 
-    	                  ulong pos, 
-    	                  ulong length, 
-    	                  uint arrayLength) : base(name, pos, length, arrayLength) {}
+    	                  long pos, 
+    	                  long length, 
+    	                  int arrayLength) : base(name, pos, length, arrayLength) {}
 	
     	public static implicit operator char(CharRecord r)
     	{
     		return (char)r.Document[(long)r.Position / 8];
     	}
 
-		public CharRecord this[ulong index]
+		public CharRecord this[long index]
 		{
 			get
 			{
@@ -222,10 +191,11 @@ public class RecordEnumerator : IEnumerator
 			
 				CharRecord newRecord = new CharRecord(Name, Position + (Length * index), Length, 1);
 				newRecord.Document = Document;
+				newRecord.Parent = this;
 				return newRecord;
 			}
 		}
-		public override Record GetArrayElement(ulong index)
+		public override Record GetArrayElement(long index)
 		{
 			return this[index];
 		}
@@ -269,7 +239,7 @@ public class RecordEnumerator : IEnumerator
     		
     		StringBuilder str = new StringBuilder();
     		str.Append("\"");
-    		for(ulong i = 0; i < (Length * ArrayLength) / 8 && i < 32; ++i)
+    		for(long i = 0; i < (Length * ArrayLength) / 8 && i < 32; ++i)
     			str.Append(AsciiChar[Document[(long)(Position/8 + i)]]);
     		str.Append("\"");
     		return str.ToString();
@@ -279,13 +249,13 @@ public class RecordEnumerator : IEnumerator
     public class IntRecord : Record
     {
     	public IntRecord(string name, 
-    	                  ulong pos, 
-    	                  ulong length,
-    	                  uint arrayLength) : base(name, pos, length, arrayLength) {}
+    	                  long pos, 
+    	                  long length,
+    	                  int arrayLength) : base(name, pos, length, arrayLength) {}
     	public static implicit operator int(IntRecord r)
     	{
     		int x = 0;
-    		for(ulong i = 0; i < r.Length / 8; ++i)
+    		for(long i = 0; i < r.Length / 8; ++i)
     			x |= (int)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
     		return x;
     	}
@@ -293,12 +263,12 @@ public class RecordEnumerator : IEnumerator
     	public static implicit operator long(IntRecord r)
     	{
     		long x = 0;
-    		for(ulong i = 0; i < r.Length / 8; ++i)
+    		for(long i = 0; i < r.Length / 8; ++i)
     			x |= (long)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
     		return x;
     	}
 
-		public IntRecord this[ulong index]
+		public IntRecord this[long index]
 		{
 			get
 			{
@@ -312,10 +282,11 @@ public class RecordEnumerator : IEnumerator
 			
 				IntRecord newRecord = new IntRecord(Name, Position + (Length * index), Length, 1);
 				newRecord.Document = Document;
+				newRecord.Parent = this;
 				return newRecord;
 			}
 		}
-		public override Record GetArrayElement(ulong index)
+		public override Record GetArrayElement(long index)
 		{
 			return this[index];
 		}
@@ -329,9 +300,9 @@ public class RecordEnumerator : IEnumerator
     public class UintRecord : Record
     {
     	public UintRecord(string name, 
-    	                  ulong pos, 
-    	                  ulong length,
-    	                  uint arrayLength) : base(name, pos, length, arrayLength) {}
+    	                  long pos, 
+    	                  long length,
+    	                  int arrayLength) : base(name, pos, length, arrayLength) {}
     	public static implicit operator uint(UintRecord r)
     	{
 			return (uint)r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
@@ -342,7 +313,7 @@ public class RecordEnumerator : IEnumerator
 			return r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
     	}
 
-		public UintRecord this[ulong index]
+		public UintRecord this[long index]
 		{
 			get
 			{
@@ -356,10 +327,11 @@ public class RecordEnumerator : IEnumerator
 			
 				UintRecord newRecord = new UintRecord(Name, Position + (Length * index), Length, 1);
 				newRecord.Document = Document;
+				newRecord.Parent = this;
 				return newRecord;
 			}
 		}
-		public override Record GetArrayElement(ulong index)
+		public override Record GetArrayElement(long index)
 		{
 			return this[index];
 		}
@@ -568,84 +540,145 @@ public class RecordEnumerator : IEnumerator
 				DumpParseTree(cn, depth + 1);
 		}
 
+	void GenCode(StringBuilder output, ParseNode node, int depth)
+	{
+		string pad = String.Empty.PadLeft(depth * 4, ' ');
 		
-		void GenCode(StringBuilder output, ParseNode node, int depth)
+		if(node.Type == ParseNodeType.RecordDefinition)
 		{
-			const string padding = "                                                                                        ";
-			string pad = padding.Substring(0, depth*4);
+			foreach(ParseNode n in node.Children)
+				if(n.Type == ParseNodeType.RecordDefinition)
+					GenCode(output, n, depth);
 			
-			if(node.Type == ParseNodeType.RecordDefinition)
+			// Declare record's class
+			output.Append(String.Format("{0}public class {1} : Record\n{{\n", pad, KnownTypes[node.TypeName].RecordType));
+			
+			// Declare record's members
+			foreach(ParseNode n in node.Children)
+				if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
+					output.Append(String.Format("{0}    public readonly {1} {2} = new {1}(\"{2}\", -1, {3}, 1);\n", pad, KnownTypes[n.TypeName].RecordType, n.Name, KnownTypes[n.TypeName].Length));
+			
+			// Declare array accessor
+			output.Append(String.Format(@"
+{0}    public {1} this[long index]
+{0}    {{
+{0}        get
+{0}        {{
+{0}            if(ArrayLength <= 1) return this;
+{0}            if(index < 0 || index >= ArrayLength) throw new System.ArgumentOutOfRangeException();
+{0}            if(ArrayElements != null)
+{0}                return ({1})ArrayElements[(int)index];
+{0}            {1} newRecord = new {1}(Name, -1, 0, 1);
+{0}            long pos = Position + (Length * index);
+{0}            newRecord.ApplyStructure(Document, ref pos, true);
+{0}            newRecord.Parent = this;
+{0}            return newRecord;
+{0}        }}
+{0}    }}
+{0}    public override Record GetArrayElement(long index) {{ return this[index]; }}
+", pad, node.TypeName));
+
+			// Declare constructors
+			output.Append(String.Format(@"
+{0}    public {1}() : base() {{}}
+{0}    public {1}(string name, long pos, long length, int arrayLength) : base(name, pos, length, arrayLength) {{}}
+", pad, node.TypeName));
+
+			// Declare application function
+			output.Append(String.Format(@"
+{0}    public override void ApplyStructure(Document doc, ref long pos, bool first)
+{0}    {{
+{0}        if(first)
+{0}        {{
+{0}            Document = doc;
+{0}            Position = pos;
+", pad));
+
+			foreach(ParseNode n in node.Children)
 			{
-				foreach(ParseNode n in node.Children)
-					if(n.Type == ParseNodeType.RecordDefinition)
-						GenCode(output, n, depth);
-
-				output.Append(pad + "public class " + KnownTypes[node.TypeName].RecordType + " : Record\n");
-				output.Append(pad + "{\n");
-				foreach(ParseNode n in node.Children)
+				if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
 				{
-					if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
-						output.Append(pad + "    public " + KnownTypes[n.TypeName].RecordType + " " + n.Name + "{ get { return (" + KnownTypes[n.TypeName].RecordType + ")_Children[\"" + n.Name + "\"]; } }\n");
+					int len;
+					bool isVariableLength = false;
+					if(n.ArrayLength != null)
+						isVariableLength = !int.TryParse(n.ArrayLength, out len);
+					output.Append(String.Format(@"
+{0}            if({1}.Position == -1) _Children.Add({1});
+{0}            for(int count = 0; count < {2}; ++count)
+{0}            {{
+{0}                if({1}.VariableLength) // First time can't be variable length and will always goto the else case
+{0}                {{
+{0}                    if({1}.ArrayElements == null)
+{0}                    {{
+{0}                        Record old = (Record){1}.Clone();
+{0}                        {1}._Children = new RecordCollection({1});
+{0}                        {1}.ArrayElements = new System.Collections.Generic.List<Record>();
+{0}                        {1}.ArrayElements.Add(old);
+{0}                        {1}.ArrayLength = 1;
+{0}                    }}
+{0}                    Record r = new {4}({1}.Name, -1, 0, 1);
+{0}                    r.ApplyStructure(doc, ref pos, true);
+{0}                    r.Parent = this;
+{0}                    {1}.ArrayElements.Add(r);
+{0}                    {1}.ArrayLength += 1;
+{0}                }}
+{0}                else
+{0}                {{
+{0}                    {1}.ApplyStructure(doc, ref pos, count == 0);
+{0}                    if({1}.VariableLength == false)
+{0}                    {{
+{0}                        {1}.ArrayLength += ({2}) - 1;
+{0}                        Length += ({2}) * {1}.Length;
+{0}                        VariableLength = VariableLength || {3};
+{0}                        pos += (({2}) - 1) * {1}.Length;
+{0}                        break;
+{0}                    }}
+{0}                }}
+{0}                if({3} || {1}.VariableLength) VariableLength = true;
+{0}                Length += {1}.Length;
+{0}            }}
+", pad, n.Name, n.ArrayLength != null ? n.ArrayLength : "1", isVariableLength ? "true" : "false", KnownTypes[n.TypeName].RecordType));
 				}
-			
-				output.Append(pad + "    public " + node.TypeName + " this[ulong index]\n");
-				output.Append(pad + "    {\n");
-				output.Append(pad + "        get\n");
-				output.Append(pad + "        {\n");
-				output.Append(pad + "            if(ArrayLength <= 1) return this;\n");
-				output.Append(pad + "            if(index < 0 || index >= ArrayLength) throw new System.ArgumentOutOfRangeException();\n");
-				output.Append(pad + "            if(ArrayElements != null)\n");
-				output.Append(pad + "                return (" + node.TypeName + ")ArrayElements[(int)index];\n");
-				output.Append(pad + "            " + node.TypeName + " newRecord = new " + node.TypeName + "(Name, Position + (Length * index), Length, 1);\n");
-				output.Append(pad + "            newRecord.Document = Document;\n");
-				output.Append(pad + "            return newRecord;\n");
-				output.Append(pad + "        }\n");
-				output.Append(pad + "    }\n");
-				output.Append(pad + "    public override Record GetArrayElement(ulong index) { return this[index]; }\n");
-
-				output.Append(pad + "    public " + node.TypeName + "() : base() {} \n");
-//				output.Append(pad + "    public " + node.TypeName + "(string name, ulong pos) : base(name, pos) { } \n");
-				output.Append(pad + "    public " + node.TypeName + "(string name, ulong pos, ulong length, uint arrayLength) : base(name, pos, length, arrayLength) { } \n");
-				output.Append(pad + "    public override void ApplyStructure(Document doc, ref ulong pos)\n");
-				output.Append(pad + "    {\n");
-				output.Append(pad + "        Record r;\n");
-				output.Append(pad + "        ulong oldPos;\n");
-				foreach(ParseNode n in node.Children)
-				{
-					if(n.Type == ParseNodeType.CSharp)
-						output.Append(n.Text);
-					else if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
-					{
-//						string lengthArgs;
-//						if(KnownTypes[n.TypeName].Length == 0)
-//							lengthArgs = "";
-//						else
-//							lengthArgs = ", " + KnownTypes[n.TypeName].Length;
-
-						if(n.ArrayLength != null)
-							output.Append(pad + "        r = new " + KnownTypes[n.TypeName].RecordType + "(\"" + n.Name + "\", pos, " + KnownTypes[n.TypeName].Length + ", (uint)" + n.ArrayLength + ");\n");
-						else
-							output.Append(pad + "        r = new " + KnownTypes[n.TypeName].RecordType + "(\"" + n.Name + "\", pos, " + KnownTypes[n.TypeName].Length + ", 1);\n");
-						output.Append(pad + "        oldPos = pos;\n");
-						output.Append(pad + "        r.ApplyStructure(doc, ref pos);\n");
-						output.Append(pad + "        Length += pos - oldPos;\n");
-						output.Append(pad + "        _Children.Add(r);\n");
-					}
-				}
-				output.Append(pad + "    }\n");
-				output.Append(pad + "}\n");
+				else if(n.Type == ParseNodeType.CSharp)
+					output.Append(n.Text);
 			}
-			else if(node.Type == ParseNodeType.Unknown)
+			
+			output.Append(String.Format(@"
+{0}        }}
+{0}        else
+{0}        {{
+", pad));
+			
+			foreach(ParseNode n in node.Children)
 			{
-				foreach(ParseNode n in node.Children)
+				if(n.Type == ParseNodeType.Record || n.Type == ParseNodeType.RecordDefinition)
 				{
-					if(n.Type == ParseNodeType.CSharp)
-						output.Append(n.Text);
-					else
-						GenCode(output, n, depth + 1);
+					output.Append(String.Format(@"
+{0}                    {1}.ApplyStructure(doc, ref pos, false);
+", pad, n.Name));
 				}
+				else if(n.Type == ParseNodeType.CSharp)
+					output.Append(n.Text);
+			}
+			
+			output.Append(String.Format(@"
+{0}        }}
+{0}    }}
+{0}}}
+", pad));
+		}
+		else if(node.Type == ParseNodeType.Unknown)
+		{
+			foreach(ParseNode n in node.Children)
+			{
+				if(n.Type == ParseNodeType.CSharp)
+					output.Append(n.Text);
+				else
+					GenCode(output, n, depth + 1);
 			}
 		}
+	}
+		
 		
 		public Record Parse(string filename)
 		{
@@ -815,7 +848,10 @@ public class RecordEnumerator : IEnumerator
 			CompilerResults cr = c.CompileAssemblyFromSource(cp, code);
 			if( cr.Errors.Count > 0 )
 			{
-				MessageBox.Show("ERROR: " + cr.Errors[0].ToString(),
+				StringBuilder msg = new StringBuilder();
+				foreach(CompilerError err in cr.Errors)
+					msg.Append(err.ToString() + "\r\n\r\n");
+				MessageBox.Show("ERROR: " + msg.ToString(), //cr.Errors[0].ToString(),
 								"Error compiling script", MessageBoxButtons.OK, 
 								MessageBoxIcon.Error );
 				return null;

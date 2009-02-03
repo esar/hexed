@@ -43,7 +43,7 @@ class StructureTreeModel : Aga.Controls.Tree.ITreeModel
 				{
 					for(int i = 0; i < (int)((StructureTreeItem)treePath.LastNode).Record.ArrayLength; ++i)
 					{
-						Record r = record.GetArrayElement((ulong)i);
+						Record r = record.GetArrayElement((long)i);
 						items.Add(new StructureTreeItem(r.Name + "[" + i + "]", r.ToString(), r.GetType().ToString(), r, this));
 					}
 				}
