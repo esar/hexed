@@ -3,9 +3,64 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace StructurePlugin
 {
+	class StructureWorker : BackgroundWorker
+	{
+		protected Document _Document;
+		public Document Document { get { return _Document; } }
+		protected string _DefinitionFilename;
+		public string DefinitionFilename { get { return _DefinitionFilename; } }
+		protected ProgressNotification _Progress;
+		public ProgressNotification Progress { get { return _Progress; } }
+		
+		public StructureWorker(Document document, string definitionFilename, ProgressNotification progress)
+		{
+			_Document = document;
+			_DefinitionFilename = definitionFilename;
+			_Progress = progress;
+			WorkerReportsProgress = true;
+			WorkerSupportsCancellation = true;
+		}
+		
+		protected override void OnDoWork(DoWorkEventArgs e)
+		{
+			base.OnDoWork(e);
+
+			ReportProgress(0, "Compiling structure definition...");
+			StructureDefinitionCompiler compiler = new StructureDefinitionCompiler();
+			Record structure = compiler.Parse(DefinitionFilename);
+			
+			ReportProgress(50, "Applying structure definition...");
+			if(structure != null)
+			{
+				long pos = 0;
+				structure.ApplyStructure(Document, ref pos, true);
+//				structure.Dump();
+			}
+
+			e.Result = structure;
+		}
+
+		protected override void OnProgressChanged(ProgressChangedEventArgs e)
+		{
+			Progress.Update(e.ProgressPercentage, (string)e.UserState);
+			base.OnProgressChanged(e);
+		}
+
+		protected override void OnRunWorkerCompleted(RunWorkerCompletedEventArgs e)
+		{
+			if(Document.MetaData.ContainsKey("Structure"))
+				Document.MetaData["Structure"] = e.Result;
+			else
+				Document.MetaData.Add("Structure", e.Result);
+			
+			base.OnRunWorkerCompleted(e);
+		}
+	}
+	
 	class StructureTreeModel : Aga.Controls.Tree.ITreeModel
 	{
 		private Record Structure;
@@ -91,6 +146,7 @@ namespace StructurePlugin
 
 		protected ToolStrip ToolBar;
 		protected IPluginHost Host;
+		protected StructureWorker Worker;
 
 		public List<Record> SelectedRecords
 		{
@@ -197,31 +253,19 @@ namespace StructurePlugin
 				
 				ProgressNotification progress = new ProgressNotification(); 
 				Host.ProgressNotifications.Add(progress);
-				
-				progress.Update(0, "Compiling structure definition...");
-				Application.DoEvents();
-				StructureDefinitionCompiler compiler = new StructureDefinitionCompiler();
-				Record structure = compiler.Parse(dlg.FileName);
-				
-				progress.Update(50, "Applying structure definition...");
-				Application.DoEvents();
-				if(structure != null)
-				{
-					long pos = 0;
-					structure.ApplyStructure(Host.ActiveView.Document, ref pos, true);
-					structure.Dump();
-					_TreeView.Model = new StructureTreeModel(structure);
-				}
-				
-				if(Host.ActiveView.Document.MetaData.ContainsKey("Structure"))
-					Host.ActiveView.Document.MetaData["Structure"] = structure;
-				else
-					Host.ActiveView.Document.MetaData.Add("Structure", structure);
-								
-				Host.ProgressNotifications.Remove(progress);
+				Worker = new StructureWorker(Host.ActiveView.Document, dlg.FileName, progress);
+				Worker.RunWorkerCompleted += OnWorkerCompleted;
+				Worker.RunWorkerAsync();
 			}
 		}
 
+		protected void OnWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+		{
+			Host.ProgressNotifications.Remove(((StructureWorker)sender).Progress);
+			if(Host.ActiveView != null && Host.ActiveView.Document == ((StructureWorker)sender).Document && e.Result != null)
+				_TreeView.Model = new StructureTreeModel((Record)e.Result);
+		}
+		
 		protected void OnSelectionChanged(object sender, EventArgs e)
 		{
 			List<Record> records = SelectedRecords;
