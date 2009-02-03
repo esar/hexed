@@ -269,14 +269,15 @@ namespace StructurePlugin
 {0}                    if({1}.ArrayElements == null)
 {0}                    {{
 {0}                        Record old = (Record){1}.Clone();
+{0}                        old.Parent = {1};
 {0}                        {1}._Children = new RecordCollection({1});
 {0}                        {1}.ArrayElements = new System.Collections.Generic.List<Record>();
 {0}                        {1}.ArrayElements.Add(old);
 {0}                        {1}.ArrayLength = 1;
 {0}                    }}
-{0}                    Record r = new {4}({1}.Name, -1, 0, 1);
+{0}                    Record r = new {4}({1}.BaseName, -1, 0, 1);
 {0}                    r.ApplyStructure(doc, ref pos, true);
-{0}                    r.Parent = this;
+{0}                    r.Parent = {1};
 {0}                    r.Index = {1}.ArrayElements.Count;
 {0}                    {1}.ArrayElements.Add(r);
 {0}                    {1}.ArrayLength += 1;

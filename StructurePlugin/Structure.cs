@@ -108,6 +108,7 @@ namespace StructurePlugin
 		public StructurePanel(IPluginHost host)
 		{
 			Host = host;
+			Host.ActiveViewChanged += OnActiveViewChanged;
 			
 			_TreeView = new Aga.Controls.Tree.TreeViewAdv();
 			_TreeColumnName = new Aga.Controls.Tree.TreeColumn("Name", 100);
@@ -171,7 +172,19 @@ namespace StructurePlugin
 			ToolBar.Items.Add(Settings.Instance.Image("open_16.png")).Click += new EventHandler(OnOpenStructureDef);
 		}
 
-		
+		protected void OnActiveViewChanged(object sender, EventArgs e)
+		{
+			if(Host.ActiveView != null)
+			{
+				object obj;
+				if(Host.ActiveView.Document.MetaData.TryGetValue("Structure", out obj))
+					_TreeView.Model = new StructureTreeModel((Record)obj);
+				else
+					_TreeView.Model = null;
+			}
+			else
+				_TreeView.Model = null;
+		}
 		
 		protected void OnOpenStructureDef(object sender, EventArgs e)
 		{

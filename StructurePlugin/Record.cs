@@ -111,6 +111,7 @@ namespace StructurePlugin
 				return name; 
 			} 
 		}
+		public string BaseName { get { return _Name; } }
 		
 		public virtual string Type { get { return this.GetType().Name; } }
 		public virtual string StringValue { get { return this.ToString(); } set {} }
