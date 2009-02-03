@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace PythonConsolePlugin
 {
@@ -83,6 +84,7 @@ namespace PythonConsolePlugin
 		PythonConsoleFeederStream StderrStream;
 		PythonConsoleFeederStream StdoutStream;
 		StringBuilder CurrentExpression = new StringBuilder();
+		List<string> CurrentGlobals = new List<string>();
 		Font ResultFont;
 		Font ErrorFont;
 
@@ -105,8 +107,7 @@ namespace PythonConsolePlugin
 			Python.Globals.Add("Host", host);
 			Python.Globals.Add("View", Host.ActiveView);
 			Python.Globals.Add("Doc", Host.ActiveView != null ? Host.ActiveView.Document : null);
-			Python.Globals.Add("Struct", Host.ActiveView != null ? Host.ActiveView.Document.Structure : null);
-			Python.Globals["View"] = Host.ActiveView;
+			OnActiveViewChanged(host, EventArgs.Empty);
 			Python.SetStandardOutput(StdoutStream);
 			Python.SetStandardError(StderrStream);
 		}
@@ -144,14 +145,21 @@ namespace PythonConsolePlugin
 		{
 			Python.Globals["View"] = Host.ActiveView;
 			if(Host.ActiveView != null)
-			{
 				Python.Globals["Doc"] = Host.ActiveView.Document;
-				Python.Globals["Struct"] = Host.ActiveView.Document.Structure;
-			}
 			else
-			{
 				Python.Globals["Doc"] = null;
-				Python.Globals["Struct"] = null;
+			
+			foreach(string s in CurrentGlobals)
+				Python.Globals.Remove(s);
+			CurrentGlobals.Clear();
+			
+			if(Host.ActiveView != null)
+			{
+				foreach(KeyValuePair<string, object> kvp in Host.ActiveView.Document.MetaData)
+				{
+					CurrentGlobals.Add(kvp.Key);
+					Python.Globals.Add(kvp.Key, kvp.Value);
+				}
 			}
 		}
 		
