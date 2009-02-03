@@ -82,6 +82,7 @@
     <Compile Include="CodeView.cs" />
     <Compile Include="PluginManager.cs" />
     <Compile Include="Settings\PluginsSettingsPage.cs" />
+    <Compile Include="SplashScreen.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

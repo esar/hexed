@@ -357,6 +357,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		Application.EnableVisualStyles();
 		Application.DoEvents();
+		SplashScreen.Show();
 		Application.Run(new HexEdApp());
 	}
 
@@ -751,6 +752,13 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		base.OnLoad(e);
 		PluginManager.LoadPlugins();
 	}
+	
+	protected override void OnActivated(EventArgs e)
+	{
+		base.OnActivated(e);
+		SplashScreen.Hide();
+	}
+
 	
 	protected void UpdateWindowTitle(string documentTitle)
 	{

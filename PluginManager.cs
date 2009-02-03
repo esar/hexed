@@ -27,6 +27,8 @@ public class PluginManager
 	
 	public void LoadPlugins()
 	{
+		SplashScreen.Status = "Searching for plugins...";
+		
 		string path = Application.StartupPath;
 		string[] filenames = Directory.GetFiles(path, "*.dll");
 
@@ -44,6 +46,7 @@ public class PluginManager
 						{
 							Console.WriteLine("Loaded plugin: " + filename + " :: " + type);
 							IPlugin p = (IPlugin)Activator.CreateInstance(type);
+							SplashScreen.Status = String.Format("Loading plugin: {0}...", p.Name);
 							p.Initialize(Host);
 							_ActivePlugins.Add(filename, p);
 						}
