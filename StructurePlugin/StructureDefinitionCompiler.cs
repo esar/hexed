@@ -19,6 +19,18 @@ using System.Drawing;
 
 namespace StructurePlugin
 {
+	class CompilerResult
+	{
+		public Record Structure;
+		public CompilerErrorCollection Errors;
+		
+		public CompilerResult(Record structure, CompilerErrorCollection errors)
+		{
+			Structure = structure;
+			Errors = errors;
+		}
+	}
+	
 	class StructureDefinitionCompiler
 	{
 		enum TokenType
@@ -340,7 +352,7 @@ namespace StructurePlugin
 		}
 		
 		
-		public Record Parse(string filename)
+		public CompilerResult Parse(string filename)
 		{
 			for(uint i = 0; i <= 64; ++i)
 				KnownTypes.Add("int" + i, new KnownType("IntRecord", "int", i));
@@ -489,8 +501,7 @@ namespace StructurePlugin
 				throw new Exception("Parse error: expected a name");
 		}		
 		
-		
-		public Record Compile(string name, string code)
+		public CompilerResult Compile(string name, string code)
 		{
 			CSharpCodeProvider c = new CSharpCodeProvider();
 			CompilerParameters cp = new CompilerParameters();
@@ -506,21 +517,13 @@ namespace StructurePlugin
 			cp.CompilerOptions = "/t:library";
 			cp.GenerateInMemory = true;
 			
-			Console.Write(code);
+//			Console.Write(code);
 			CompilerResults cr = c.CompileAssemblyFromSource(cp, code);
-			if( cr.Errors.Count > 0 )
-			{
-				StringBuilder msg = new StringBuilder();
-				foreach(CompilerError err in cr.Errors)
-					msg.Append(err.ToString() + "\r\n\r\n");
-				MessageBox.Show("ERROR: " + msg.ToString(), //cr.Errors[0].ToString(),
-								"Error compiling script", MessageBoxButtons.OK, 
-								MessageBoxIcon.Error );
-				return null;
-			}
+			if( cr.Errors.HasErrors )
+				return new CompilerResult(null, cr.Errors);
 			
 			System.Reflection.Assembly a = cr.CompiledAssembly;
-			return (Record)a.CreateInstance(name);
+			return new CompilerResult((Record)a.CreateInstance(name), cr.Errors);
 		}
 	}
 }

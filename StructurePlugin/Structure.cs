@@ -31,17 +31,17 @@ namespace StructurePlugin
 
 			ReportProgress(0, "Compiling structure definition...");
 			StructureDefinitionCompiler compiler = new StructureDefinitionCompiler();
-			Record structure = compiler.Parse(DefinitionFilename);
+			CompilerResult result = compiler.Parse(DefinitionFilename);
 			
 			ReportProgress(50, "Applying structure definition...");
-			if(structure != null)
+			if(result.Structure != null)
 			{
 				long pos = 0;
-				structure.ApplyStructure(Document, ref pos, true);
-//				structure.Dump();
+				result.Structure.ApplyStructure(Document, ref pos, true);
+//				result.Structure.Dump();
 			}
 
-			e.Result = structure;
+			e.Result = result;
 		}
 
 		protected override void OnProgressChanged(ProgressChangedEventArgs e)
@@ -53,9 +53,9 @@ namespace StructurePlugin
 		protected override void OnRunWorkerCompleted(RunWorkerCompletedEventArgs e)
 		{
 			if(Document.MetaData.ContainsKey("Structure"))
-				Document.MetaData["Structure"] = e.Result;
+				Document.MetaData["Structure"] = ((CompilerResult)e.Result).Structure;
 			else
-				Document.MetaData.Add("Structure", e.Result);
+				Document.MetaData.Add("Structure", ((CompilerResult)e.Result).Structure);
 			
 			base.OnRunWorkerCompleted(e);
 		}
@@ -261,9 +261,19 @@ namespace StructurePlugin
 
 		protected void OnWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
+			CompilerResult result = (CompilerResult)e.Result;
+			
 			Host.ProgressNotifications.Remove(((StructureWorker)sender).Progress);
-			if(Host.ActiveView != null && Host.ActiveView.Document == ((StructureWorker)sender).Document && e.Result != null)
-				_TreeView.Model = new StructureTreeModel((Record)e.Result);
+			if(Host.ActiveView != null && Host.ActiveView.Document == ((StructureWorker)sender).Document && result.Structure != null)
+				_TreeView.Model = new StructureTreeModel(result.Structure);
+			
+			if(result.Errors != null)
+			{
+				CompileErrorDialog dlg = new CompileErrorDialog();
+				dlg.Errors = result.Errors;
+				dlg.StartPosition = FormStartPosition.CenterParent;
+				dlg.ShowDialog();
+			}
 		}
 		
 		protected void OnSelectionChanged(object sender, EventArgs e)
