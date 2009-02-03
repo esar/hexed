@@ -315,7 +315,6 @@ class HexEdApp : Form, IPluginHost
 	private ToolStrip			ViewToolStrip = new ToolStrip();
 	private StatusStrip			StatusBar = new StatusStrip();
 	private SelectionPanel		selectionPanel;
-	private StructurePanel		structurePanel;
 	private HistoryPanel		HistoryPanel;
 	private ImageList			WindowImageList;
 	
@@ -391,14 +390,12 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		CreateToolBars();
 		
 		selectionPanel = new SelectionPanel(this);
-		structurePanel = new StructurePanel(this);
 		HistoryPanel = new HistoryPanel(this);
 		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
 		_dockingManager.InnerControl = _TabbedGroups;
 		_dockingManager.OuterControl = ToolStripPanel;
 
 		((IPluginHost)this).AddWindow(selectionPanel, "Selection", Settings.Instance.Image("selection_16.png"), DefaultWindowPosition.BottomLeft, true);
-		((IPluginHost)this).AddWindow(structurePanel, "Structure", Settings.Instance.Image("structure_16.png"), DefaultWindowPosition.Left, true);
 		((IPluginHost)this).AddWindow(HistoryPanel, "History", Settings.Instance.Image("history_16.png"), DefaultWindowPosition.Left, true);
 
 		
@@ -437,7 +434,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Go To Selection As Address");
 
 
-		structurePanel.SelectionChanged += OnStructureSelectionChanged;
 		_TabbedGroups.PageChanged += OnTabbedGroupsPageChanged;
 
 		AllowDrop = true;
@@ -892,47 +888,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 //		n.BeginEdit();
 	}
 
-	protected void OnStructureSelectionChanged(object sender, EventArgs e)
-	{
-		List<Record> records = structurePanel.SelectedRecords;
-		if(records.Count == 0)
-			return;
-		
-		((HexViewForm)_TabbedGroups.ActiveTabPage).View.ClearHighlights();
-		
-		if(_TabbedGroups.ActiveTabPage != null)
-		{
-			Record record = records[0];
-
-			int level = 0;
-			while(record != null)
-			{
-				HexView.SelectionRange sel = new HexView.SelectionRange(((HexViewForm)_TabbedGroups.ActiveTabPage).View);
-				sel.Set((long)record.Position, (long)(record.Position + (record.Length * record.ArrayLength)));
-					
-				if(level++ == 0)
-				{
-					sel.BackColor = Color.FromArgb(255, 200, 255, 200);
-					sel.BorderColor = Color.LightGreen;
-					sel.BorderWidth = 1;
-				}
-				else
-				{
-					sel.BackColor = Color.FromArgb(64, 192,192,192);
-					sel.BorderColor = Color.FromArgb(128, 192,192,192);
-					sel.BorderWidth = 1;
-				}
-					
-				((HexViewForm)_TabbedGroups.ActiveTabPage).View.AddHighlight(sel);
-					
-//				((HexViewForm)_TabbedGroups.ActiveTabPage).View.Selection.Set(	(long)record.Position,
-//				                                               (long)( record.Position + (record.Length * record.ArrayLength)));
-				
-				record = record.Parent;
-			}
-			((HexViewForm)_TabbedGroups.ActiveTabPage).View.EnsureVisible((long)records[0].Position);
-		}
-	}
 
 	private void OnFileExit(object sender, EventArgs args)
 	{

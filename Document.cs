@@ -63,25 +63,7 @@ public class Document : PieceBuffer
 	public Document(string filename) : base(filename)
 	{
 	}
-	
-	public void ApplyStructureDefinition(string filename)
-	{
-		StructureDefinitionCompiler compiler = new StructureDefinitionCompiler();
-		Record structure = compiler.Parse(filename);
 		
-		if(structure != null)
-		{
-			long pos = 0;
-			structure.ApplyStructure(this, ref pos, true);
-			structure.Dump();
-		}
-		
-		if(MetaData.ContainsKey("Structure"))
-			MetaData["Structure"] = structure;
-		else
-			MetaData.Add("Structure", structure);
-	}
-	
 	public ulong GetInteger(long offset, int length, Endian endian)
 	{
 		ulong x = 0;

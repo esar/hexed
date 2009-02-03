@@ -56,8 +56,6 @@
     <Compile Include="PluginInterface.cs" />
     <Compile Include="SelectionPanel.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="StructureDefinitionCompiler.cs" />
-    <Compile Include="StructurePanel.cs" />
     <Compile Include="AddressDialog.cs" />
     <Compile Include="HexEd.cs" />
     <Compile Include="HexView.cs" />

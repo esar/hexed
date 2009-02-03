@@ -13,3 +13,4 @@ test-results/*
 NCover/*
 *.orig
 competition/*
+*.mdp

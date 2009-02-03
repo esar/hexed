@@ -17,36 +17,37 @@ using Microsoft.CSharp;
 using System.Windows.Forms;
 using System.Drawing;
 
-
-public class RecordEnumerator : IEnumerator
+namespace StructurePlugin
 {
-	Record Record;
-	long _Current = 0;
-	
-	public RecordEnumerator(Record record)
+	public class RecordEnumerator : IEnumerator
 	{
-		Record = record;
-	}
-	
-	public object Current
-	{
-		get { return Record.GetArrayElement(_Current); }
-	}
-	
-	public void Reset()
-	{
-		_Current = 0;
-	}
-	
-	public bool MoveNext()
-	{
-		if(_Current + 1 >= Record.Count)
-			return false;
+		Record Record;
+		long _Current = 0;
+		
+		public RecordEnumerator(Record record)
+		{
+			Record = record;
+		}
+		
+		public object Current
+		{
+			get { return Record.GetArrayElement(_Current); }
+		}
+		
+		public void Reset()
+		{
+			_Current = 0;
+		}
+		
+		public bool MoveNext()
+		{
+			if(_Current + 1 >= Record.Count)
+				return false;
 
-		_Current += 1;		
-		return true;
+			_Current += 1;		
+			return true;
+		}
 	}
-}
 
 	public class RecordCollection
 	{
@@ -705,6 +706,7 @@ public class RecordEnumerator : IEnumerator
 			if(node.Children.Count > 0)
 			{
 				StringBuilder output = new StringBuilder();
+				output.Append("using StructurePlugin;\n\n");
 				GenCode(output, node, 0);
 				ParseNode mainNode = null;
 				foreach(ParseNode n in node.Children)
@@ -839,6 +841,7 @@ public class RecordEnumerator : IEnumerator
 			cp.ReferencedAssemblies.Add("System.Data.dll");
 			cp.ReferencedAssemblies.Add("System.Windows.Forms.dll");
 			cp.ReferencedAssemblies.Add("System.Drawing.dll");
+			cp.ReferencedAssemblies.Add(System.Reflection.Assembly.GetAssembly(typeof(Document)).Location);
 			cp.ReferencedAssemblies.Add(System.Reflection.Assembly.GetExecutingAssembly().Location);
 			
 			cp.CompilerOptions = "/t:library";
@@ -861,4 +864,4 @@ public class RecordEnumerator : IEnumerator
 			return (Record)a.CreateInstance(name);
 		}
 	}
-
+}
