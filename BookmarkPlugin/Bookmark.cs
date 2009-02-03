@@ -189,10 +189,10 @@ namespace BookmarkPlugin
 			if(Document != null)
 			{
 				object o;
-				if(!Document.MetaData.TryGetValue(typeof(Bookmarks).FullName, out o))
+				if(!Document.MetaData.TryGetValue("Bookmarks", out o))
 				{
 					Bookmarks = new Bookmarks();
-					Document.MetaData.Add(typeof(Bookmarks).FullName, Bookmarks);
+					Document.MetaData.Add("Bookmarks", Bookmarks);
 				}
 				else
 					Bookmarks = (Bookmarks)o;
