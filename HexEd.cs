@@ -35,7 +35,6 @@ class HexEdApp : Form, IPluginHost
 	private DockingManager		_dockingManager = null;
 	private TabbedGroups		_TabbedGroups = null;
 	private ToolStripPanel		ToolStripPanel;
-	private ToolStripMenuItem	ViewWindowsMenuItem;
 	private ToolStrip			FileToolStrip = new ToolStrip();
 	private ToolStrip			EditToolStrip = new ToolStrip();
 	private ToolStrip			ViewToolStrip = new ToolStrip();
@@ -63,8 +62,6 @@ class HexEdApp : Form, IPluginHost
 	private static CommandSet	_Commands = new CommandSet();
 	public CommandSet Commands { get { return _Commands; } }
 	
-	protected ContextMenuStrip	SelectionContextMenu	= new ContextMenuStrip();
-
 	public event EventHandler ActiveViewChanged;
 	
 	protected Timer ProgressNotificationTimer = new Timer();
@@ -159,15 +156,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		StatusBar.Items.Add(new ToolStripSeparator());
 		
 		Controls.Add(StatusBar);
-
-		ToolStripMenuItem mi;
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Cu&t");
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("&Copy");
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("&Paste");
-		SelectionContextMenu.Items.Add("-");
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Define Field");
-		mi.Click += new EventHandler(OnSelectionContextMenuDefineField);
-		mi = (ToolStripMenuItem)SelectionContextMenu.Items.Add("Go To Selection As Address");
 
 
 		_TabbedGroups.PageChanged += OnTabbedGroupsPageChanged;
@@ -404,7 +392,6 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi2.DropDownItems.Add(CreateMenuItem("View/Go To Selection As Address"));
 		mi.DropDownItems.Add(mi2);
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		ViewWindowsMenuItem = (ToolStripMenuItem)mi.DropDownItems.Add("Windows");
 		MainMenuStrip.Items.Add(mi);
 		
 		mi = new ToolStripMenuItem("&Window");
@@ -528,7 +515,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		foreach(ToolStripItem i in items)
 		{
-			if((byText && i.Text == name) || (!byText && i.Name == name))
+			if((byText && i.Text.Replace("&", String.Empty) == name) || (!byText && i.Name == name))
 				list.Add(i);
 			else if(recurse && i is ToolStripMenuItem && ((ToolStripMenuItem)i).HasDropDownItems)
 			{
@@ -957,16 +944,18 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			WindowImageList.Images.Add(image);
 			int imageIndex = WindowImageList.Images.Count - 1;
 			content = _dockingManager.Contents.Add(control, name, WindowImageList, imageIndex);
-			ToolStripItem item = ViewWindowsMenuItem.DropDownItems.Add(name, image);
+			ToolStripItem item = new ToolStripMenuItem(name, image);
 			item.Tag = content;
 			item.Click += OnViewWindowsMenuItemClicked;
+			AddMenuItem(Menus.Main, "View", item); 
 		}
 		else
 		{
 			content = _dockingManager.Contents.Add(control, name);
-			ToolStripItem item = ViewWindowsMenuItem.DropDownItems.Add(name);
+			ToolStripItem item = new ToolStripMenuItem(name);
 			item.Tag = content;
 			item.Click += OnViewWindowsMenuItemClicked;
+			AddMenuItem(Menus.Main, "View", item); 
 		}
 			
 		content.DisplaySize = new Size(400, 240);
