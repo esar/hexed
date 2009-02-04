@@ -19,6 +19,41 @@ class SelectionPanel : Panel
 	public SelectionPanel(IPluginHost host)
 	{
 		Host = host;
+
+		Host.Commands.Add("Selection/Byte Swap", "Reverses the bytes in the current selection", "Byte Swap",
+		                  Host.Settings.Image("byteswap_16.png"),
+		                  null,
+		                  OnByteSwap);
+		Host.Commands.Add("Selection/Invert", "Inverts the bits in the current selection", "Invert",
+		                  Host.Settings.Image("invert_16.png"),
+		                  null,
+		                  OnInvert);
+		Host.Commands.Add("Selection/Shift Left", "Shifts the selected data left by the specified number of bits", "Shift Left",
+		                  Host.Settings.Image("shiftleft_16.png"),
+		                  null,
+		                  OnShiftLeft);
+		Host.Commands.Add("Selection/Shift Right", "Shifts the selected data right by the specified number of bits", "Shift Right",
+		                  Host.Settings.Image("shiftright_16.png"),
+		                  null,
+		                  OnShiftRight);
+		Host.Commands.Add("Selection/Rotate Left", "Rotates the selected data left by the specified number of bits", "Rotate Left",
+		                  Host.Settings.Image("rotateleft_16.png"),
+		                  null);
+		Host.Commands.Add("Selection/Rotate Right", "Rotates the selected data right by the specified number of bits", "Rotate Right",
+		                  Host.Settings.Image("rotateright_16.png"),
+		                  null);
+		Host.Commands.Add("Selection/AND", "AND's the selected data with the specified pattern", "AND",
+		                  Host.Settings.Image("and_16.png"),
+		                  null,
+		                  OnAnd);
+		Host.Commands.Add("Selection/OR", "OR's the selected data with the specified pattern", "OR",
+		                  Host.Settings.Image("or_16.png"),
+		                  null,
+		                  OnOr);
+		Host.Commands.Add("Selection/XOR", "XOR's the selected data with the specified pattern", "XOR",
+		                  Host.Settings.Image("xor_16.png"),
+		                  null,
+		                  OnXor);
 		
 		List.View = View.Details;
 		List.AllowColumnReorder = true;
@@ -59,31 +94,17 @@ class SelectionPanel : Panel
 		
 		ToolStripItem item;
 		ToolBar.GripStyle = ToolStripGripStyle.Hidden;
-		item = ToolBar.Items.Add(Settings.Instance.Image("byteswap_16.png"));
-		item.ToolTipText = "Byte Swap";
-		item.Click += OnByteSwap;
-		item = ToolBar.Items.Add(Settings.Instance.Image("invert_16.png"));
-		item.ToolTipText = "Invert";
-		item.Click += OnInvert;
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/Byte Swap"));
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/Invert"));
 		ToolBar.Items.Add(new ToolStripSeparator());
-		item = ToolBar.Items.Add(Settings.Instance.Image("shiftleft_16.png"));
-		item.ToolTipText = "Shift Left";
-		item.Click += OnShiftLeft;
-		item = ToolBar.Items.Add(Settings.Instance.Image("shiftright_16.png"));
-		item.ToolTipText = "Shift Right";
-		item.Click += OnShiftRight;
-		ToolBar.Items.Add(Settings.Instance.Image("rotateleft_16.png")).ToolTipText = "Rotate Left";
-		ToolBar.Items.Add(Settings.Instance.Image("rotateright_16.png")).ToolTipText = "Rotate Right";
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/Shift Left"));
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/Shift Right"));
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/Rotate Left"));
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/Rotate Right"));
 		ToolBar.Items.Add(new ToolStripSeparator());
-		item = ToolBar.Items.Add("&&");
-		item.ToolTipText = "AND";
-		item.Click += OnAnd;
-		item = ToolBar.Items.Add("|");
-		item.ToolTipText = "OR";
-		item.Click += OnOr;
-		item = ToolBar.Items.Add("^");
-		item.ToolTipText = "XOR";
-		item.Click += OnXor;
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/AND"));
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/OR"));
+		ToolBar.Items.Add(Host.CreateToolButton("Selection/XOR"));
 		foreach(ToolStripItem x in ToolBar.Items)
 			x.Enabled = false;
 		Controls.Add(ToolBar);
