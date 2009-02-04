@@ -85,6 +85,7 @@
     <Compile Include="SplashScreen.cs" />
     <Compile Include="CommandSet.cs" />
     <Compile Include="Settings\ShortcutsSettingsPage.cs" />
+    <Compile Include="RadixMenu.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
