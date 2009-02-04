@@ -369,7 +369,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi.DropDownItems.Add(CreateMenuItem("Edit/Select All"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi2 = new ToolStripMenuItem("EditInsert");
+		mi2 = new ToolStripMenuItem("Insert");
 		mi2.DropDownItems.Add(CreateMenuItem("Edit/Insert File"));
 		mi2.DropDownItems.Add(CreateMenuItem("Edit/Insert Pattern"));
 		mi.DropDownItems.Add(mi2);
