@@ -127,6 +127,28 @@ namespace SearchPlugin
 		{
 			Host = host;
 
+			host.Commands.Add("Search/Search", "Searches for the specified pattern in the current document", "Search", 
+			                  host.Settings.Image("search_16.png"), 
+			                  new Keys[] { Keys.Control | Keys.F },
+			                  OnSearch);
+			host.Commands.Add("Search/Next", "Jumps to the next search result", "Next",
+			                  Host.Settings.Image("next_16.png"),
+			                  new Keys[] { Keys.F3 },
+			                  OnNext);
+			host.Commands.Add("Search/Prev", "Jumps to the previous search result", "Prev",
+			                  Host.Settings.Image("prev_16.png"),
+			                  new Keys[] { Keys.Control | Keys.F3 },
+			                  OnPrev);
+			host.Commands.Add("Search/First", "Jumps to the first search result", "First",
+			                  Host.Settings.Image("first_16.png"),
+			                  null,
+			                  OnFirst);
+			host.Commands.Add("Search/Last", "Jumps to the last search result", "Last",
+			                  Host.Settings.Image("last_16.png"),
+			                  null,
+			                  OnLast);
+			                  
+			
 			ListView.Columns.Add("Position");
 			ListView.Columns.Add("Length");
 			ListView.Columns.Add("Value");
@@ -142,23 +164,12 @@ namespace SearchPlugin
 			Controls.Add(MatchIndicator);
 			
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
-			ToolStripItem item = new ToolStripButton(Host.Settings.Image("newfolder_16.png"));
-			item.ToolTipText = "New Search";
-			item.Click += OnSearch;
-			ToolBar.Items.Add(item);
+			ToolBar.Items.Add(Host.CreateToolButton("Search/Search"));
 			ToolBar.Items.Add(new ToolStripSeparator());
-			item = new ToolStripButton(Host.Settings.Image("first_16.png"));
-			item.Click += OnFirst;
-			ToolBar.Items.Add(item);
-			item = new ToolStripButton(Host.Settings.Image("prev_16.png"));
-			item.Click += OnPrev;
-			ToolBar.Items.Add(item);
-			item = new ToolStripButton(Host.Settings.Image("next_16.png"));
-			item.Click += OnNext;
-			ToolBar.Items.Add(item);
-			item = new ToolStripButton(Host.Settings.Image("last_16.png"));
-			item.Click += OnLast;
-			ToolBar.Items.Add(item);
+			ToolBar.Items.Add(Host.CreateToolButton("Search/First"));
+			ToolBar.Items.Add(Host.CreateToolButton("Search/Prev"));
+			ToolBar.Items.Add(Host.CreateToolButton("Search/Next"));
+			ToolBar.Items.Add(Host.CreateToolButton("Search/Last"));
 			Controls.Add(ToolBar);
 
 			Search = new VirtualSearch();
@@ -287,7 +298,7 @@ namespace SearchPlugin
 			if(Search.ResultCount > 0)
 			{
 				ListView.SelectedIndices.Clear();
-				ListView.SelectedIndices.Add(1);
+				ListView.SelectedIndices.Add(0);
 				ListView.EnsureVisible(1);
 			}
 		}

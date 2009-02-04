@@ -10,175 +10,6 @@ using Crownwood.DotNetMagic.Common;
 using Crownwood.DotNetMagic.Controls;
 
 
-public class CommandEventArgs : EventArgs
-{
-	public object Arg = 0;
-
-	public CommandEventArgs(object arg)
-	{
-		Arg = arg;
-	}
-}
-public delegate void CommandEventHandler(object sender, CommandEventArgs e);
-
-class CommandSet
-{
-	public class Command
-	{
-		public string _Name;
-		public int _Enabled = -1;
-		public int _Checked = -1;
-		
-		public EventHandler StateChanged;
-		public CommandEventHandler Invoked;
-		
-		public string Name
-		{
-			get { return _Name; }
-		}
-		
-		public bool Enabled
-		{
-			get { return (_Enabled != 0); }
-			set 
-			{ 
-				if(value != Enabled || _Enabled == -1)
-				{
-					_Enabled = value ? 1 : 0;
-					if(StateChanged != null) 
-						StateChanged(this, new EventArgs());
-				}
-			}
-		}
-		
-		public bool Checked
-		{
-			get { return (_Checked > 0); }
-			set 
-			{ 
-				if(value != Checked || _Enabled == -1)
-				{
-					_Checked = value ? 1 : 0;
-					if(StateChanged != null) 
-						StateChanged(this, new EventArgs()); 
-				}
-			}
-		}
-		
-		public Command(string name)
-		{
-			_Name = name;
-		}
-		
-		public void Invoke(object arg)
-		{
-			if(Invoked != null)
-				Invoked(this, new CommandEventArgs(arg));
-		}
-	}
-	
-	private Dictionary<string, Command> Commands = new Dictionary<string, Command>();
-	private Dictionary<string, Command> MergedCommands;
-	
-	public Command this[string name]
-	{
-		get
-		{
-			Command c = null;
-			if(MergedCommands != null)
-				MergedCommands.TryGetValue(name, out c);
-			else
-				Commands.TryGetValue(name, out c);
-			return c;
-		}
-	}
-	
-	public Command Add(string name)
-	{
-		Command c;
-		Commands.TryGetValue(name, out c);
-		if(c == null)
-		{
-			c = new Command(name);
-			Commands.Add(name, c);
-		}
-		return c;
-	}
-	
-	public Command Add(string name, CommandEventHandler invokeHandler)
-	{
-		Command c = Add(name);
-		c.Invoked += invokeHandler;
-		return c;
-	}
-	
-	public Command Add(string name, CommandEventHandler invokeHandler, EventHandler stateChangeHandler)
-	{
-		Command c = Add(name);
-		if(invokeHandler != null)
-			c.Invoked += invokeHandler;
-		if(stateChangeHandler != null)
-			c.StateChanged += stateChangeHandler;
-		return c;
-	}
-	
-	public void Merge(CommandSet setToMerge)
-	{
-		MergedCommands = new Dictionary<string, Command>();
-		foreach(KeyValuePair<string, Command> kvp in Commands)
-		{
-			Command command = kvp.Value;
-			Command newCommand = new Command(kvp.Key);
-		
-			if(command.StateChanged != null)
-				foreach(Delegate d in command.StateChanged.GetInvocationList())
-					newCommand.StateChanged += (EventHandler)d;
-			if(command.Invoked != null)
-				foreach(Delegate d in command.Invoked.GetInvocationList())
-					newCommand.Invoked += (CommandEventHandler)d;
-			
-			MergedCommands.Add(kvp.Key, newCommand);
-		}
-		
-		foreach(KeyValuePair<string, Command> kvp in setToMerge.Commands)
-		{
-			Command command = kvp.Value;
-			Command oldCommand = null;
-			Command newCommand;
-			
-			MergedCommands.TryGetValue(kvp.Key, out oldCommand);
-			if(oldCommand != null)
-				newCommand = oldCommand;
-			else
-				newCommand = new Command(kvp.Key);
-
-			if(command.Invoked != null)
-				foreach(Delegate d in command.Invoked.GetInvocationList())
-					newCommand.Invoked += (CommandEventHandler)d;
-			if(command.StateChanged != null)
-				foreach(Delegate d in command.StateChanged.GetInvocationList())
-					newCommand.StateChanged += (EventHandler)d;
-			
-			if(oldCommand == null)
-				MergedCommands.Add(kvp.Key, newCommand);
-		}
-	}
-	
-	public void RevertMerge()
-	{
-		foreach(KeyValuePair<string, Command> kvp in MergedCommands)
-		{
-			Command cmd = null;
-			Commands.TryGetValue(kvp.Key, out cmd);
-			if(cmd != null)
-			{
-				cmd.Enabled = kvp.Value.Enabled;
-				cmd.Checked = kvp.Value.Checked;
-			}
-		}
-		MergedCommands = null;
-	}
-}
 
 class RadixMenu : ToolStripMenuItem
 {
@@ -305,6 +136,17 @@ class RadixMenu : ToolStripMenuItem
 
 class HexEdApp : Form, IPluginHost
 {
+	private static HexEdApp _Instance;
+	public static HexEdApp Instance 
+	{ 
+		get 
+		{ 
+			if(_Instance == null) 
+				_Instance = new HexEdApp(); 
+			return _Instance; 
+		} 
+	}
+	
 	private DockingManager		_dockingManager = null;
 	private TabbedGroups		_TabbedGroups = null;
 	private ToolStripPanel		ToolStripPanel;
@@ -331,7 +173,8 @@ class HexEdApp : Form, IPluginHost
 	protected PluginManager _PluginManager;
 	public PluginManager PluginManager { get { return _PluginManager; } }
 	
-	private static CommandSet	Commands = new CommandSet();
+	private static CommandSet	_Commands = new CommandSet();
+	public CommandSet Commands { get { return _Commands; } }
 	
 	protected ContextMenuStrip	SelectionContextMenu	= new ContextMenuStrip();
 
@@ -358,7 +201,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Application.EnableVisualStyles();
 		Application.DoEvents();
 		SplashScreen.Show();
-		Application.Run(new HexEdApp());
+		Application.Run(HexEdApp.Instance);
 	}
 
 	public HexEdApp()
@@ -458,48 +301,163 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	
 	private void CreateCommands()
 	{
-		Commands.Add("FileNew", OnFileNew, OnUpdateUiElement);
-		Commands.Add("FileOpen", OnFileOpen, OnUpdateUiElement);
-		Commands.Add("FileSave", null, OnUpdateUiElement);
-		Commands.Add("FileSaveAs", null, OnUpdateUiElement);
-		Commands.Add("FileSaveAll", null, OnUpdateUiElement);
-		Commands.Add("FilePrintSetup", null, OnUpdateUiElement);
-		Commands.Add("FilePrintPreview", null, OnUpdateUiElement);
-		Commands.Add("FilePrint", null, OnUpdateUiElement);
-		Commands.Add("FileFileProperties", OnFileFileProperties, OnUpdateUiElement);
-		Commands.Add("FileExit", OnFileExit, OnUpdateUiElement);
+		Commands.Add("File/New", "Creates a new document", "&New",     
+		             Settings.Instance.Image("new_16.png"),  
+		             new Keys[] { Keys.Control | Keys.N }, 
+		             OnFileNew, OnUpdateUiElement);
+		Commands.Add("File/Open", "Opens an existing document", "&Open",    
+		             Settings.Instance.Image("open_16.png"), 
+		             new Keys[] { Keys.Control | Keys.O },  
+		             OnFileOpen, OnUpdateUiElement);
+		Commands.Add("File/Save", "Saves the current document", "&Save",    
+		             Settings.Instance.Image("save_16.png"), 
+		             new Keys[] { Keys.Control | Keys.S }, 
+		             null, OnUpdateUiElement);
+		Commands.Add("File/Save As", "Saves the current document with the specified file name", "Save &As", 
+		             null,                                   
+		             null,             
+		             null, OnUpdateUiElement);
+		Commands.Add("File/Save All", "Saves all open documents", "Save All", 
+		             Settings.Instance.Image("saveall_16.png"), 
+		             new Keys[] { Keys.Control | Keys.Shift | Keys.S }, 
+		             null, OnUpdateUiElement);
+		Commands.Add("File/Print Setup", "Configures printing", "Print Setup...", 
+		             Settings.Instance.Image("printsetup_16.png"), 
+		             null, 
+		             null, OnUpdateUiElement);
+		Commands.Add("File/Print Preview", "Creates a print preview for the current document", "P&rint Preview...", 
+		             Settings.Instance.Image("printpreview_16.png"), 
+		             null, 
+		             null, OnUpdateUiElement);
+		Commands.Add("File/Print", "Prints the current document", "&Print", 
+		             Settings.Instance.Image("print_16.png"), 
+		             new Keys[] { Keys.Control | Keys.P }, 
+		             null, OnUpdateUiElement);
+		Commands.Add("File/File Properties", "Displays the current document's file properties", "File Properties...", 
+		             null, 
+		             null, 
+		             OnFileFileProperties, OnUpdateUiElement);
+		Commands.Add("File/Exit", "Exits the application", "E&xit", 
+		             null, 
+		             null, 
+		             OnFileExit, OnUpdateUiElement);
 		
-		Commands.Add("EditUndo", null, OnUpdateUiElement);
-		Commands.Add("EditRedo", null, OnUpdateUiElement);
-		Commands.Add("EditCut", null, OnUpdateUiElement);
-		Commands.Add("EditCopy", null, OnUpdateUiElement);
-		Commands.Add("EditPaste", null, OnUpdateUiElement);
-		Commands.Add("EditDelete", null, OnUpdateUiElement);
-		Commands.Add("EditSelectAll", null, OnUpdateUiElement);
-		Commands.Add("EditInsertFile", null, OnUpdateUiElement);
-		Commands.Add("EditInsertPattern", null, OnUpdateUiElement);
-		Commands.Add("EditPreferences", OnEditPreferences, OnUpdateUiElement);
+		Commands.Add("Edit/Undo", "Undoes the last operation", "&Undo",
+		             Settings.Instance.Image("undo_16.png"),
+		             new Keys[] { Keys.Control | Keys.Z }, 
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Redo", "Redoes the last operation", "&Redo",
+		             Settings.Instance.Image("redo_16.png"),
+		             new Keys[] { Keys.Control | Keys.Y },
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Cut", "Cuts the current selection to the clipboard", "Cu&t",
+		             Settings.Instance.Image("cut_16.png"),
+		             new Keys[] { Keys.Control | Keys.X },
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Copy", "Copies the current selection to the clipboard", "&Copy",
+		             Settings.Instance.Image("copy_16.png"),
+		             new Keys[] { Keys.Control | Keys.C },
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Paste", "Pastes the clipboard to the current document", "&Paste",
+		             Settings.Instance.Image("paste_16.png"),
+		             new Keys[] { Keys.Control | Keys.V },
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Delete", "Deletes the current selection", "&Delete",
+		             Settings.Instance.Image("delete_16.png"),
+		             new Keys[] { Keys.Delete },
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Select All", "Selects all of the current document", "Select &All",
+		             null,
+		             new Keys[] { Keys.Control | Keys.A },
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Insert File", "Inserts the specified file into the current document", "&File",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Insert Pattern", "Inserts the specified pattern into the current document", "&Pattern",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("Edit/Preferences", "Displayes the preferences dialog", "&Preferences...",
+		             Settings.Instance.Image("options_16.png"),
+		             null,
+		             OnEditPreferences, OnUpdateUiElement);
 		
-		Commands.Add("ViewAddressRadix", null, OnUpdateUiElement);
-		Commands.Add("ViewDataRadix", null, OnUpdateUiElement);
-		Commands.Add("ViewGoTo", null, OnUpdateUiElement);
-		Commands.Add("ViewGoToTop", null, OnUpdateUiElement);
-		Commands.Add("ViewGoToBottom", null, OnUpdateUiElement);
-		Commands.Add("ViewGoToSelectionStart", null, OnUpdateUiElement);
-		Commands.Add("ViewGoToSelectionEnd", null, OnUpdateUiElement);
-		Commands.Add("ViewGoToAddress", null, OnUpdateUiElement);
-		Commands.Add("ViewGoToSelectionAsAddress", null, OnUpdateUiElement);
-		Commands.Add("ViewBytes", null, OnUpdateUiElement);
-		Commands.Add("ViewWords", null, OnUpdateUiElement);
-		Commands.Add("ViewDwords", null, OnUpdateUiElement);
-		Commands.Add("ViewQwords", null, OnUpdateUiElement);
-		Commands.Add("ViewLittleEndian", null, OnUpdateUiElement);
-		Commands.Add("ViewBigEndian", null, OnUpdateUiElement);
+		Commands.Add("View/Address Radix", null, null,
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Data Radix", null, null,
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Go To", null, null,
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Go To Top", "Moves the insert caret to the top of the document", "Top",
+		             null,
+		             new Keys[] { Keys.Control | Keys.Home },
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Go To Bottom", "Moves the insert caret to the bottom of the document", "Bottom",
+		             null,
+		             new Keys[] { Keys.Control | Keys.End },
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Go To Selection Start", "Moves the insert caret to the beginning of the selection", "Selection Start",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Go To Selection End", "Moves the insert caret to the end of the selection", "Selection End",
+		             null, 
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Go To Address", "Moves the insert caret to the specified address", "Address",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Go To Selection As Address", "Moves the insert caret to the address in teh current selection", "Selection As Address",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Bytes", "Views the document as bytes", "Bytes",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Words", "Views the document as words", "Words",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Double Words", "Views the document as double words", "Double Words",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Quad Words", "Views the document as quad words", "Quad Words",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Little Endian", "Views the document as little endian", "Little Endian",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
+		Commands.Add("View/Big Endian", "Views the document as big endian", "Big Endian",
+		             null,
+		             null,
+		             null, OnUpdateUiElement);
 		
-		Commands.Add("WindowSplit", OnWindowSplit, OnUpdateUiElement);
-		Commands.Add("WindowDuplicate", OnWindowDuplicate, OnUpdateUiElement);
-
-		Commands.Add("HelpAbout", OnHelpAbout, OnUpdateUiElement);
+		
+		Commands.Add("Window/Split", "Splits the current view", "&Split",
+		             Settings.Instance.Image("split_16.png"),
+		             null,
+		             OnWindowSplit, OnUpdateUiElement);
+		Commands.Add("Window/Duplicate", "Duplicates the current view", "&Duplicate",
+		             Settings.Instance.Image("duplicate_16.png"),
+		             null,
+		             OnWindowDuplicate, OnUpdateUiElement);
+		
+		Commands.Add("Help/About", "Displays the about box", "About",
+		             null,
+		             null,
+		             OnHelpAbout, OnUpdateUiElement);
 	}
 	
 	private void CreateMenus()
@@ -508,99 +466,115 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		ToolStripMenuItem mi2;
 		
 		mi = new ToolStripMenuItem("&File");
-		mi.DropDownItems.Add(CreateMenuItem("&New", "new_16.png", "FileNew", Keys.Control | Keys.N));
-		mi.DropDownItems.Add(CreateMenuItem("&Open", "open_16.png", "FileOpen", Keys.Control | Keys.O));
+		mi.DropDownItems.Add(CreateMenuItem("File/New"));
+		mi.DropDownItems.Add(CreateMenuItem("File/Open"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(CreateMenuItem("&Save", "save_16.png", "FileSave", Keys.Control | Keys.S));
-		mi.DropDownItems.Add(CreateMenuItem("Save &As", null, "FileSaveAs", Keys.None));
-		mi.DropDownItems.Add(CreateMenuItem("Save All", "saveall_16.png", "FileSaveAll", Keys.Control | Keys.Shift | Keys.S));
+		mi.DropDownItems.Add(CreateMenuItem("File/Save"));
+		mi.DropDownItems.Add(CreateMenuItem("File/Save As"));
+		mi.DropDownItems.Add(CreateMenuItem("File/Save All"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(CreateMenuItem("Print Setup...", "printsetup_16.png", "FilePrintSetup", Keys.None));
-		mi.DropDownItems.Add(CreateMenuItem("P&rint Preview...", "printpreview_16.png", "FilePrintPreview", Keys.None));
-		mi.DropDownItems.Add(CreateMenuItem("&Print", "print_16.png", "FilePrint", Keys.Control | Keys.P));
+		mi.DropDownItems.Add(CreateMenuItem("File/Print Setup"));
+		mi.DropDownItems.Add(CreateMenuItem("File/Print Preview"));
+		mi.DropDownItems.Add(CreateMenuItem("File/Print"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(CreateMenuItem("File Properties...", null, "FileFileProperties", Keys.None));
+		mi.DropDownItems.Add(CreateMenuItem("File/File Properties"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(CreateMenuItem("E&xit", null, "FileExit", Keys.None));
+		mi.DropDownItems.Add(CreateMenuItem("File/Exit"));
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&Edit");
-		mi.DropDownItems.Add(CreateMenuItem("&Undo", "undo_16.png", "EditUndo", Keys.Control | Keys.Z));
-		mi.DropDownItems.Add(CreateMenuItem("&Redo", "redo_16.png", "EditRedo", Keys.Control | Keys.Y));
+		mi.DropDownItems.Add(CreateMenuItem("Edit/Undo"));
+		mi.DropDownItems.Add(CreateMenuItem("Edit/Redo"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(CreateMenuItem("Cu&t", "cut_16.png", "EditCut", Keys.Control | Keys.X));
-		mi.DropDownItems.Add(CreateMenuItem("&Copy", "copy_16.png", "EditCopy", Keys.Control | Keys.C));
-		mi.DropDownItems.Add(CreateMenuItem("&Paste", "paste_16.png", "EditPaste", Keys.Control | Keys.V));
-		mi.DropDownItems.Add(CreateMenuItem("&Delete", "delete_16.png", "EditDelete", Keys.Delete));
+		mi.DropDownItems.Add(CreateMenuItem("Edit/Cut"));
+		mi.DropDownItems.Add(CreateMenuItem("Edit/Copy"));
+		mi.DropDownItems.Add(CreateMenuItem("Edit/Paste"));
+		mi.DropDownItems.Add(CreateMenuItem("Edit/Delete"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(CreateMenuItem("Select &All", null, "EditSelectAll", Keys.Control | Keys.A));
+		mi.DropDownItems.Add(CreateMenuItem("Edit/Select All"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi2 = new ToolStripMenuItem("&Insert", null, null, "EditInsert");
-		mi2.DropDownItems.Add(CreateMenuItem("&File...", null, "EditInsertFile", Keys.None));
-		mi2.DropDownItems.Add(CreateMenuItem("&Pattern...", null, "EditInsertPattern", Keys.None));
+		mi2 = new ToolStripMenuItem("EditInsert");
+		mi2.DropDownItems.Add(CreateMenuItem("Edit/Insert File"));
+		mi2.DropDownItems.Add(CreateMenuItem("Edit/Insert Pattern"));
 		mi.DropDownItems.Add(mi2);
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi.DropDownItems.Add(CreateMenuItem("&Preferences...", "options_16.png", "EditPreferences", Keys.None));
+		mi.DropDownItems.Add(CreateMenuItem("Edit/Preferences"));
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&View");
-		AddressRadixMenu = new RadixMenu("Address Radix", "ViewAddressRadix", OnUiCommand);
+		AddressRadixMenu = new RadixMenu("Address Radix", "View/Address Radix", OnUiCommand);
 		mi.DropDownItems.Add(AddressRadixMenu);
-		DataRadixMenu = new RadixMenu("Data Radix", "ViewDataRadix", OnUiCommand);
+		DataRadixMenu = new RadixMenu("Data Radix", "View/Data Radix", OnUiCommand);
 		mi.DropDownItems.Add(DataRadixMenu);
 		mi.DropDownItems.Add(new ToolStripSeparator());
-		mi2 = new ToolStripMenuItem("Go To", null, null, "ViewGoTo");
-		mi2.DropDownItems.Add(CreateMenuItem("Top", null, "ViewGoToTop", Keys.Control | Keys.Home));
-		mi2.DropDownItems.Add(CreateMenuItem("Bottom", null, "ViewGoToBottom", Keys.Control | Keys.End));
-		mi2.DropDownItems.Add(new ToolStripMenuItem("Selection Start", null, OnUiCommand, "ViewGoToSelectionStart"));
-		mi2.DropDownItems.Add(new ToolStripMenuItem("Selection End", null, OnUiCommand, "ViewGoToSelectionEnd"));
-		mi2.DropDownItems.Add(new ToolStripMenuItem("Address...", null, OnUiCommand, "ViewGoToAddress"));
-		mi2.DropDownItems.Add(new ToolStripMenuItem("Selection As Address", null, OnUiCommand, "ViewGoToSelectionAsAddress"));
+		mi2 = new ToolStripMenuItem("Go To", null, null, "View/Go To");
+		mi2.DropDownItems.Add(CreateMenuItem("View/Go To Top"));
+		mi2.DropDownItems.Add(CreateMenuItem("View/Go To Bottom"));
+		mi2.DropDownItems.Add(CreateMenuItem("View/Go To Selection Start"));
+		mi2.DropDownItems.Add(CreateMenuItem("View/Go To Selection End"));
+		mi2.DropDownItems.Add(CreateMenuItem("View/Go To Address"));
+		mi2.DropDownItems.Add(CreateMenuItem("View/Go To Selection As Address"));
 		mi.DropDownItems.Add(mi2);
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		ViewWindowsMenuItem = (ToolStripMenuItem)mi.DropDownItems.Add("Windows");
 		MainMenuStrip.Items.Add(mi);
 		
 		mi = new ToolStripMenuItem("&Window");
-		mi.DropDownItems.Add(new ToolStripMenuItem("&Split", Settings.Instance.Image("split_16.png"), OnUiCommand, "WindowSplit"));
-		mi.DropDownItems.Add(new ToolStripMenuItem("&Duplicate", Settings.Instance.Image("duplicate_16.png"), OnUiCommand, "WindowDuplicate"));
+		mi.DropDownItems.Add(CreateMenuItem("Window/Split"));
+		mi.DropDownItems.Add(CreateMenuItem("Window/Duplicate"));
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&Help");
-		mi.DropDownItems.Add(new ToolStripMenuItem("&About", null, OnUiCommand, "HelpAbout"));
+		mi.DropDownItems.Add(CreateMenuItem("Help/About"));
 		MainMenuStrip.Items.Add(mi);
 	}
 	
 	private void CreateToolBars()
 	{
-		FileToolStrip.Items.Add(CreateToolButton(null, "new_16.png", "FileNew", "New"));
-		FileToolStrip.Items.Add(CreateToolButton(null, "open_16.png", "FileOpen", "Open"));
+		FileToolStrip.Items.Add(CreateToolButton("File/New"));
+		FileToolStrip.Items.Add(CreateToolButton("File/Open"));
 		FileToolStrip.Items.Add(new ToolStripSeparator());
-		FileToolStrip.Items.Add(CreateToolButton(null, "save_16.png", "FileSave", "Save"));
-		FileToolStrip.Items.Add(CreateToolButton(null, "saveall_16.png", "FileSaveAll", "Save All"));
+		FileToolStrip.Items.Add(CreateToolButton("File/Save"));
+		FileToolStrip.Items.Add(CreateToolButton("File/Save All"));
 		
-		EditToolStrip.Items.Add(CreateToolButton(null, "undo_16.png", "EditUndo", "Undo"));
-		EditToolStrip.Items.Add(CreateToolButton(null, "redo_16.png", "EditRedo", "Redo"));
+		EditToolStrip.Items.Add(CreateToolButton("Edit/Undo"));
+		EditToolStrip.Items.Add(CreateToolButton("Edit/Redo"));
 		EditToolStrip.Items.Add(new ToolStripSeparator());
-		EditToolStrip.Items.Add(CreateToolButton(null, "cut_16.png", "EditCut", "Cut"));
-		EditToolStrip.Items.Add(CreateToolButton(null, "copy_16.png", "EditCopy", "Copy"));
-		EditToolStrip.Items.Add(CreateToolButton(null, "paste_16.png", "EditPaste", "Paste"));
-		EditToolStrip.Items.Add(CreateToolButton(null, "delete_16.png", "EditDelete", "Delete"));
+		EditToolStrip.Items.Add(CreateToolButton("Edit/Cut"));
+		EditToolStrip.Items.Add(CreateToolButton("Edit/Copy"));
+		EditToolStrip.Items.Add(CreateToolButton("Edit/Paste"));
+		EditToolStrip.Items.Add(CreateToolButton("Edit/Delete"));
 		
-		ViewToolStrip.Items.Add(CreateToolButton("B", null, "ViewBytes", "Bytes"));
-		ViewToolStrip.Items.Add(CreateToolButton("W", null, "ViewWords", "Words"));
-		ViewToolStrip.Items.Add(CreateToolButton("D", null, "ViewDwords", "Double Words"));
-		ViewToolStrip.Items.Add(CreateToolButton("Q", null, "ViewQwords", "Quad Words"));
+		ViewToolStrip.Items.Add(CreateToolButton("B", null, "View/Bytes", "Bytes"));
+		ViewToolStrip.Items.Add(CreateToolButton("W", null, "View/Words", "Words"));
+		ViewToolStrip.Items.Add(CreateToolButton("D", null, "View/Double Words", "Double Words"));
+		ViewToolStrip.Items.Add(CreateToolButton("Q", null, "View/Quad Words", "Quad Words"));
 		ViewToolStrip.Items.Add(new ToolStripSeparator());
-		ViewToolStrip.Items.Add(CreateToolButton("LE", null, "ViewLittleEndian", "Little Endian"));
-		ViewToolStrip.Items.Add(CreateToolButton("BE", null, "ViewBigEndian", "Big Endian"));
+		ViewToolStrip.Items.Add(CreateToolButton("LE", null, "View/Little Endian", "Little Endian"));
+		ViewToolStrip.Items.Add(CreateToolButton("BE", null, "View/Big Endian", "Big Endian"));
 		
 		ToolStripPanel.Join(ViewToolStrip, 1);
 		ToolStripPanel.Join(EditToolStrip, 1);
 		ToolStripPanel.Join(FileToolStrip, 1);
 	}
 	
-	public static ToolStripMenuItem CreateMenuItem(string text, string image, string name, Keys shortcut)
+	public ToolStripMenuItem CreateMenuItem(string commandName)
+	{
+		Command cmd = Commands.Find(commandName);
+		if(cmd == null)
+			return null;
+		
+		ToolStripMenuItem i = new ToolStripMenuItem(cmd.Label);
+		if(cmd.Image != null)
+			i.Image = cmd.Image;
+		i.Click += OnUiCommand;
+		i.Name = cmd.Name;
+		if(cmd.Shortcuts != null)
+			i.ShortcutKeys = cmd.Shortcuts[0];
+		return i;
+	}
+	
+	public ToolStripMenuItem CreateMenuItem(string text, string image, string name, Keys shortcut)
 	{
 		ToolStripMenuItem i = new ToolStripMenuItem(text);
 		if(image != null)
@@ -611,7 +585,21 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		return i;
 	}
 	
-	public static ToolStripButton CreateToolButton(string text, string image, string name, string tooltip)
+	public ToolStripButton CreateToolButton(string commandName)
+	{
+		Command cmd = Commands.Find(commandName);
+		if(cmd == null)
+			return null;
+		ToolStripButton i = new ToolStripButton();
+		if(cmd.Image != null)
+			i.Image = cmd.Image;
+		i.Click += OnUiCommand;
+		i.Name = cmd.Name;
+		i.ToolTipText = cmd.Label;
+		return i;
+	}
+	
+	public ToolStripButton CreateToolButton(string text, string image, string name, string tooltip)
 	{
 		ToolStripButton i = new ToolStripButton(text);
 		if(image != null)
@@ -645,7 +633,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	
 	protected void OnUpdateUiElement(object sender, EventArgs e)
 	{
-		CommandSet.Command cmd = (CommandSet.Command)sender;
+		Command cmd = (Command)sender;
 		
 		ToolStripItem[] items = FindToolStripItems(MainMenuStrip.Items, cmd.Name, true, false); // TODO: MONO: mono Find() doesn't work: MainMenuStrip.Items.Find(cmd.Name, true);
 		foreach(ToolStripMenuItem i in items)
@@ -676,7 +664,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		}
 	}
 	
-	public static void OnUiCommand(object sender, EventArgs e)
+	public void OnUiCommand(object sender, EventArgs e)
 	{
 		ToolStripItem item = (ToolStripItem)sender;
 		Commands[item.Name].Invoke(item.Tag);
@@ -688,47 +676,47 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		bool haveSelection = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View.Selection.Length > 0 : false;
 		HexView view = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View : null;
 		
-		Commands["FileSave"].Enabled = haveChild && view.Document.IsModified;
-		Commands["FileSaveAs"].Enabled = haveChild;
-		Commands["FileSaveAll"].Enabled = haveChild;
-		Commands["FilePrintSetup"].Enabled = haveChild;
-		Commands["FilePrintPreview"].Enabled = haveChild;
-		Commands["FilePrint"].Enabled = haveChild;
+		Commands["File/Save"].Enabled = haveChild && view.Document.IsModified;
+		Commands["File/Save As"].Enabled = haveChild;
+		Commands["File/Save All"].Enabled = haveChild;
+		Commands["File/Print Setup"].Enabled = haveChild;
+		Commands["File/Print Preview"].Enabled = haveChild;
+		Commands["File/Print"].Enabled = haveChild;
 		
-		Commands["EditUndo"].Enabled = haveChild && view.Document.CanUndo;
-		Commands["EditRedo"].Enabled = haveChild && view.Document.CanRedo;
-		Commands["EditCut"].Enabled = haveSelection;
-		Commands["EditCopy"].Enabled = haveSelection;
-		Commands["EditPaste"].Enabled = haveChild;
-		Commands["EditDelete"].Enabled = haveSelection;
-		Commands["EditSelectAll"].Enabled = haveChild;
-		Commands["EditInsertFile"].Enabled = haveChild;
-		Commands["EditInsertPattern"].Enabled = haveChild;
+		Commands["Edit/Undo"].Enabled = haveChild && view.Document.CanUndo;
+		Commands["Edit/Redo"].Enabled = haveChild && view.Document.CanRedo;
+		Commands["Edit/Cut"].Enabled = haveSelection;
+		Commands["Edit/Copy"].Enabled = haveSelection;
+		Commands["Edit/Paste"].Enabled = haveChild;
+		Commands["Edit/Delete"].Enabled = haveSelection;
+		Commands["Edit/Select All"].Enabled = haveChild;
+		Commands["Edit/Insert File"].Enabled = haveChild;
+		Commands["Edit/Insert Pattern"].Enabled = haveChild;
 
-		Commands["ViewAddressRadix"].Enabled = haveChild;
-		Commands["ViewDataRadix"].Enabled = haveChild;
-		Commands["ViewGoTo"].Enabled = haveChild;
-		Commands["ViewGoToTop"].Enabled = haveChild;
-		Commands["ViewGoToBottom"].Enabled = haveChild;
-		Commands["ViewGoToSelectionStart"].Enabled = haveChild;
-		Commands["ViewGoToSelectionEnd"].Enabled = haveChild;
-		Commands["ViewGoToAddress"].Enabled = haveChild;
-		Commands["ViewGoToSelectionAsAddress"].Enabled = haveChild;
-		Commands["ViewBytes"].Enabled = haveChild;
-		Commands["ViewBytes"].Checked = (haveChild && ActiveView.BytesPerWord == 1);
-		Commands["ViewWords"].Enabled = haveChild;
-		Commands["ViewWords"].Checked = (haveChild && ActiveView.BytesPerWord == 2);
-		Commands["ViewDwords"].Enabled = haveChild;
-		Commands["ViewDwords"].Checked = (haveChild && ActiveView.BytesPerWord == 4);
-		Commands["ViewQwords"].Enabled = haveChild;
-		Commands["ViewQwords"].Checked = (haveChild && ActiveView.BytesPerWord == 8);
-		Commands["ViewLittleEndian"].Enabled = haveChild;
-		Commands["ViewLittleEndian"].Checked = (haveChild && ActiveView.Endian == Endian.Little);
-		Commands["ViewBigEndian"].Enabled = haveChild;
-		Commands["ViewBigEndian"].Checked = (haveChild && ActiveView.Endian == Endian.Big);
+		Commands["View/Address Radix"].Enabled = haveChild;
+		Commands["View/Data Radix"].Enabled = haveChild;
+		Commands["View/Go To"].Enabled = haveChild;
+		Commands["View/Go To Top"].Enabled = haveChild;
+		Commands["View/Go To Bottom"].Enabled = haveChild;
+		Commands["View/Go To Selection Start"].Enabled = haveChild;
+		Commands["View/Go To Selection End"].Enabled = haveChild;
+		Commands["View/Go To Address"].Enabled = haveChild;
+		Commands["View/Go To Selection As Address"].Enabled = haveChild;
+		Commands["View/Bytes"].Enabled = haveChild;
+		Commands["View/Bytes"].Checked = (haveChild && ActiveView.BytesPerWord == 1);
+		Commands["View/Words"].Enabled = haveChild;
+		Commands["View/Words"].Checked = (haveChild && ActiveView.BytesPerWord == 2);
+		Commands["View/Double Words"].Enabled = haveChild;
+		Commands["View/Double Words"].Checked = (haveChild && ActiveView.BytesPerWord == 4);
+		Commands["View/Quad Words"].Enabled = haveChild;
+		Commands["View/Quad Words"].Checked = (haveChild && ActiveView.BytesPerWord == 8);
+		Commands["View/Little Endian"].Enabled = haveChild;
+		Commands["View/Little Endian"].Checked = (haveChild && ActiveView.Endian == Endian.Little);
+		Commands["View/Big Endian"].Enabled = haveChild;
+		Commands["View/Big Endian"].Checked = (haveChild && ActiveView.Endian == Endian.Big);
 		
-		Commands["WindowSplit"].Enabled = haveChild;		
-		Commands["WindowDuplicate"].Enabled = haveChild;
+		Commands["Window/Split"].Enabled = haveChild;		
+		Commands["Window/Duplicate"].Enabled = haveChild;
 		
 		if(view != null)
 		{

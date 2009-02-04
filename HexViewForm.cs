@@ -18,29 +18,29 @@ class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
 	
 	public HexViewForm(Document doc)
 	{
-		Commands.Add("EditUndo", OnEditUndo);
-		Commands.Add("EditRedo", OnEditRedo);
-		Commands.Add("EditCut", OnEditCut);
-		Commands.Add("EditCopy", OnEditCopy);
-		Commands.Add("EditPaste", OnEditPaste);
-		Commands.Add("EditInsertFile", OnEditInsertFile);
-		Commands.Add("EditInsertPattern", OnEditInsertPattern);
-		Commands.Add("EditSelectAll", OnEditSelectAll);
-		Commands.Add("SelectionDefineField", OnSelectionDefineField);
-		Commands.Add("ViewAddressRadix", OnViewAddressRadix);
-		Commands.Add("ViewDataRadix", OnViewDataRadix);
-		Commands.Add("ViewGoToTop", OnViewGoToTop);
-		Commands.Add("ViewGoToBottom", OnViewGoToBottom);
-		Commands.Add("ViewGoToSelectionStart", OnViewGoToSelectionStart);
-		Commands.Add("ViewGoToSelectionEnd", OnViewGoToSelectionEnd);
-		Commands.Add("ViewGoToAddress", OnViewGoToAddress);
-		Commands.Add("ViewGoToSelectionAsAddress", OnViewGoToSelectionAsAddress);
-		Commands.Add("ViewBytes", OnViewBytes);
-		Commands.Add("ViewWords", OnViewWords);
-		Commands.Add("ViewDwords", OnViewDwords);
-		Commands.Add("ViewQwords", OnViewQwords);
-		Commands.Add("ViewLittleEndian", OnViewLittleEndian);
-		Commands.Add("ViewBigEndian", OnViewBigEndian);
+		Commands.Add("Edit/Undo", OnEditUndo);
+		Commands.Add("Edit/Redo", OnEditRedo);
+		Commands.Add("Edit/Cut", OnEditCut);
+		Commands.Add("Edit/Copy", OnEditCopy);
+		Commands.Add("Edit/Paste", OnEditPaste);
+		Commands.Add("Edit/Insert File", OnEditInsertFile);
+		Commands.Add("Edit/Insert Pattern", OnEditInsertPattern);
+		Commands.Add("Edit/Select All", OnEditSelectAll);
+		Commands.Add("Selection/Define Field", OnSelectionDefineField);
+		Commands.Add("View/Address Radix", OnViewAddressRadix);
+		Commands.Add("View/Data Radix", OnViewDataRadix);
+		Commands.Add("View/Go To Top", OnViewGoToTop);
+		Commands.Add("View/Go To Bottom", OnViewGoToBottom);
+		Commands.Add("View/Go To Selection Start", OnViewGoToSelectionStart);
+		Commands.Add("View/Go To Selection End", OnViewGoToSelectionEnd);
+		Commands.Add("View/Go To Address", OnViewGoToAddress);
+		Commands.Add("View/Go To Selection As Address", OnViewGoToSelectionAsAddress);
+		Commands.Add("View/Bytes", OnViewBytes);
+		Commands.Add("View/Words", OnViewWords);
+		Commands.Add("View/Double Words", OnViewDwords);
+		Commands.Add("View/Quad Words", OnViewQwords);
+		Commands.Add("View/Little Endian", OnViewLittleEndian);
+		Commands.Add("View/Big Endian", OnViewBigEndian);
 		
 		View = new HexView(doc);
 		View.Dock = DockStyle.Fill;
@@ -93,12 +93,12 @@ class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
 			case HexView.HexViewHit.HitType.DataSelection:
 			case HexView.HexViewHit.HitType.AsciiSelection:
 				ContextMenuStrip menu = new ContextMenuStrip();
-				menu.Items.Add(HexEdApp.CreateMenuItem("Cut", "cut_16.png", "EditCut", Keys.Control | Keys.X));
-				menu.Items.Add(HexEdApp.CreateMenuItem("Copy", "copy_16.png", "EditCopy", Keys.Control | Keys.C));
-				menu.Items.Add(HexEdApp.CreateMenuItem("Paste", "paste_16.png", "EditPaste", Keys.Control | Keys.V));
+				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("Edit/Cut"));
+				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("Edit/Copy"));
+				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("Edit/Paste"));
 				menu.Items.Add(new ToolStripSeparator());
-				menu.Items.Add(HexEdApp.CreateMenuItem("Define Field", null, "SelectionDefineField", Keys.None));
-				menu.Items.Add(HexEdApp.CreateMenuItem("Go To Selection As Address", null, "ViewGoToSelectionAsAddress", Keys.None));
+				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("Selection/Define Field"));
+				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("View/Go To Selection As Address"));
 				menu.Show(this, e.Position);
 				break;
 		}

@@ -32,9 +32,11 @@ public interface IPluginHost
 	event EventHandler ActiveViewChanged;
 	
 	Settings Settings { get; }
+	CommandSet Commands { get; }
 	HexView ActiveView { get; }
 	ProgressNotificationCollection ProgressNotifications { get; }
 	
 	ToolStripMenuItem AddMenuItem(string path);
+	ToolStripButton CreateToolButton(string commandName);
 	void AddWindow(Control control, string name, Image image, DefaultWindowPosition defaultPosition, bool visibleByDefault);
 }

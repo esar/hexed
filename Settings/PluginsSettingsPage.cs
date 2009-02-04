@@ -143,12 +143,15 @@ class PluginsSettingsPage : SettingsPage
 		ButtonPanel.FlowDirection = FlowDirection.TopDown;
 		EnableButton.Text = "Enable";
 		EnableButton.Enabled = false;
+		EnableButton.Margin = new Padding(5, 0, 0, 0);
 		ButtonPanel.Controls.Add(EnableButton);
 		DisableButton.Text = "Disable";
 		DisableButton.Enabled = false;
+		DisableButton.Margin = new Padding(5, 5, 0, 0);
 		ButtonPanel.Controls.Add(DisableButton);
 		InfoButton.Text = "Information";
 		InfoButton.Enabled = false;
+		InfoButton.Margin = new Padding(5, 5, 0, 0);
 		ButtonPanel.Controls.Add(InfoButton);
 		ButtonPanel.AutoSize = true;
 		ButtonPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;

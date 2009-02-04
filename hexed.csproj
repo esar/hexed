@@ -83,6 +83,8 @@
     <Compile Include="PluginManager.cs" />
     <Compile Include="Settings\PluginsSettingsPage.cs" />
     <Compile Include="SplashScreen.cs" />
+    <Compile Include="CommandSet.cs" />
+    <Compile Include="Settings\ShortcutsSettingsPage.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

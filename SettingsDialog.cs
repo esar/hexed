@@ -209,6 +209,7 @@ class EditorAppearanceSettingsPage : SettingsPage
 			AddPage(page, new EditorAppearanceSettingsPage(), 3);
 		
 			page = AddPage(new PluginsSettingsPage(app), 3);
+			page = AddPage(new ShortcutsSettingsPage(app), 3);
 		
 			page = AddPage(new CommandsSettingsPage(), 9);
 			AddPage(page, new RevisionGraphSettingsPage(), 6);
