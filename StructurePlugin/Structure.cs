@@ -267,7 +267,7 @@ namespace StructurePlugin
 			if(Host.ActiveView != null && Host.ActiveView.Document == ((StructureWorker)sender).Document && result.Structure != null)
 				_TreeView.Model = new StructureTreeModel(result.Structure);
 			
-			if(result.Errors != null)
+			if(result.Errors.Count > 0)
 			{
 				CompileErrorDialog dlg = new CompileErrorDialog();
 				dlg.Errors = result.Errors;

@@ -4,7 +4,7 @@ using System.CodeDom.Compiler;
 
 
 
-class CompileErrorDialog : Form
+class CompileErrorDialog : DialogBase
 {
 	protected RichTextBox TextBox = new RichTextBox();
 	
@@ -19,11 +19,13 @@ class CompileErrorDialog : Form
 		}
 	}
 	
-	public CompileErrorDialog()
+	public CompileErrorDialog() : base(DialogBase.Buttons.OK)
 	{
 		Text = "Compile Error";
 		
 		TextBox.Dock = DockStyle.Fill;
 		Controls.Add(TextBox);
+		
+		Size = new System.Drawing.Size(480, 320);
 	}
 }
