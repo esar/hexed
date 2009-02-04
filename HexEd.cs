@@ -11,6 +11,13 @@ using Crownwood.DotNetMagic.Controls;
 
 
 
+public enum Menus
+{
+	Main,
+	AddressContext,
+	DataContext,
+	SelectedDataContext
+}
 
 class HexEdApp : Form, IPluginHost
 {
@@ -41,6 +48,8 @@ class HexEdApp : Form, IPluginHost
 	
 	private RadixMenu				AddressRadixMenu;
 	private RadixMenu				DataRadixMenu;
+
+	private ContextMenuStrip[]		ContextMenus;
 	
 	private ToolStripProgressBar	ProgressBar;
 	private ToolStripStatusLabel	ProgressMessage;
@@ -89,7 +98,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		_PluginManager = new PluginManager(this);
 		
 		CreateCommands();
-		
+	
 		WindowImageList = new ImageList();
 		WindowImageList.ColorDepth = ColorDepth.Depth32Bit;
 		
@@ -113,6 +122,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Controls.Add(ToolStripPanel);
 
 		CreateMenus();
+		CreateContextMenus();
 		CreateToolBars();
 		
 		selectionPanel = new SelectionPanel(this);
@@ -405,6 +415,28 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi = new ToolStripMenuItem("&Help");
 		mi.DropDownItems.Add(CreateMenuItem("Help/About"));
 		MainMenuStrip.Items.Add(mi);
+	}
+	
+	private void CreateContextMenus()
+	{
+		ContextMenus = new ContextMenuStrip[Enum.GetValues(typeof(Menus)).Length];
+		for(int i = 0; i < ContextMenus.Length; ++i)
+			ContextMenus[i] = new ContextMenuStrip();
+		
+		ContextMenus[(int)Menus.SelectedDataContext].Items.Add(CreateMenuItem("Edit/Cut"));
+		ContextMenus[(int)Menus.SelectedDataContext].Items.Add(CreateMenuItem("Edit/Copy"));
+		ContextMenus[(int)Menus.SelectedDataContext].Items.Add(CreateMenuItem("Edit/Paste"));
+		ContextMenus[(int)Menus.SelectedDataContext].Items.Add(new ToolStripSeparator());
+		AddMenuItem(Menus.SelectedDataContext, "Go To", CreateMenuItem("View/Go To Top"));
+		AddMenuItem(Menus.SelectedDataContext, "Go To", CreateMenuItem("View/Go To Bottom"));
+		AddMenuItem(Menus.SelectedDataContext, "Go To", CreateMenuItem("View/Go To Selection As Address"));
+		
+		AddMenuItem(Menus.DataContext, String.Empty, CreateMenuItem("Edit/Select All"));
+		AddMenuItem(Menus.DataContext, String.Empty, new ToolStripSeparator());
+		AddMenuItem(Menus.DataContext, "Go To", CreateMenuItem("View/Go To Top"));
+		AddMenuItem(Menus.DataContext, "Go To", CreateMenuItem("View/Go To Bottom"));
+		AddMenuItem(Menus.DataContext, "Go To", CreateMenuItem("View/Go To Selection As Address"));
+		
 	}
 	
 	private void CreateToolBars()
@@ -912,6 +944,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		}
 	}
 	
+	public ContextMenuStrip GetContextMenu(Menus menu)
+	{
+		return ContextMenus[(int)menu];
+	}
 	
 	void IPluginHost.AddWindow(Control control, string name, Image image, DefaultWindowPosition defaultPosition, bool visibleByDefault)
 	{	
@@ -980,13 +1016,18 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 				c.BringToFront();
 	}
 	
-	ToolStripMenuItem IPluginHost.AddMenuItem(string path)
+	public void AddMenuItem(Menus menu, string path, ToolStripItem menuItem)
 	{
+		path = path.Replace("&", String.Empty);
 		string[] parts = path.Split(new char[] {'/', '\\'});
 		
 		int i = 0;
 		ToolStripMenuItem item = null;
-		ToolStripItemCollection m = MainMenuStrip.Items;
+		ToolStripItemCollection m = null;
+		if(menu == Menus.Main)
+			m = MainMenuStrip.Items;
+		else
+			m = ContextMenus[(int)menu].Items;
 		for(i = 0; i < parts.Length; ++i)
 		{
 			ToolStripItem[] items = FindToolStripItems(m, parts[i], false, true); //m.Find(parts[i], false);
@@ -1004,10 +1045,13 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		for(; i < parts.Length; ++i)
 		{
-			item = (ToolStripMenuItem)m.Add(parts[i]);
-			m = item.DropDownItems;
+			if(parts[i].Length > 0)
+			{
+				item = (ToolStripMenuItem)m.Add(parts[i]);
+				m = item.DropDownItems;
+			}
 		}
-	
-		return item;
+		
+		m.Add(menuItem);
 	}
 }

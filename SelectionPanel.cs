@@ -55,6 +55,18 @@ class SelectionPanel : Panel
 		                  null,
 		                  OnXor);
 		
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/Byte Swap"));
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/Invert"));
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", new ToolStripSeparator());
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/Shift Left"));
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/Shift Right"));
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/Rotate Left"));
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/Rotate Right"));
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", new ToolStripSeparator());
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/AND"));
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/OR"));
+		Host.AddMenuItem(Menus.SelectedDataContext, "Selection", Host.CreateMenuItem("Selection/XOR"));
+		
 		List.View = View.Details;
 		List.AllowColumnReorder = true;
 		List.FullRowSelect = true;

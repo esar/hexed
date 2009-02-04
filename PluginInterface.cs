@@ -36,8 +36,9 @@ public interface IPluginHost
 	HexView ActiveView { get; }
 	ProgressNotificationCollection ProgressNotifications { get; }
 	
-	ToolStripMenuItem AddMenuItem(string path);
 	ToolStripButton CreateToolButton(string commandName);
+	ToolStripMenuItem CreateMenuItem(string commandName);
+	void AddMenuItem(Menus menu, string path, ToolStripItem menuItem);
 	void AddWindow(Control control, string name, Image image, DefaultWindowPosition defaultPosition, bool visibleByDefault);
 	void BringToFront(Control control);
 }

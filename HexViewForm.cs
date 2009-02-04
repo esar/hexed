@@ -26,7 +26,6 @@ class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
 		Commands.Add("Edit/Insert File", OnEditInsertFile);
 		Commands.Add("Edit/Insert Pattern", OnEditInsertPattern);
 		Commands.Add("Edit/Select All", OnEditSelectAll);
-		Commands.Add("Selection/Define Field", OnSelectionDefineField);
 		Commands.Add("View/Address Radix", OnViewAddressRadix);
 		Commands.Add("View/Data Radix", OnViewDataRadix);
 		Commands.Add("View/Go To Top", OnViewGoToTop);
@@ -90,16 +89,19 @@ class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
 	{
 		switch(e.Hit.Type)
 		{
+			case HexView.HexViewHit.HitType.Address:
+				if(HexEdApp.Instance.GetContextMenu(Menus.AddressContext).Items.Count > 0)
+					HexEdApp.Instance.GetContextMenu(Menus.AddressContext).Show(this, e.Position);
+				break;
+			case HexView.HexViewHit.HitType.Data:
+			case HexView.HexViewHit.HitType.Ascii:
+				if(HexEdApp.Instance.GetContextMenu(Menus.DataContext).Items.Count > 0)
+					HexEdApp.Instance.GetContextMenu(Menus.DataContext).Show(this, e.Position);
+				break;
 			case HexView.HexViewHit.HitType.DataSelection:
 			case HexView.HexViewHit.HitType.AsciiSelection:
-				ContextMenuStrip menu = new ContextMenuStrip();
-				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("Edit/Cut"));
-				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("Edit/Copy"));
-				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("Edit/Paste"));
-				menu.Items.Add(new ToolStripSeparator());
-				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("Selection/Define Field"));
-				menu.Items.Add(HexEdApp.Instance.CreateMenuItem("View/Go To Selection As Address"));
-				menu.Show(this, e.Position);
+				if(HexEdApp.Instance.GetContextMenu(Menus.SelectedDataContext).Items.Count > 0)
+					HexEdApp.Instance.GetContextMenu(Menus.SelectedDataContext).Show(this, e.Position);
 				break;
 		}
 	}
