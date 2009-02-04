@@ -1,16 +1,103 @@
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 
-class PluginInfoDialog : Form
+class PluginInfoDialog : DialogBase
 {
+	PictureBox Icon = new PictureBox();
 	Label NameLabel = new Label();
+	Label DescriptionLabel = new Label();
+	Label VersionLabel = new Label();
+	Label VersionValue = new Label();
+	Label AuthorLabel = new Label();
+	Label AuthorValue = new Label();
+	Label CopyrightLabel = new Label();
+	Label CopyrightValue = new Label();
+	Label UrlLabel = new Label();
+	LinkLabel UrlValue = new LinkLabel();
 	
-	public PluginInfoDialog(IPlugin plugin)
+	TableLayoutPanel Panel = new TableLayoutPanel();
+	
+	public PluginInfoDialog(IPlugin plugin) : base(DialogBase.Buttons.OK)
 	{
+		Font boldFont = new Font(NameLabel.Font, FontStyle.Bold);
+
+		Text = "Plugin Info";
+		
+		Panel.BackColor = Color.Transparent;
+		Panel.RowCount = 10;
+		Panel.ColumnCount = 2;
+		Panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+		Panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+		Panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+		Panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
+		
+		Icon.Image = plugin.Image;
+		Icon.AutoSize = true;
+		Panel.Controls.Add(Icon);
+		Panel.SetRowSpan(Icon, 10);
+		
+		NameLabel.Font = new Font(NameLabel.Font.FontFamily.Name, 12, FontStyle.Bold);
 		NameLabel.Text = plugin.Name;
-		NameLabel.Dock = DockStyle.Fill;
-		Controls.Add(NameLabel);
+		NameLabel.AutoSize = true;
+		Panel.Controls.Add(NameLabel);
+		
+		DescriptionLabel.Text = plugin.Description;
+		DescriptionLabel.Dock = DockStyle.Fill;
+		Panel.Controls.Add(DescriptionLabel);
+
+		VersionLabel.Font = boldFont;
+		VersionLabel.Text = "Version:";
+		VersionLabel.AutoSize = true;
+		Panel.Controls.Add(VersionLabel);
+		
+		VersionValue.Text = plugin.Version;
+		VersionValue.AutoSize = true;
+		Panel.Controls.Add(VersionValue);
+
+		AuthorLabel.Padding = new Padding(0, 5, 0, 0);
+		AuthorLabel.Font = boldFont;
+		AuthorLabel.Text = "Author:";
+		AuthorLabel.AutoSize = true;
+		Panel.Controls.Add(AuthorLabel);
+		
+		AuthorValue.Text = plugin.Author;
+		AuthorValue.AutoSize = true;
+		Panel.Controls.Add(AuthorValue);
+		
+		CopyrightLabel.Padding = new Padding(0, 5, 0, 0);
+		CopyrightLabel.Font = boldFont;
+		CopyrightLabel.Text = "Copyright:";
+		CopyrightLabel.AutoSize = true;
+		Panel.Controls.Add(CopyrightLabel);
+		
+		CopyrightValue.Text = plugin.Copyright;
+		CopyrightValue.AutoSize = true;
+		Panel.Controls.Add(CopyrightValue);
+
+		UrlLabel.Padding = new Padding(0, 5, 0, 0);
+		UrlLabel.Font = boldFont;
+		UrlLabel.Text = "URL:";
+		UrlLabel.AutoSize = true;
+		Panel.Controls.Add(UrlLabel);
+		
+		UrlValue.Text = plugin.Url;
+		UrlValue.Links.Add(0, plugin.Url.Length, plugin.Url);
+		UrlValue.AutoSize = true;
+		UrlValue.LinkClicked += OnLinkClicked;
+		Panel.Controls.Add(UrlValue);
+		
+		Panel.Dock = DockStyle.Fill;
+		Controls.Add(Panel);
+		
+		Size = new Size(320, 320);
+	}
+	
+	protected void OnLinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+	{
+		System.Diagnostics.Process.Start(e.Link.LinkData.ToString());
+		e.Link.Visited = true;
 	}
 }
 
@@ -91,6 +178,7 @@ class PluginsSettingsPage : SettingsPage
 	protected void OnInfo(object sender, EventArgs e)
 	{
 		PluginInfoDialog dlg = new PluginInfoDialog((IPlugin)List.SelectedItems[0].Tag);
+		dlg.StartPosition = FormStartPosition.CenterParent;
 		dlg.ShowDialog();
 	}
 }

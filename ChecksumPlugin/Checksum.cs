@@ -559,9 +559,13 @@ namespace ChecksumPlugin
 	
 	public class Checksum : IPlugin
 	{
+		Image IPlugin.Image { get { return Settings.Instance.Image("checksum_16.png"); } }
 		string IPlugin.Name { get { return "Checksum"; } }
+		string IPlugin.Description { get { return "Calculates checksums of the selection or document"; } }
 		string IPlugin.Author { get { return "Stephen Robinson"; } }
 		string IPlugin.Version { get { return "1.0"; } }
+		string IPlugin.Copyright { get { return "(c)2008 Stephen Robinson"; } }
+		string IPlugin.Url { get { return "http://www.esar.org.uk/"; } }
 
 		IPluginHost Host;
 		

@@ -39,7 +39,7 @@ public class PatternDialog : DialogBase
 		get { return ExtrasPanel; }
 	}
 	
-	public PatternDialog()
+	public PatternDialog() : base(DialogBase.Buttons.OK | DialogBase.Buttons.Cancel)
 	{
 		Panel = new TableLayoutPanel();
 		Panel.ColumnCount = 4;

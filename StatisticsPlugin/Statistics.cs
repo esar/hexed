@@ -808,9 +808,13 @@ namespace StatisticsPlugin
 	
 	public class StatisticsPlugin : IPlugin
 	{
+		Image IPlugin.Image { get { return Settings.Instance.Image("histogram_16.png"); } }
 		string IPlugin.Name { get { return "Statistics"; } }
+		string IPlugin.Description { get { return "Provides statisitcs about the contents of a document"; } }
 		string IPlugin.Author { get { return "Stephen Robinson"; } }
 		string IPlugin.Version { get { return "1.0"; } }
+		string IPlugin.Copyright { get { return "(c)2008 Stephen Robinson"; } }
+		string IPlugin.Url { get { return "http://www.esar.org.uk/"; } }
 
 		IPluginHost Host;
 		

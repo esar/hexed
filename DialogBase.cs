@@ -78,6 +78,15 @@ public class GradientPanel : Panel
 
 public class DialogBase : Form
 {
+	public enum Buttons
+	{
+		None = 0,
+		OK = 1,
+		Apply = 2,
+		Cancel = 4,
+		All = 7
+	}
+	
 	protected FlowLayoutPanel  ButtonPanel;
 	protected Button OkButton;
 	protected new Button CancelButton;
@@ -89,7 +98,7 @@ public class DialogBase : Form
 		get { return ContentPanel.Controls; }
 	}
 	
-	public DialogBase()
+	public DialogBase(Buttons buttons)
 	{		
 		ButtonPanel = new FlowLayoutPanel();
 		ButtonPanel.FlowDirection = FlowDirection.RightToLeft;
@@ -98,24 +107,34 @@ public class DialogBase : Form
 		ButtonPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 		ButtonPanel.Padding = new Padding(0, 0, 20, 0);
 		ButtonPanel.BackColor = Color.Transparent;
+
+		if((buttons & Buttons.Apply) != 0)
+		{
+			ApplyButton = new Button();
+			ApplyButton.Text = "Apply";
+			ApplyButton.Click += OnApply;
+			ApplyButton.Margin = new Padding(3, 6, 3, 2);
+			ButtonPanel.Controls.Add(ApplyButton);
+		}
 		
-		OkButton = new Button();
-		OkButton.Text = "OK";
-		OkButton.Click += OnOK;
-		OkButton.Margin = new Padding(3, 6, 3, 2);
-		CancelButton = new Button();
-		CancelButton.Text = "Cancel";
-		CancelButton.Click += OnCancel;
-		CancelButton.Margin = new Padding(3, 6, 3, 2);
-		CancelButton.CausesValidation = false;
-		ApplyButton = new Button();
-		ApplyButton.Text = "Apply";
-		ApplyButton.Click += OnApply;
-		ApplyButton.Margin = new Padding(3, 6, 3, 2);
-		
-		ButtonPanel.Controls.Add(ApplyButton);
-		ButtonPanel.Controls.Add(CancelButton);
-		ButtonPanel.Controls.Add(OkButton);
+		if((buttons & Buttons.Cancel) != 0)
+		{
+			CancelButton = new Button();
+			CancelButton.Text = "Cancel";
+			CancelButton.Click += OnCancel;
+			CancelButton.Margin = new Padding(3, 6, 3, 2);
+			CancelButton.CausesValidation = false;
+			ButtonPanel.Controls.Add(CancelButton);
+		}
+
+		if((buttons & Buttons.OK) != 0)
+		{
+			OkButton = new Button();
+			OkButton.Text = "OK";
+			OkButton.Click += OnOK;
+			OkButton.Margin = new Padding(3, 6, 3, 2);
+			ButtonPanel.Controls.Add(OkButton);
+		}
 		
 		ContentPanel = new GradientPanel();
 		ContentPanel.Padding = new Padding(5, 5, 8, 5);

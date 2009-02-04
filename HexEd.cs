@@ -871,6 +871,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	private void OnEditPreferences(object sender, EventArgs e)
 	{
 		SettingsDialog dlg = new SettingsDialog(this);
+		dlg.StartPosition = FormStartPosition.CenterParent;
 		dlg.ShowDialog();
 	}
 	

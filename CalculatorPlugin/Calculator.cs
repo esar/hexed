@@ -60,9 +60,13 @@ namespace CalculatorPlugin
 	
 	public class MyClass : IPlugin
 	{
+		Image IPlugin.Image { get { return Settings.Instance.Image("calculator_16.png"); } }
 		string IPlugin.Name { get { return "Calculator"; } }
+		string IPlugin.Description { get { return "Provides a simple calculator"; } }
 		string IPlugin.Author { get { return "Stephen Robinson"; } }
 		string IPlugin.Version { get { return "1.0"; } }
+		string IPlugin.Copyright { get { return "(c)2008 Stephen Robinson"; } }
+		string IPlugin.Url { get { return "http://www.esar.org.uk/"; } }
 
 		void IPlugin.Initialize(IPluginHost host)
 		{

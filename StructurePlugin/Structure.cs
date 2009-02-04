@@ -317,9 +317,13 @@ namespace StructurePlugin
 	
 	public class StructurePlugin : IPlugin
 	{
+		Image IPlugin.Image { get { return Settings.Instance.Image("structure_16.png"); } }
 		string IPlugin.Name { get { return "Structure"; } }
+		string IPlugin.Description { get { return "Displays a documents structure based on structure definition scripts"; } }
 		string IPlugin.Author { get { return "Stephen Robinson"; } }
 		string IPlugin.Version { get { return "1.0"; } }
+		string IPlugin.Copyright { get { return "(c)2008 Stephen Robinson"; } }
+		string IPlugin.Url { get { return "http://www.esar.org.uk/"; } }
 
 		IPluginHost Host;
 		

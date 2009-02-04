@@ -28,7 +28,7 @@ class FilePropertiesDialog : DialogBase
 	protected TableLayoutPanel Panel;
 	
 	
-	public FilePropertiesDialog(string filename)
+	public FilePropertiesDialog(string filename) : base(DialogBase.Buttons.All)
 	{
 		Info = new FileInfo(filename);
 	

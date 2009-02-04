@@ -245,9 +245,13 @@ namespace PythonConsolePlugin
 
 	public class PythonConsolePlugin : IPlugin
 	{
+		Image IPlugin.Image { get { return Settings.Instance.Image("console_16.png"); } }
 		string IPlugin.Name { get { return "Python Console"; } }
+		string IPlugin.Description { get { return "Provides an interactive python console"; } }
 		string IPlugin.Author { get { return "Stephen Robinson"; } }
 		string IPlugin.Version { get { return "1.0"; } }
+		string IPlugin.Copyright { get { return "(c)2008 Stephen Robinson"; } }
+		string IPlugin.Url { get { return "http://www.esar.org.uk/"; } }
 
 		void IPlugin.Initialize(IPluginHost host)
 		{

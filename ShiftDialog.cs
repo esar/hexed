@@ -119,7 +119,7 @@ class ShiftDialog : DialogBase
 		get { return _Value; }
 	}
 	
-	public ShiftDialog()
+	public ShiftDialog() : base(DialogBase.Buttons.OK | DialogBase.Buttons.Cancel)
 	{
 		Panel = new TableLayoutPanel();
 		Panel.BackColor = Color.Transparent;

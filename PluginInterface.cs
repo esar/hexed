@@ -14,9 +14,13 @@ using System.Drawing;
 
 public interface IPlugin
 {
+	Image Image { get; }
 	string Name { get; }
+	string Description { get; }
 	string Author { get; }
 	string Version { get; }
+	string Copyright { get; }
+	string Url { get; }
 	
 	void Initialize(IPluginHost host);
 	void Dispose();
