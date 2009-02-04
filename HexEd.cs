@@ -670,6 +670,22 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands[item.Name].Invoke(item.Tag);
 	}
 	
+	protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+	{
+		if(base.ProcessCmdKey(ref msg, keyData))
+		   return true;
+		
+		Command cmd = Commands.FindShortcut(keyData);
+		if(cmd != null)
+		{
+			cmd.Invoke(null);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	
 	protected void OnIdle(object sender, EventArgs e)
 	{
 		bool haveChild = (_TabbedGroups.ActiveTabPage != null);
@@ -1077,6 +1093,13 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 				
 		if(visibleByDefault)
 			_dockingManager.ShowContent(content);
+	}
+	
+	public void BringToFront(Control control)
+	{
+		foreach(Content c in _dockingManager.Contents)
+			if(c.Control == control)
+				c.BringToFront();
 	}
 	
 	ToolStripMenuItem IPluginHost.AddMenuItem(string path)

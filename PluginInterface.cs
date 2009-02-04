@@ -39,4 +39,5 @@ public interface IPluginHost
 	ToolStripMenuItem AddMenuItem(string path);
 	ToolStripButton CreateToolButton(string commandName);
 	void AddWindow(Control control, string name, Image image, DefaultWindowPosition defaultPosition, bool visibleByDefault);
+	void BringToFront(Control control);
 }

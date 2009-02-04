@@ -269,6 +269,8 @@ namespace SearchPlugin
 		
 		protected void OnSearch(object sender, EventArgs e)
 		{
+			Host.BringToFront(this);
+			
 			SearchDialog dlg = new SearchDialog();
 			dlg.StartPosition = FormStartPosition.CenterParent;
 			if(dlg.ShowDialog() != DialogResult.OK)

@@ -156,6 +156,21 @@ public class CommandSet : IEnumerable< KeyValuePair<string, Command> >
 			return null;
 	}
 	
+	public Command FindShortcut(Keys keys)
+	{
+		foreach(KeyValuePair<string, Command> kvp in Commands)
+		{
+			if(kvp.Value.Shortcuts != null)
+			{
+				foreach(Keys k in kvp.Value.Shortcuts)
+					if(k == keys)
+						return kvp.Value;
+			}
+		}
+		
+		return null;
+	}
+	
 	public IEnumerator< KeyValuePair<string, Command> > GetEnumerator()
 	{
 		return Commands.GetEnumerator();
