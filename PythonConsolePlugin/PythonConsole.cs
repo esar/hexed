@@ -225,15 +225,19 @@ namespace PythonConsolePlugin
 		public PythonConsolePanel(IPluginHost host)
 		{
 			Host = host;
+
+			Host.Commands.Add("Python Console/Clear Console", "Clears the contents of the console", "Clear Console",
+			                  Host.Settings.Image("delete_16.png"),
+			                  null,
+			                  OnClearConsole);
+			
 			Console = new PythonConsole(host);
 			Console.Dock = DockStyle.Fill;
 			Controls.Add(Console);
 			
 			ToolBar = new ToolStrip();
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
-			ToolStripItem item = ToolBar.Items.Add(Host.Settings.Image("delete_16.png"));
-			item.ToolTipText = "Clear Console";
-			item.Click += OnClearConsole;
+			ToolBar.Items.Add(Host.CreateToolButton("Python Console/Clear Console"));
 			Controls.Add(ToolBar);
 		}
 		

@@ -268,7 +268,12 @@ namespace ChecksumPlugin
 		public ResultWindow(IPluginHost host)
 		{
 			Host = host;
-						
+			
+			Host.Commands.Add("Checksum/Calculate", "Calculates the checksums for the selection or document", "Calculate",
+			                  Host.Settings.Image("go_16.png"),
+			                  null,
+			                  OnCalculate);
+			
 			LocalAlgorithms.Add("ADLER-32", typeof(Adler32Managed));
 			foreach(CrcModel m in CrcManaged.Models)
 				LocalAlgorithms.Add(m.Name, typeof(CrcManaged));
@@ -322,9 +327,7 @@ namespace ChecksumPlugin
 			SelectionComboBox.Overflow = ToolStripItemOverflow.Never;
 			ToolBar.Items.Add(SelectionComboBox);
 			
-			RefreshButton = new ToolStripButton(Host.Settings.Image("go_16.png"));
-			RefreshButton.ToolTipText = "Calculate";
-			RefreshButton.Click += OnCalculate;
+			RefreshButton = Host.CreateToolButton("Checksum/Calculate");
 			RefreshButton.Overflow = ToolStripItemOverflow.Never;
 			RefreshButton.Enabled = false;
 			ToolBar.Items.Add(RefreshButton);

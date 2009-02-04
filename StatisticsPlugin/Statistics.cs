@@ -490,6 +490,23 @@ namespace StatisticsPlugin
 		{
 			Host = host;
 			Host.ActiveViewChanged += OnActiveViewChanged;
+
+			Host.Commands.Add("Statistics/Show Graph", "Shows the results as a bar graph", "Show Graph",
+			                  Host.Settings.Image("histogram_16.png"),
+			                  null,
+			                  OnShowGraph);
+			Host.Commands.Add("Statistics/Show Table", "Shows the results as a table", "Show Table",
+			                  Host.Settings.Image("table_16.png"),
+			                  null,
+			                  OnShowTable);
+			Host.Commands.Add("Statistics/Show Statistics", "Shows the results as a table of statistics", "Show Statistics",
+			                  Host.Settings.Image("stats_16.png"),
+			                  null,
+			                  OnShowStats);			
+			Host.Commands.Add("Statistics/Calculate", "Calculates the statistics for the selection or document", "Calculate",
+			                  Host.Settings.Image("go_16.png"),
+			                  null,
+			                  OnCalculate);
 			
 			Graph.Dock = DockStyle.Fill;
 			Controls.Add(Graph);
@@ -547,17 +564,11 @@ namespace StatisticsPlugin
 			RangeIndicator.Orientation = Orientation.Horizontal;
 			Controls.Add(RangeIndicator);
 			
-			GraphButton = new ToolStripButton(Host.Settings.Image("histogram_16.png"));
-			GraphButton.ToolTipText = "Show Graph";
-			GraphButton.Click += OnShowGraph;
+			GraphButton = Host.CreateToolButton("Statistics/Show Graph");
 			ToolBar.Items.Add(GraphButton);
-			TableButton = new ToolStripButton(Host.Settings.Image("table_16.png"));
-			TableButton.ToolTipText = "Show Table";
-			TableButton.Click += OnShowTable;
+			TableButton = Host.CreateToolButton("Statistics/Show Table");
 			ToolBar.Items.Add(TableButton);
-			StatsButton = new ToolStripButton(Host.Settings.Image("stats_16.png"));
-			StatsButton.ToolTipText = "Show Statistics";
-			StatsButton.Click += OnShowStats;
+			StatsButton = Host.CreateToolButton("Statistics/Show Statistics");
 			ToolBar.Items.Add(StatsButton);
 			ToolBar.Items.Add(new ToolStripSeparator());
 			
@@ -567,8 +578,7 @@ namespace StatisticsPlugin
 			SelectionComboBox.SelectedIndex = 0;
 			SelectionComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
 			ToolBar.Items.Add(SelectionComboBox);
-			RefreshButton = new ToolStripButton(Host.Settings.Image("go_16.png"));
-			RefreshButton.Click += OnCalculate;
+			RefreshButton = Host.CreateToolButton("Statistics/Calculate");
 			RefreshButton.Enabled = false;
 			ToolBar.Items.Add(RefreshButton);
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
