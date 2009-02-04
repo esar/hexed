@@ -96,7 +96,8 @@ namespace SearchPlugin
 		
 		private Document  Document;
 		private byte[]    Pattern;
-		
+
+		DocumentMatchBucketCollection Hits;
 		List<RestartPosition> RestartPositions = new List<RestartPosition>();
 		SearchResult[]   CachedResults;
 		long             FirstCachedResult;
@@ -136,17 +137,19 @@ namespace SearchPlugin
 				return null;
 			}
 		}
-		
+				
 		public VirtualSearch()
 		{
 			CachedResults = new SearchResult[CACHE_SIZE];
 		}
 		
-		public void Initialize(Document document, byte[] pattern)
+		public void Initialize(Document document, byte[] pattern, DocumentMatchBucketCollection hits)
 		{
 			Document = document;
 			Pattern = pattern;
 
+			Hits = hits;
+			
 			_ResultCount = 0;
 			FirstCachedResult = 0;
 			Array.Clear(CachedResults, 0, CACHE_SIZE);
@@ -294,6 +297,9 @@ namespace SearchPlugin
 					CachedResults[index - FirstCachedResult] = progress.NewResults[i];
 				else if(RestartPositions.Count == 0 || progress.NewResults[i].Position >= RestartPositions[RestartPositions.Count - 1].Position + RESTART_GAP)
 					RestartPositions.Add(new RestartPosition(index, progress.NewResults[i].Position));
+
+				if(Hits != null)
+					Hits.Add(progress.NewResults[i].Position);
 			}
 
 			if(_ResultCount != oldResultCount && ResultCountChanged != null)

@@ -117,6 +117,7 @@ namespace SearchPlugin
 		ToolStrip ToolBar = new ToolStrip();
 		VirtualSearch Search;
 		ProgressNotification Progress;
+		bool FoundFirstHit;
 		
 		ListViewItem[] ListItemCache = new ListViewItem[LIST_ITEM_CACHE_SIZE];
 		ListViewItem ListItemZero;
@@ -201,6 +202,11 @@ namespace SearchPlugin
 		protected void OnSearchResultCountChanged(object sender, EventArgs e)
 		{
 			ListView.VirtualListSize = (int)Search.ResultCount;
+			if(FoundFirstHit == false)
+			{
+				FoundFirstHit = true;
+				OnFirst(this, EventArgs.Empty);
+			}
 		}
 		
 		protected void OnListRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
@@ -277,8 +283,9 @@ namespace SearchPlugin
 				return;
 
 			ClearListItemCache();
-			Search.Initialize(Host.ActiveView.Document, dlg.Pattern);
+			FoundFirstHit = false;
 			MatchIndicator.Reset(Host.ActiveView.Document.Length, 512);
+			Search.Initialize(Host.ActiveView.Document, dlg.Pattern, MatchIndicator.Matches);
 			ListView.Refresh();
 		}
 		
@@ -307,12 +314,22 @@ namespace SearchPlugin
 		
 		protected void OnPrev(object sender, EventArgs e)
 		{
-			if(Search.ResultCount > 0 && ListView.SelectedIndices.Count > 0 && ListView.SelectedIndices[0] > 0)
+			if(ListView.SelectedIndices.Count > 0)
 			{
-				int prev = ListView.SelectedIndices[0] - 1;
-				ListView.SelectedIndices.Clear();
-				ListView.SelectedIndices.Add(prev);
-				ListView.EnsureVisible(prev);
+				if(ListView.SelectedIndices[0] > 0)
+				{
+					int prev = ListView.SelectedIndices[0] - 1;
+					ListView.SelectedIndices.Clear();
+					ListView.SelectedIndices.Add(prev);
+					ListView.EnsureVisible(prev);
+				}
+				else if(MessageBox.Show(this, "Search has reached the beginning of the document.\nContinue from the end of the document?", 
+				                        "No more results", 
+				                        MessageBoxButtons.YesNo, 
+				                        MessageBoxIcon.Question) == DialogResult.Yes)
+				{
+					OnLast(sender, e);
+				}
 			}
 		}
 		
@@ -326,6 +343,13 @@ namespace SearchPlugin
 					ListView.SelectedIndices.Clear();
 					ListView.SelectedIndices.Add(next);
 					ListView.EnsureVisible(next);
+				}
+				else if(MessageBox.Show(this, "Search has reached the end of the document.\nContinue from the start of the document?", 
+				                        "No more results", 
+				                        MessageBoxButtons.YesNo, 
+				                        MessageBoxIcon.Question) == DialogResult.Yes)
+				{
+					OnFirst(sender, e);
 				}
 			}
 		}
