@@ -539,9 +539,9 @@ public partial class HexView : Control
 		long dataOffset = firstLine * LayoutDimensions.BitsPerRow;
 
 		if(address < dataOffset)
-			ScrollToAddress(address);
+			ScrollToAddress(address - ((LayoutDimensions.BitsPerRow * (LayoutDimensions.VisibleLines - 2)) / 2));
 		else if(address >= dataOffset + (LayoutDimensions.BitsPerRow * (LayoutDimensions.VisibleLines - 2)))
-			ScrollToAddress(address - (LayoutDimensions.BitsPerRow * (LayoutDimensions.VisibleLines - 2)));
+			ScrollToAddress(address - ((LayoutDimensions.BitsPerRow * (LayoutDimensions.VisibleLines - 2)) / 2));
 	}
 
 	public void ScrollToAddress(long address)
