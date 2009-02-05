@@ -212,7 +212,10 @@ class OpenWindowMenu : ToolStripMenuItem
 			this.Visible = false;
 		}
 		else
+		{
 			this.Visible = true;
+			this.Enabled = false;
+		}
 	}	
 }
 
@@ -386,6 +389,14 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		             Settings.Instance.Image("open_16.png"), 
 		             new Keys[] { Keys.Control | Keys.O },  
 		             OnFileOpen, OnUpdateUiElement);
+		Commands.Add("File/Close", "Closes the current document", "&Close",
+		             null,
+		             null,
+		             OnFileClose, OnUpdateUiElement);
+		Commands.Add("File/Close All", "Closes all open documents", "Close All",
+		             null,
+		             null,
+		             OnFileCloseAll, OnUpdateUiElement);
 		Commands.Add("File/Save", "Saves the current document", "&Save",    
 		             Settings.Instance.Image("save_16.png"), 
 		             new Keys[] { Keys.Control | Keys.S }, 
@@ -549,6 +560,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi = new ToolStripMenuItem("&File");
 		mi.DropDownItems.Add(CreateMenuItem("File/New"));
 		mi.DropDownItems.Add(CreateMenuItem("File/Open"));
+		mi.DropDownItems.Add(CreateMenuItem("File/Close"));
+		mi.DropDownItems.Add(CreateMenuItem("File/Close All"));
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		mi.DropDownItems.Add(CreateMenuItem("File/Save"));
 		mi.DropDownItems.Add(CreateMenuItem("File/Save As"));
@@ -799,12 +812,15 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		bool haveSelection = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View.Selection.Length > 0 : false;
 		HexView view = haveChild ? ((HexViewForm)_TabbedGroups.ActiveTabPage).View : null;
 		
+		Commands["File/Close"].Enabled = haveChild;
+		Commands["File/Close All"].Enabled = haveChild;
 		Commands["File/Save"].Enabled = haveChild && view.Document.IsModified;
 		Commands["File/Save As"].Enabled = haveChild;
 		Commands["File/Save All"].Enabled = haveChild;
 		Commands["File/Print Setup"].Enabled = haveChild;
 		Commands["File/Print Preview"].Enabled = haveChild;
 		Commands["File/Print"].Enabled = haveChild;
+		Commands["File/File Properties"].Enabled = haveChild;
 		
 		Commands["Edit/Undo"].Enabled = haveChild && view.Document.CanUndo;
 		Commands["Edit/Redo"].Enabled = haveChild && view.Document.CanRedo;
@@ -969,6 +985,17 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		}
 	}
 
+	protected void OnFileClose(object sender, EventArgs e)
+	{
+		if(_TabbedGroups.ActiveTabPage != null)
+			CloseView((HexViewForm)_TabbedGroups.ActiveTabPage);
+	}
+	
+	protected void OnFileCloseAll(object sender, EventArgs e)
+	{
+		CloseAllViews();
+	}
+	
 	protected void OnFileFileProperties(object sender, EventArgs e)
 	{
 		if(ActiveView != null && ActiveView.Document.FileName != null)
@@ -1163,10 +1190,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	public void CloseDocument(Document doc)
 	{
 		foreach(HexViewForm form in Documents[doc])
-		{
-			((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
-			_TabbedGroups.ActiveLeaf.TabPages.Remove(form);
-		}
+			CloseView(form);
 		
 		Documents[doc].Clear();
 		Documents.Remove(doc);
@@ -1192,6 +1216,19 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Documents[doc].Add(form);
 	}
 		
+	public void CloseView(HexViewForm form)
+	{
+		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
+		_TabbedGroups.ActiveLeaf.TabPages.Remove(form);
+		OnViewClosed(new ViewClosedEventArgs(form));
+	}
+	
+	public void CloseAllViews()
+	{
+		while(_TabbedGroups.ActiveTabPage != null)
+			CloseView((HexViewForm)_TabbedGroups.ActiveTabPage);
+	}
+	
 	public void OnViewClosed(ViewClosedEventArgs e)
 	{
 		Documents[e.Form.View.Document].Remove(e.Form);
