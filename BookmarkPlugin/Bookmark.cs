@@ -95,7 +95,37 @@ namespace BookmarkPlugin
 		public BookmarkPanel(IPluginHost host)
 		{
 			Host = host;
-			Host.AddMenuItem("Edit/Add Bookmark").Click += OnAddBookmark;
+			
+			Host.Commands.Add("Bookmark/Add Bookmark", "Adds a new bookmark", "Add Bookmark",
+			                  Host.Settings.Image("bookmark_16.png"),
+			                  new Keys[] { Keys.Control | Keys.B },
+			                  OnAddBookmark);
+			Host.Commands.Add("Bookmark/New Folder", "Creates a new bookmark folder", "New Folder",
+			                  Host.Settings.Image("newfolder_16.png"),
+			                  null,
+			                  OnNewFolder);
+			Host.Commands.Add("Bookmark/Delete", "Deletes the selected bookmark or folder", "Delete",
+			                  Host.Settings.Image("delete_16.png"),
+			                  null,
+			                  OnDelete);
+			Host.Commands.Add("Bookmark/Move First", "Jumps to the first bookmark", "Move First",
+			                  Host.Settings.Image("first_16.png"),
+			                  null,
+			                  OnMoveFirst);
+			Host.Commands.Add("Bookmark/Move Previous", "Jumps to the previous bookmark", "Move Previous",
+			                  Host.Settings.Image("prev_16.png"),
+			                  new Keys[] { Keys.Control | Keys.Up },
+			                  OnMovePrev);
+			Host.Commands.Add("Bookmark/Move Next", "Jumps to the next bookmark", "Move Next",
+			                  Host.Settings.Image("next_16.png"),
+			                  new Keys[] { Keys.Control | Keys.Down },
+			                  OnMoveNext);
+			Host.Commands.Add("Bookmark/Move Last", "Jumps to the last bookmark", "Move Last",
+			                  Host.Settings.Image("last_16.png"),
+			                  null,
+			                  OnMoveLast);
+			
+			Host.AddMenuItem(Menus.Main, "Edit", Host.CreateMenuItem("Bookmark/Add Bookmark"));
 			Host.ActiveViewChanged += OnActiveViewChanged;
 			
 			Tree = new TreeViewAdv();
@@ -136,30 +166,14 @@ namespace BookmarkPlugin
 			
 			ToolBar = new ToolStrip();
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
-			ToolStripItem item;
-			item = ToolBar.Items.Add(Settings.Instance.Image("newfolder_16.png"));
-			item.ToolTipText = "New Folder";
-			item.Click += OnNewFolder;
-			item = ToolBar.Items.Add(Settings.Instance.Image("unknown_op.png"));
-			item.ToolTipText = "Add Bookmark";
-			item.Click += OnAddBookmark;
+			ToolBar.Items.Add(Host.CreateToolButton("Bookmark/New Folder"));
+			ToolBar.Items.Add(Host.CreateToolButton("Bookmark/Add Bookmark"));
 			ToolBar.Items.Add(new ToolStripSeparator());
-			item = ToolBar.Items.Add(Settings.Instance.Image("delete_16.png"));
-			item.ToolTipText = "Delete";
-			item.Click += OnDelete;
-			ToolBar.Items.Add(new ToolStripSeparator());
-			item = ToolBar.Items.Add(Host.Settings.Image("first_16.png"));
-			item.ToolTipText = "Move First";
-			item.Click += OnMoveFirst;
-			item = ToolBar.Items.Add(Host.Settings.Image("prev_16.png"));
-			item.ToolTipText = "Move Previous";
-			item.Click += OnMovePrev;
-			item = ToolBar.Items.Add(Host.Settings.Image("next_16.png"));
-			item.ToolTipText = "Move Next";
-			item.Click += OnMoveNext;
-			item = ToolBar.Items.Add(Host.Settings.Image("last_16.png"));
-			item.ToolTipText = "Move Last";
-			item.Click += OnMoveLast;
+			ToolBar.Items.Add(Host.CreateToolButton("Bookmark/Delete"));
+			ToolBar.Items.Add(Host.CreateToolButton("Bookmark/Move First"));
+			ToolBar.Items.Add(Host.CreateToolButton("Bookmark/Move Previous"));
+			ToolBar.Items.Add(Host.CreateToolButton("Bookmark/Move Next"));
+			ToolBar.Items.Add(Host.CreateToolButton("Bookmark/Move Last"));
 			Controls.Add(ToolBar);
 			
 			Tree.SelectionChanged += OnTreeSelectionChanged;
@@ -208,6 +222,7 @@ namespace BookmarkPlugin
 		
 		public void OnAddBookmark(object sender, EventArgs e)
 		{
+			Host.BringToFront(this);
 			BookmarkNode n = new BookmarkNode(false, "New Bookmark");
 			n.Range = Host.ActiveView.Document.Marks.AddRange(Host.ActiveView.Selection.Start / 8,
 			                                                  Host.ActiveView.Selection.End / 8);
@@ -220,6 +235,7 @@ namespace BookmarkPlugin
 
 		private void OnNewFolder(object sender, EventArgs e)
 		{
+			Host.BringToFront(this);
 			BookmarkNode n = new BookmarkNode(true, "New Folder");
 			Bookmarks.Nodes.Add(n);
 			Tree.SelectedNode = Tree.FindNode(new TreePath(n));
@@ -242,6 +258,7 @@ namespace BookmarkPlugin
 		
 		private void OnDelete(object sender, EventArgs e)
 		{
+			Host.BringToFront(this);
 			if(Tree.SelectedNode != null)
 			{
 				BookmarkNode node = Tree.GetPath(Tree.SelectedNode).LastNode as BookmarkNode;
