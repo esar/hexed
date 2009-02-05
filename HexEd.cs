@@ -1367,15 +1367,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		{
 			ToolStripItem[] items = FindToolStripItems(m, parts[i], false, true); //m.Find(parts[i], false);
 			if(items.Length == 1)
-			{
-				Console.WriteLine("Found 1");
 				m = ((ToolStripMenuItem)items[0]).DropDownItems;
-			}
 			else
-			{
-				Console.WriteLine("Found: " + items.Length);
 				break;
-			}
 		}
 		
 		for(; i < parts.Length; ++i)
