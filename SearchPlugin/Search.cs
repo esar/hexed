@@ -134,11 +134,11 @@ namespace SearchPlugin
 			                  OnSearch);
 			host.Commands.Add("Search/Next", "Jumps to the next search result", "Next",
 			                  Host.Settings.Image("next_16.png"),
-			                  new Keys[] { Keys.F3 },
+			                  new Keys[] { Keys.F3, Keys.Control | Keys.Right },
 			                  OnNext);
 			host.Commands.Add("Search/Prev", "Jumps to the previous search result", "Prev",
 			                  Host.Settings.Image("prev_16.png"),
-			                  new Keys[] { Keys.Control | Keys.F3 },
+			                  new Keys[] { Keys.Control | Keys.F3, Keys.Control | Keys.Left },
 			                  OnPrev);
 			host.Commands.Add("Search/First", "Jumps to the first search result", "First",
 			                  Host.Settings.Image("first_16.png"),
