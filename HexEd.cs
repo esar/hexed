@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Drawing;
 using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 
 using Crownwood.DotNetMagic.Docking;
@@ -19,7 +20,203 @@ public enum Menus
 	SelectedDataContext
 }
 
-class HexEdApp : Form, IPluginHost
+class ViewClosedEventArgs : EventArgs
+{
+	public HexViewForm Form;
+	public ViewClosedEventArgs(HexViewForm form)
+	{
+		Form = form;
+	}
+}
+
+class OpenWindowMenu : ToolStripMenuItem
+{
+	class OpenWindowMenuItem : ToolStripMenuItem 
+	{
+		public OpenWindowMenuItem(string text) : base(text) {}
+	}
+	
+	protected bool FixedOwner = false;
+	protected ToolStripMenuItem CurrentOwner;
+	protected List<ToolStripMenuItem> Items = new List<ToolStripMenuItem>();
+	protected EventHandler Handler;
+
+	protected bool _IsPath;
+	public bool IsPath
+	{
+		get { return _IsPath; }
+		set { _IsPath = true; }
+	}
+	
+	protected ToolStripMenuItem _SelectedItem;
+	public ToolStripMenuItem SelectedItem 
+	{ 
+		get	{ return _SelectedItem; }
+		set
+		{
+			if(_SelectedItem != value)
+			{
+				if(_SelectedItem != null)
+					_SelectedItem.Checked = false;
+				_SelectedItem = value;
+				if(_SelectedItem != null)
+					_SelectedItem.Checked = true;
+				
+				if(_SelectedItem != null && Handler != null)
+					Handler(_SelectedItem, EventArgs.Empty);
+			}
+		}
+	}
+	
+	public OpenWindowMenu()
+	{
+		Text = "No Open Windows";
+		Enabled = false;		
+	}
+	
+	public OpenWindowMenu(ToolStripMenuItem owner, EventHandler handler) : this()
+	{
+		CurrentOwner = owner;
+		CurrentOwner.DropDownOpening += OnOwnerDropDownOpening;
+		FixedOwner = true;
+		Handler = handler;
+	}
+	
+	public ToolStripMenuItem Add(string name, object tag)
+	{
+		ToolStripMenuItem item;
+		if(_IsPath)
+			item = new OpenWindowMenuItem(EllipsisPath(name, 32));
+		else
+			item = new OpenWindowMenuItem(name);
+		item.Click += OnItemClick;
+		item.Name = Name;
+		item.Tag = tag;
+		Items.Add(item);
+		return item;
+	}
+	
+	public void Remove(object tag)
+	{
+		foreach(ToolStripMenuItem i in Items)
+		{
+			if(i.Tag == tag)
+			{
+				Items.Remove(i);
+				break;
+			}
+		}
+	}
+	
+	public void SetSelectedItem(object tag)
+	{
+		foreach(ToolStripMenuItem i in Items)
+		{
+			if(i.Tag == tag)
+			{
+				SelectedItem = i;
+				break;
+			}
+		}
+	}
+
+	protected static string EllipsisPath(string path, int maxLength)
+	{
+		// If whole path fits, return whole path
+		if(path.Length < maxLength)
+			return path;
+		
+		string[] parts = path.Split(new char[] {System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar});
+		
+		// If first part is empty, remove it and add '/' to front of new first entry
+		if(parts[0].Length == 0)
+		{
+			string[] tmp = new string[parts.Length - 1];
+			Array.Copy(parts, 1, tmp, 0, tmp.Length);
+			tmp[0] = String.Format("{0}{1}", System.IO.Path.DirectorySeparatorChar, tmp[0]); 
+			parts = tmp;
+		}
+		
+		// If the filename on its own doesn't fit, return "filename..."
+		string filename = parts[parts.Length - 1];
+		if(filename.Length + 5 > maxLength)
+			return filename.Substring(0, maxLength - 3) + "...";
+
+		// If the first directory doesn't fit, return "firstDir.../filename"
+		maxLength -= filename.Length + 5; // 5 = "/.../"
+		if(parts[0].Length >= maxLength)
+			return String.Format("{0}...{1}{2}", parts[0].Substring(0, maxLength), System.IO.Path.DirectorySeparatorChar, filename);
+		
+		// Return as many of the first directories as possible, "dir/dir/.../filename"
+		System.Text.StringBuilder result = new System.Text.StringBuilder();
+		
+		result.Append(parts[0]);
+		result.Append(System.IO.Path.DirectorySeparatorChar);
+		maxLength -= parts[0].Length + 1;
+		
+		for(int i = 1; i < parts.Length - 1; ++i)
+		{
+			if(parts[i].Length < maxLength)
+			{
+				result.Append(parts[i]);
+				result.Append(System.IO.Path.DirectorySeparatorChar);
+				maxLength -= parts[i].Length + 1; 
+			}
+			else
+				break;
+		}
+		
+		result.Append("...");
+		result.Append(System.IO.Path.DirectorySeparatorChar);
+		result.Append(filename);
+		
+		return result.ToString();
+	}
+	
+	protected override void OnOwnerChanged(EventArgs e)
+	{
+		base.OnOwnerChanged(e);
+		
+		if(FixedOwner)
+			return;
+		
+		if(CurrentOwner != null)
+			CurrentOwner.DropDownOpening -= OnOwnerDropDownOpening;
+		CurrentOwner = OwnerItem as ToolStripMenuItem;
+		if(CurrentOwner != null)
+			CurrentOwner.DropDownOpening += OnOwnerDropDownOpening;
+	}
+
+	protected void OnItemClick(object sender, EventArgs e)
+	{
+		SelectedItem = sender as ToolStripMenuItem;
+	}
+	
+	protected void OnOwnerDropDownOpening(object sender, EventArgs e)
+	{
+		if(CurrentOwner != null)
+		{
+			List<ToolStripMenuItem> itemsToRemove = new List<ToolStripMenuItem>();
+			foreach(ToolStripItem item in CurrentOwner.DropDownItems)
+				if(item is OpenWindowMenuItem)
+					itemsToRemove.Add((ToolStripMenuItem)item);
+			foreach(ToolStripMenuItem item in itemsToRemove)
+				CurrentOwner.DropDownItems.Remove(item);
+		}
+
+		if(CurrentOwner != null && Items.Count > 0)
+		{
+			int index = CurrentOwner.DropDownItems.IndexOf(this);
+			foreach(ToolStripMenuItem item in Items)
+				CurrentOwner.DropDownItems.Insert(++index, item);
+			this.Visible = false;
+		}
+		else
+			this.Visible = true;
+	}	
+}
+
+class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 {
 	private static HexEdApp _Instance;
 	public static HexEdApp Instance 
@@ -31,6 +228,8 @@ class HexEdApp : Form, IPluginHost
 			return _Instance; 
 		} 
 	}
+
+	private Dictionary< Document, List< HexViewForm > > Documents = new Dictionary<Document,List<HexViewForm>>();
 	
 	private DockingManager		_dockingManager = null;
 	private TabbedGroups		_TabbedGroups = null;
@@ -47,6 +246,7 @@ class HexEdApp : Form, IPluginHost
 	
 	private RadixMenu				AddressRadixMenu;
 	private RadixMenu				DataRadixMenu;
+	private OpenWindowMenu			OpenWindowMenu;
 
 	private ContextMenuStrip[]		ContextMenus;
 	
@@ -159,6 +359,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 
 
 		_TabbedGroups.PageChanged += OnTabbedGroupsPageChanged;
+		_TabbedGroups.PageCloseRequest += OnTabbedGroupsPageCloseRequest;
 
 		AllowDrop = true;
 		this.DragEnter += OnDragEnter;
@@ -329,6 +530,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		             Settings.Instance.Image("duplicate_16.png"),
 		             null,
 		             OnWindowDuplicate, OnUpdateUiElement);
+		Commands.Add("Window/Open Windows", null, null,
+		             null,
+		             null,
+		             OnWindowOpenWindows, OnUpdateUiElement);
 		
 		Commands.Add("Help/About", "Displays the about box", "About",
 		             null,
@@ -340,7 +545,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		ToolStripMenuItem mi;
 		ToolStripMenuItem mi2;
-		
+
 		mi = new ToolStripMenuItem("&File");
 		mi.DropDownItems.Add(CreateMenuItem("File/New"));
 		mi.DropDownItems.Add(CreateMenuItem("File/Open"));
@@ -397,6 +602,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi = new ToolStripMenuItem("&Window");
 		mi.DropDownItems.Add(CreateMenuItem("Window/Split"));
 		mi.DropDownItems.Add(CreateMenuItem("Window/Duplicate"));
+		mi.DropDownItems.Add(new ToolStripSeparator());
+		OpenWindowMenu = new OpenWindowMenu(mi, OnUiCommand);
+		OpenWindowMenu.Name = "Window/Open Windows";
+		OpenWindowMenu.IsPath = true;
+		mi.DropDownItems.Add(OpenWindowMenu);
 		MainMenuStrip.Items.Add(mi);
 
 		mi = new ToolStripMenuItem("&Help");
@@ -671,49 +881,39 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{	
 		if(_TabbedGroups.ActiveTabPage != null)
 		{
+			OpenWindowMenu.SetSelectedItem(_TabbedGroups.ActiveTabPage);
 			UpdateWindowTitle(_TabbedGroups.ActiveTabPage.Title);
 			Commands.Merge(((HexViewForm)_TabbedGroups.ActiveTabPage).Commands);
 		}
 		else
+		{
+			OpenWindowMenu.SelectedItem = null;
 			Commands.RevertMerge();
+		}
 		
 		if(ActiveViewChanged != null)
 			ActiveViewChanged(this, new EventArgs());
 	}
 
-
-	public void Open(string filename)
+	protected void OnTabbedGroupsPageCloseRequest(object sender, Crownwood.DotNetMagic.Controls.TGCloseRequestEventArgs e)
 	{
-		string[] filenameParts = filename.Split(new char[] {Path.PathSeparator, Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
+		HexViewForm form = (HexViewForm)e.TabPage;
 		
-		try
+		if(Documents[form.View.Document].Count <= 1 && form.View.Document.IsModified)
 		{
-			Document doc = new Document(filename);
-			HexViewForm form = new HexViewForm(doc);
-			form.Title = filenameParts[filenameParts.Length - 1];
-			form.Image = Settings.Instance.Image("document_16.png");
-			_TabbedGroups.ActiveLeaf.TabPages.Add(form);
-			((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
+			if(MessageBox.Show("Do you want to close the document without saving changes?", 
+			                   "Document Modified", 
+			                   MessageBoxButtons.YesNo, 
+			                   MessageBoxIcon.Question) == DialogResult.No)
+			{
+				e.Cancel = true;
+				return;
+			}
 		}
-		catch(System.Security.SecurityException ex)
-		{
-			MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
-		}
-		catch(UnauthorizedAccessException ex)
-		{
-			MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
-		}
+
+		OnViewClosed(new ViewClosedEventArgs(form));
 	}
-	
-	public void New()
-	{
-		Document doc = new Document();
-		HexViewForm form = new HexViewForm(doc);
-		form.Title = "New File";
-		form.Image = Settings.Instance.Image("document_16.png");
-		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
-		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
-	}
+
 	
 	protected void OnDragEnter(object sender, DragEventArgs e)
 	{
@@ -728,7 +928,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		string[] filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
 		
 		foreach(string filename in filenames)
-			Open(filename);
+		{
+			Document doc = OpenDocument(filename);
+			if(doc != null)
+				CreateView(doc);
+		}
 	}
 	
 	/*
@@ -746,7 +950,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	
 	private void OnFileNew(object sender, EventArgs e)
 	{
-		New();
+		Document doc = CreateDocument();
+		if(doc != null)
+			CreateView(doc);
 	}
 	
 	private void OnFileOpen(object sender, EventArgs args)
@@ -756,7 +962,11 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		ofd.Filter = "All Files (*.*)|*.*";
 		
 		if(ofd.ShowDialog() == DialogResult.OK)
-			Open(ofd.FileName);
+		{
+			Document doc = OpenDocument(ofd.FileName);
+			if(doc != null)
+				CreateView(doc);
+		}
 	}
 
 	protected void OnFileFileProperties(object sender, EventArgs e)
@@ -791,6 +1001,10 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		//((HexViewForm)ActiveMdiChild).Split();
 	}
 	
+	protected void OnWindowOpenWindows(object sender, EventArgs e)
+	{
+		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = (HexViewForm)OpenWindowMenu.SelectedItem.Tag;
+	}
 
 	protected void OnSelectionContextMenuDefineField(object sender, EventArgs e)
 	{
@@ -901,6 +1115,101 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		ProgressBar.Value = percent; 
 		ProgressMessage.Text = String.Format("{0}% {1}", percent, progress.Message);
 	}
+	
+	
+	/**********************************************
+	      Document Collection Functions
+	***********************************************/
+	
+	public Document OpenDocument(string filename)
+	{
+		Document document = null;
+		foreach(Document doc in Documents.Keys)
+		{
+			if(doc.FileName == filename)
+			{
+				document = doc;
+				break;
+			}
+		}
+		
+		if(document == null)
+		{
+			try
+			{
+				document = new Document(filename);
+				Documents.Add(document, new List<HexViewForm>());
+			}
+			catch(System.Security.SecurityException ex)
+			{
+				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			catch(UnauthorizedAccessException ex)
+			{
+				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+		
+		return document;
+	}
+	
+	public Document CreateDocument()
+	{
+		Document doc = new Document();
+		Documents.Add(doc, new List<HexViewForm>());
+		return doc;
+	}
+	
+	public void CloseDocument(Document doc)
+	{
+		foreach(HexViewForm form in Documents[doc])
+		{
+			((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
+			_TabbedGroups.ActiveLeaf.TabPages.Remove(form);
+		}
+		
+		Documents[doc].Clear();
+		Documents.Remove(doc);
+	}
+	
+	public void CreateView(Document doc)
+	{
+		HexViewForm form = new HexViewForm(doc);
+		if(doc.FileName != null)
+		{
+			string[] filenameParts = doc.FileName.Split(new char[] {Path.PathSeparator, Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
+			form.Title = filenameParts[filenameParts.Length - 1];
+		}
+		else
+			form.Title = "New File";
+		form.Image = Settings.Instance.Image("document_16.png");
+		if(form.View.Document.FileName != null)
+			OpenWindowMenu.Add(form.View.Document.FileName, form);
+		else
+			OpenWindowMenu.Add(form.Title, form);
+		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
+		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
+		Documents[doc].Add(form);
+	}
+		
+	public void OnViewClosed(ViewClosedEventArgs e)
+	{
+		Documents[e.Form.View.Document].Remove(e.Form);
+		if(Documents[e.Form.View.Document].Count == 0)
+			Documents.Remove(e.Form.View.Document);
+		OpenWindowMenu.Remove(e.Form);
+	}
+	
+	public IEnumerator<Document> GetEnumerator()
+	{
+		return Documents.Keys.GetEnumerator();
+	}
+	
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		return Documents.Keys.GetEnumerator();
+	}
+	
 	
 	
 	

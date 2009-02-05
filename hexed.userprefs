@@ -1,23 +1,23 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="HexEd.cs" line="453" column="1" />
-    <File name="StatisticsPlugin/Statistics.cs" line="15" column="4" />
-    <File name="PieceBuffer.cs" line="574" column="2" />
-    <File name="PatternDialog.cs" line="100" column="1" />
-    <File name="DialogBase.cs" line="103" column="24" />
-    <File name="StructurePanel.cs" line="46" column="42" />
-    <File name="StructureDefinitionCompiler.cs" line="968" column="5" />
-    <File name="Document.cs" line="44" column="48" />
-    <File name="HexView.cs" line="1" column="1" />
-    <File name="HexViewForm.cs" line="231" column="26" />
+    <File name="HexEd.cs" line="919" column="17" />
+    <File name="Settings/ShortcutsSettingsPage.cs" line="69" column="65" />
+    <File name="PluginInterface.cs" line="41" column="53" />
+    <File name="SelectionPanel.cs" line="68" column="94" />
+    <File name="HexViewForm.cs" line="90" column="21" />
+    <File name="StructurePlugin/Structure.cs" line="33" column="77" />
+    <File name="Document.cs" line="6" column="1" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="CalculatorPlugin" expanded="True" />
-        <Node name="hexed" expanded="True" selected="True" />
+        <Node name="ChecksumPlugin" expanded="True" />
+        <Node name="hexed" expanded="True" selected="True">
+          <Node name="Settings" expanded="True" />
+        </Node>
         <Node name="SearchPlugin" expanded="True" />
+        <Node name="StructurePlugin" expanded="True" />
       </Node>
     </ViewMemento>
     <ViewMemento id="ClassPad">
@@ -28,7 +28,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/StructureDefinitionCompiler.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>
