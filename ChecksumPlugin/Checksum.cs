@@ -257,7 +257,6 @@ namespace ChecksumPlugin
 		ToolStrip ToolBar = new ToolStrip();
 		ToolStripButton ConfigButton;
 		ToolStripComboBox SelectionComboBox;
-		ToolStripTextBox SelectionTextBox;
 		ToolStripButton RefreshButton;
 
 		bool IgnoreCheckStateChange = false;

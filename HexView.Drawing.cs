@@ -361,7 +361,6 @@ public partial class HexView
 	protected GraphicsPath CreateRoundedRectPath(RectangleF rect)
 	{
 		Size	CornerSize = new Size(10, 10);
-		Point	Margin = new Point(2, 2);
 
 		GraphicsPath path = new GraphicsPath();
 

@@ -48,7 +48,7 @@ public partial class PieceBuffer
 		public long StartOffset;
 		public Piece EndPiece;
 		public long EndOffset;
-		public long Length
+		public new long Length
 		{
 			get { return _Length; }
 			set { _Length = value; }
@@ -414,43 +414,43 @@ public partial class PieceBuffer
 	
 	protected class InternalHistoryItem : HistoryItem
 	{
-		public bool Active 
+		public new bool Active 
 		{
 			get { return _Active; }
 			set { _Active = value; } 
 		}
-		public DateTime Date 
+		public new DateTime Date 
 		{
 			get { return _Date; }
 			set { _Date = value; } 
 		}
-		public HistoryOperation Operation 
+		public new HistoryOperation Operation 
 		{
 			get { return _Operation; }
 			set { _Operation = value; } 
 		}
-		public long StartPosition 
+		public new long StartPosition 
 		{
 			get { return _StartPosition; }
 			set { _StartPosition = value; } 
 		}
-		public long Length 
+		public new long Length 
 		{
 			get { return _Length; }
 			set { _Length = value; } 
 		}
 		
-		public HistoryItem Parent 
+		public new HistoryItem Parent 
 		{
 			get { return _Parent; }
 			set { _Parent = value; } 
 		}
-		public HistoryItem FirstChild 
+		public new HistoryItem FirstChild 
 		{
 			get { return _FirstChild; }
 			set { _FirstChild = value; } 
 		}
-		public HistoryItem NextSibling 
+		public new HistoryItem NextSibling 
 		{
 			get { return _NextSibling; }
 			set { _NextSibling = value; } 
@@ -1627,14 +1627,13 @@ public partial class PieceBuffer
 	}
 	protected void DebugDumpHistory(string msg)
 	{
-		return;
-		
+		/*
 		Console.WriteLine("\n" + msg + "\n========\n");
 	
 		InternalHistoryItem i = _History;
 		while(i.InternalParent != null)
 			i = i.InternalParent;
-		DebugDumpHistory(i, 1);
+		DebugDumpHistory(i, 1); */
 	}
 	
 	public string DebugGetPieces()

@@ -153,12 +153,12 @@ class ShiftDialog : DialogBase
 		{
 			_Value = (int)ValueTextBox.Value;
 		}
-		catch(FormatException ex)
+		catch(FormatException)
 		{
 			MessageBox.Show(String.Format("'{0}' is not a valid number", ValueTextBox.Text), "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			return;
 		}
-		catch(OverflowException ex)
+		catch(OverflowException)
 		{
 			MessageBox.Show(String.Format("'{0}' is too large", ValueTextBox.Text), "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			return;

@@ -10,7 +10,6 @@ public class PatternDialog : DialogBase
 	ComboBox TypeCombo;
 	Label    RadixLabel;
 	ComboBox RadixCombo;
-	Label    ValueLabel;
 	HexView  HexView;
 	Panel    HexViewPanel;
 	TextBox  TextBox;

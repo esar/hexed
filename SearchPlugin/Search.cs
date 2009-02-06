@@ -11,7 +11,6 @@ namespace SearchPlugin
 	class DocumentMatchBucketCollection
 	{
 		DocumentMatchIndicator Owner;
-		long DocumentLength;
 		bool[] Buckets;
 		public long BucketWidth;
 		
@@ -28,7 +27,6 @@ namespace SearchPlugin
 		public DocumentMatchBucketCollection(DocumentMatchIndicator owner, long documentLength, int numBuckets)
 		{
 			Owner = owner;
-			DocumentLength = documentLength;
 			Buckets = new bool[numBuckets];
 			BucketWidth = documentLength / numBuckets;
 		}

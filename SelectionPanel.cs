@@ -104,7 +104,6 @@ class SelectionPanel : Panel
 		List.Dock = DockStyle.Fill;
 		Controls.Add(List);
 		
-		ToolStripItem item;
 		ToolBar.GripStyle = ToolStripGripStyle.Hidden;
 		ToolBar.Items.Add(Host.CreateToolButton("Selection/Byte Swap"));
 		ToolBar.Items.Add(Host.CreateToolButton("Selection/Invert"));

@@ -17,7 +17,6 @@ class SplashScreen : Form
 	}
 	
 	Label    StatusValue = new Label();
-	TableLayoutPanel Panel = new TableLayoutPanel();
 	
 	public static string Status
 	{
@@ -57,13 +56,13 @@ class SplashScreen : Form
 		Size = new System.Drawing.Size(320, 240);
 	}
 	
-	public static void Show()
+	public new static void Show()
 	{
 		Instance.Show(null);
 		Application.DoEvents();
 	}
 	
-	public static void Hide()
+	public new static void Hide()
 	{
 		((Form)Instance).Hide();
 		Application.DoEvents();
