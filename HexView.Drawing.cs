@@ -605,7 +605,7 @@ public partial class HexView
 			e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
 
 
-			str = "";
+			str = String.Empty;
 			rect = new RectangleF(	LayoutDimensions.DataRect.Left, 
 									(float)drawingOffset + line * LayoutDimensions.WordSize.Height,
 									LayoutDimensions.WordSize.Width,

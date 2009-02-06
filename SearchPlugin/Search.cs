@@ -229,7 +229,7 @@ namespace SearchPlugin
 							ListItemZero = e.Item;
 					}
 					else
-						e.Item = new ListViewItem(new string[] {"Searching...", "", ""});
+						e.Item = new ListViewItem(new string[] {"Searching...", String.Empty, String.Empty});
 				}
 				else
 					e.Item = ListItemCache[e.ItemIndex - FirstCachedListItemIndex];
@@ -238,7 +238,7 @@ namespace SearchPlugin
 			{
 				e.Item = CacheListItems(e.ItemIndex);
 				if(e.Item == null)
-					e.Item = new ListViewItem(new string[] {"Searching...", "", ""});
+					e.Item = new ListViewItem(new string[] {"Searching...", String.Empty, String.Empty});
 			}
 		}
 		

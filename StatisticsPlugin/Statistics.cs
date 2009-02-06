@@ -92,7 +92,7 @@ namespace StatisticsPlugin
 				}
 			}
 			
-			ReportProgress(100, new ProgressInfo("", counts));
+			ReportProgress(100, new ProgressInfo(String.Empty, counts));
 		}
 
 		protected override void OnProgressChanged(ProgressChangedEventArgs e)

@@ -199,7 +199,7 @@ namespace StructurePlugin
 				if(ArrayLength <= 1)
 					return this;
 				if(index < 0 || index >= ArrayLength)
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException("index", "The index must be less than the length of the array");
 			
 				if(ArrayElements != null)
 					return (CharRecord)ArrayElements[(int)index];
@@ -293,7 +293,7 @@ namespace StructurePlugin
 				if(ArrayLength <= 1)
 					return this;
 				if(index < 0 || index >= ArrayLength)
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException("index", "The index must be less than the length of the array");
 			
 				if(ArrayElements != null)
 					return (IntRecord)ArrayElements[(int)index];
@@ -341,7 +341,7 @@ namespace StructurePlugin
 				if(ArrayLength <= 1)
 					return this;
 				if(index < 0 || index >= ArrayLength)
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException("index", "The index must be less than the length of the array");
 			
 				if(ArrayElements != null)
 					return (UintRecord)ArrayElements[(int)index];

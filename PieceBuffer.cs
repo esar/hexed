@@ -1321,7 +1321,7 @@ public partial class PieceBuffer
 		if(HistoryAdded != null)
 			HistoryAdded(this, new HistoryEventArgs(oldItem, newItem));
 		
-		DebugDumpHistory("");
+		DebugDumpHistory(String.Empty);
 	}
 	
 	protected void UndoRedo()
@@ -1410,7 +1410,7 @@ public partial class PieceBuffer
 			OnChanged(change);
 		}
 
-		DebugDumpHistory("");
+		DebugDumpHistory(String.Empty);
 		Debug.Assert(Marks.DebugMarkChainIsValid(), "Undo: Leave: Invalid mark chain");
 	}
 	

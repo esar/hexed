@@ -141,7 +141,7 @@ public partial class HexView : Control
 		{
 			if(Length > 0)
 			{
-				string s = "";
+				string s = String.Empty;
 				
 				// Limit to 256
 				long end = End;
@@ -584,7 +584,7 @@ public partial class HexView : Control
 	// TODO: Move IntToRadixString to a utility class
 	public string IntToRadixString(ulong x, uint radix, int minLength)
 	{
-		string str = "";
+		string str = String.Empty;
 		const string digit		= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		const string padding	= "00000000000000000000000000000000000000000000000000000000000000000";
 

@@ -77,27 +77,27 @@ class SelectionPanel : Panel
 		ListViewItem i;
 		i = List.Items.Add("Length");
 		i.UseItemStyleForSubItems = false;
-		lengthItem = i.SubItems.Add("");
+		lengthItem = i.SubItems.Add(String.Empty);
 		
 		i = List.Items.Add("Integer");
 		i.UseItemStyleForSubItems = false;
-		integerItem = i.SubItems.Add("");
+		integerItem = i.SubItems.Add(String.Empty);
 
 		i = List.Items.Add("Floating Point");
 		i.UseItemStyleForSubItems = false;
-		floatItem = i.SubItems.Add("");
+		floatItem = i.SubItems.Add(String.Empty);
 
 		i = List.Items.Add("ASCII");
 		i.UseItemStyleForSubItems = false;
-		asciiItem = i.SubItems.Add("");
+		asciiItem = i.SubItems.Add(String.Empty);
 
 		i = List.Items.Add("Unicode");
 		i.UseItemStyleForSubItems = false;
-		unicodeItem = i.SubItems.Add("");
+		unicodeItem = i.SubItems.Add(String.Empty);
 
 		i = List.Items.Add("UTF-8");
 		i.UseItemStyleForSubItems = false;
-		utf8Item = i.SubItems.Add("");
+		utf8Item = i.SubItems.Add(String.Empty);
 
 		List.AutoResizeColumn(0, ColumnHeaderAutoResizeStyle.ColumnContent);
 		List.Columns[1].Width = -2;

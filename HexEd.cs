@@ -45,7 +45,7 @@ class OpenWindowMenu : ToolStripMenuItem
 	public bool IsPath
 	{
 		get { return _IsPath; }
-		set { _IsPath = true; }
+		set { _IsPath = value; }
 	}
 	
 	protected ToolStripMenuItem _SelectedItem;

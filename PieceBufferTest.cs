@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
@@ -254,8 +255,8 @@ public class PieceBufferTest
 		// remove everything
 		b.Remove(0,100);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 	}
 	
 	[Test]
@@ -408,8 +409,8 @@ public class PieceBufferTest
 		// remove everything
 		b.Remove(m1, m8);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 
 		b.Insert("the lazy dog");
 		Assert.AreEqual(GetText(), "the lazy dog");
@@ -453,8 +454,8 @@ public class PieceBufferTest
 		// remove everything
 		b.Remove(m1, m8);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 
 		b.Insert("the lazy dog");
 		Assert.AreEqual(GetText(), "the lazy dog");
@@ -634,14 +635,14 @@ public class PieceBufferTest
 		// Fourth undo should return us to an empty buffer
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 		
 		// Undo with no history should silently do nothing
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 	}
 	
 	[Test]
@@ -669,8 +670,8 @@ public class PieceBufferTest
 		// Another undo should return us to an empty buffer
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 	}
 
 	[Test]
@@ -703,8 +704,8 @@ public class PieceBufferTest
 		// Remove the remaining text ("this ")
 		b.Remove(0, 5);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 		
 		// First undo should put back "this "
 		b.Undo();
@@ -730,13 +731,13 @@ public class PieceBufferTest
 		
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 		
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 	}
 
 	[Test]
@@ -792,7 +793,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetText(), "the quick brown fox jumps over the lazy dog.");
 		
 		b.Undo();
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetText(), String.Empty);
 	}
 	
 	[Test]
@@ -834,8 +835,8 @@ public class PieceBufferTest
 		// Undo insert of "this "
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 		
 		// Redo insert of "this "
 		b.Redo();
@@ -904,8 +905,8 @@ public class PieceBufferTest
 		// Remove the remainder (three pieces at once)
 		b.Remove(0, 100);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 		
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,26}{0,26}");
@@ -934,8 +935,8 @@ public class PieceBufferTest
 		
 		b.Undo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 		
 		b.Redo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,44}{0,44}");
@@ -964,13 +965,13 @@ public class PieceBufferTest
 		
 		b.Redo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 		
 		b.Redo();
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{0,0}");
-		Assert.AreEqual(GetPieces(), "");
-		Assert.AreEqual(GetText(), "");
+		Assert.AreEqual(GetPieces(), String.Empty);
+		Assert.AreEqual(GetText(), String.Empty);
 	}
 	
 	[Test]
