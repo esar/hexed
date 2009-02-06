@@ -203,7 +203,10 @@ public partial class HexView
 		LayoutDimensions.VisibleLines = (int)Math.Ceiling(ClientSize.Height / LayoutDimensions.WordSize.Height);
 
 		// Calculate width of largest address
-		LayoutDimensions.NumAddressDigits = (int)(Math.Log(Document.Length) / Math.Log(_AddressRadix)) + 1;
+		if(Document.Length == 0)
+			LayoutDimensions.NumAddressDigits = 1;
+		else
+			LayoutDimensions.NumAddressDigits = (int)(Math.Log(Document.Length) / Math.Log(_AddressRadix)) + 1;
 		SizeF AddressSize = MeasureSubString(g, digits, 0, LayoutDimensions.NumAddressDigits, _Font).Size;
 		LayoutDimensions.AddressRect = new RectangleF(	0,
 														0,
