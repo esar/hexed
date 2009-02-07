@@ -444,20 +444,6 @@ public partial class HexView : Control
 			DataRadixString[i] = IntToRadixString(i, radix, maxDigits);
 	}
 
-	protected override CreateParams CreateParams
-	{
-		get
-		{
-//			const int WS_BORDER = 0x00800000;
-//			const int WS_EX_STATICEDGE = 0x00020000;
-
-			CreateParams cp = base.CreateParams;
-//			cp.ExStyle |= WS_EX_STATICEDGE;
-
-			return cp;
-		}
-	}
-
 
 	public HexView(Document doc)
 	{

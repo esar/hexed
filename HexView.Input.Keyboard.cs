@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using System.Security.Permissions;
 
 
 public partial class HexView
@@ -14,6 +15,7 @@ public partial class HexView
 		return true;
 	}
 	
+	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
 	protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
 	{
 		// If the Delete key is used as an accelerator it won't be passed to OnKeyDown, etc.
