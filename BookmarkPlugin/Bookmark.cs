@@ -467,20 +467,20 @@ namespace BookmarkPlugin
 
 	public class BookmarkPlugin : IPlugin
 	{
-		Image IPlugin.Image { get { return Settings.Instance.Image("bookmark_16.png"); } }
-		string IPlugin.Name { get { return "Bookmarks"; } }
-		string IPlugin.Description { get { return "Provides a mechanism for bookmarking sections of a document"; } }
-		string IPlugin.Author { get { return "Stephen Robinson"; } }
-		string IPlugin.Version { get { return "1.0"; } }
-		string IPlugin.Copyright { get { return "(c)2008 Stephen Robinson"; } }
-		string IPlugin.Url { get { return "http://www.esar.org.uk/"; } }
+		public Image Image { get { return Settings.Instance.Image("bookmark_16.png"); } }
+		public string Name { get { return "Bookmarks"; } }
+		public string Description { get { return "Provides a mechanism for bookmarking sections of a document"; } }
+		public string Author { get { return "Stephen Robinson"; } }
+		public string Version { get { return "1.0"; } }
+		public string Copyright { get { return "(c)2008 Stephen Robinson"; } }
+		public string Url { get { return "http://www.esar.org.uk/"; } }
 
-		void IPlugin.Initialize(IPluginHost host)
+		public void Initialize(IPluginHost host)
 		{
 			host.AddWindow(new BookmarkPanel(host), "Bookmarks", host.Settings.Image("bookmark_16.png"), DefaultWindowPosition.Left, true);
 		}
 		
-		void IPlugin.Dispose()
+		public void Dispose()
 		{
 		}
 	}

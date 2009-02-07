@@ -249,20 +249,20 @@ namespace PythonConsolePlugin
 
 	public class PythonConsolePlugin : IPlugin
 	{
-		Image IPlugin.Image { get { return Settings.Instance.Image("console_16.png"); } }
-		string IPlugin.Name { get { return "Python Console"; } }
-		string IPlugin.Description { get { return "Provides an interactive python console"; } }
-		string IPlugin.Author { get { return "Stephen Robinson"; } }
-		string IPlugin.Version { get { return "1.0"; } }
-		string IPlugin.Copyright { get { return "(c)2008 Stephen Robinson"; } }
-		string IPlugin.Url { get { return "http://www.esar.org.uk/"; } }
+		public Image Image { get { return Settings.Instance.Image("console_16.png"); } }
+		public string Name { get { return "Python Console"; } }
+		public string Description { get { return "Provides an interactive python console"; } }
+		public string Author { get { return "Stephen Robinson"; } }
+		public string Version { get { return "1.0"; } }
+		public string Copyright { get { return "(c)2008 Stephen Robinson"; } }
+		public string Url { get { return "http://www.esar.org.uk/"; } }
 
-		void IPlugin.Initialize(IPluginHost host)
+		public void Initialize(IPluginHost host)
 		{
 			host.AddWindow(new PythonConsolePanel(host), "Python Console", host.Settings.Image("console_16.png"), DefaultWindowPosition.BottomRight, true);
 		}
 		
-		void IPlugin.Dispose()
+		public void Dispose()
 		{
 		}
 	}

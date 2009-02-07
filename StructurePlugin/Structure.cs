@@ -317,23 +317,20 @@ namespace StructurePlugin
 	
 	public class StructurePlugin : IPlugin
 	{
-		Image IPlugin.Image { get { return Settings.Instance.Image("structure_16.png"); } }
-		string IPlugin.Name { get { return "Structure"; } }
-		string IPlugin.Description { get { return "Displays a documents structure based on structure definition scripts"; } }
-		string IPlugin.Author { get { return "Stephen Robinson"; } }
-		string IPlugin.Version { get { return "1.0"; } }
-		string IPlugin.Copyright { get { return "(c)2008 Stephen Robinson"; } }
-		string IPlugin.Url { get { return "http://www.esar.org.uk/"; } }
+		public Image Image { get { return Settings.Instance.Image("structure_16.png"); } }
+		public string Name { get { return "Structure"; } }
+		public string Description { get { return "Displays a documents structure based on structure definition scripts"; } }
+		public string Author { get { return "Stephen Robinson"; } }
+		public string Version { get { return "1.0"; } }
+		public string Copyright { get { return "(c)2008 Stephen Robinson"; } }
+		public string Url { get { return "http://www.esar.org.uk/"; } }
 
-		IPluginHost Host;
-		
-		void IPlugin.Initialize(IPluginHost host)
+		public void Initialize(IPluginHost host)
 		{
-			Host = host;
-			Host.AddWindow(new StructurePanel(host), "Structure", Host.Settings.Image("structure_16.png"), DefaultWindowPosition.Left, true);
+			host.AddWindow(new StructurePanel(host), "Structure", host.Settings.Image("structure_16.png"), DefaultWindowPosition.Left, true);
 		}
 		
-		void IPlugin.Dispose()
+		public void Dispose()
 		{
 		}
 	}
