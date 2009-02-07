@@ -46,7 +46,7 @@ public class ProgressNotification
 	}
 }
 
-public class ProgressNotificationEventArgs
+public class ProgressNotificationEventArgs : EventArgs
 {
 	protected ProgressNotification _Notification;
 	public ProgressNotification Notification
