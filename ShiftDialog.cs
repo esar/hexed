@@ -97,7 +97,12 @@ class MultiBaseNumericTextBox : TextBox
 		{
 			_Value = Convert.ToInt32(text, radix);
 		}
-		catch(Exception ex)
+		catch(FormatException ex)
+		{
+			ParseException = ex;
+			return false;
+		}
+		catch(OverflowException ex)
 		{
 			ParseException = ex;
 			return false;
