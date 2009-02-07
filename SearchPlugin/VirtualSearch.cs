@@ -88,7 +88,7 @@ namespace SearchPlugin
 		}
 	}
 	
-	class VirtualSearch
+	class VirtualSearch : IDisposable
 	{
 		private const int RESTART_GAP = 1024 * 1024;
 		private const int CACHE_SIZE = 10000;
@@ -345,6 +345,22 @@ namespace SearchPlugin
 			
 			if(ProgressChanged != null)
 				ProgressChanged(this, new VirtualSearchProgressEventArgs(0, 0));
+		}
+		
+		protected virtual void Dispose(bool disposing)
+		{
+			if(disposing)
+			{
+				if(Worker.IsBusy)
+					Worker.CancelAsync();
+				Worker.Dispose();
+			}
+		}
+		
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
 		}
 	}
 }
