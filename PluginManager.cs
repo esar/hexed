@@ -5,19 +5,17 @@ using System.Windows.Forms;
 using System.IO;
 
 
-public class PluginCollection : Dictionary<string, IPlugin>
-{
-}
+public class PluginDictionary : Dictionary<string, IPlugin> {}
 
 public class PluginManager
 {
 	protected IPluginHost Host;
 	
-	protected PluginCollection _ActivePlugins = new PluginCollection();
-	public PluginCollection ActivePlugins { get { return _ActivePlugins; } }
+	protected PluginDictionary _ActivePlugins = new PluginDictionary();
+	public PluginDictionary ActivePlugins { get { return _ActivePlugins; } }
 	
-	protected PluginCollection _InactivePlugins = new PluginCollection();
-	public PluginCollection InactivePlugins { get { return _InactivePlugins; } }
+	protected PluginDictionary _InactivePlugins = new PluginDictionary();
+	public PluginDictionary InactivePlugins { get { return _InactivePlugins; } }
 
 	
 	public PluginManager(IPluginHost host)
