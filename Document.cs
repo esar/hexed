@@ -19,7 +19,7 @@ public class MetaDataItemChangedEventArgs : EventArgs
 
 public delegate void MetaDataItemChangedEventHandler(object sender, MetaDataItemChangedEventArgs e);
 	
-public class MetaDataCollection : Dictionary<string, object>
+public class MetaDataDictionary : Dictionary<string, object>
 {
 	public event MetaDataItemChangedEventHandler ItemChanged;
 	
@@ -44,8 +44,8 @@ public class MetaDataCollection : Dictionary<string, object>
 	
 public class Document : PieceBuffer
 {
-	protected MetaDataCollection _MetaData = new MetaDataCollection();
-	public MetaDataCollection MetaData
+	protected MetaDataDictionary _MetaData = new MetaDataDictionary();
+	public MetaDataDictionary MetaData
 	{
 		get { return _MetaData; }
 	}
