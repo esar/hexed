@@ -219,7 +219,7 @@ class SelectionPanel : Panel
 			integerItem.Text = view.IntToRadixString((ulong)view.Selection.AsInteger(), view.DataRadix, 1);
 			integerItem.ForeColor = Color.FromKnownColor(KnownColor.WindowText);
 		}
-		catch(Exception)
+		catch(InvalidCastException)
 		{
 			integerItem.Text = "[Invalid Selection]";
 			integerItem.ForeColor = Color.FromKnownColor(KnownColor.GrayText);
@@ -230,7 +230,7 @@ class SelectionPanel : Panel
 			floatItem.Text = view.Selection.AsFloat().ToString();
 			floatItem.ForeColor = Color.FromKnownColor(KnownColor.WindowText);
 		}
-		catch(Exception)
+		catch(InvalidCastException)
 		{
 			floatItem.Text = "[Invalid Selection]";
 			floatItem.ForeColor = Color.FromKnownColor(KnownColor.GrayText);
@@ -241,7 +241,7 @@ class SelectionPanel : Panel
 			asciiItem.Text = view.Selection.AsAscii();
 			asciiItem.ForeColor = Color.FromKnownColor(KnownColor.WindowText);
 		}
-		catch(Exception)
+		catch(InvalidCastException)
 		{
 			asciiItem.Text = "[Invalid Selection]";
 			asciiItem.ForeColor = Color.FromKnownColor(KnownColor.GrayText);
@@ -252,7 +252,7 @@ class SelectionPanel : Panel
 			unicodeItem.Text = view.Selection.AsUnicode();
 			unicodeItem.ForeColor = Color.FromKnownColor(KnownColor.WindowText);
 		}
-		catch(Exception)
+		catch(InvalidCastException)
 		{
 			unicodeItem.Text = "[Invalid Selection]";
 			unicodeItem.ForeColor = Color.FromKnownColor(KnownColor.GrayText);
@@ -263,7 +263,7 @@ class SelectionPanel : Panel
 			utf8Item.Text = view.Selection.AsUTF8();
 			utf8Item.ForeColor = Color.FromKnownColor(KnownColor.WindowText);
 		}
-		catch(Exception)
+		catch(InvalidCastException)
 		{
 			utf8Item.Text = "[Invalid Selection]";
 			utf8Item.ForeColor = Color.FromKnownColor(KnownColor.GrayText);

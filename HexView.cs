@@ -169,7 +169,14 @@ public partial class HexView : Control
 				for(int i = 0; i < len; ++i)
 					data[i] = View.Document[Start/8 + i];
 
-				return System.Text.Encoding.Unicode.GetString(data);
+				try
+				{
+					return System.Text.Encoding.Unicode.GetString(data);
+				}
+				catch(System.Text.DecoderFallbackException)
+				{
+					throw new InvalidCastException();
+				}
 			}
 			else
 				throw new InvalidCastException();
@@ -187,7 +194,14 @@ public partial class HexView : Control
 				for(int i = 0; i <len; ++i)
 					data[i] = View.Document[Start/8 + i];
 
-				return System.Text.Encoding.UTF8.GetString(data);
+				try
+				{
+					return System.Text.Encoding.UTF8.GetString(data);
+				}
+				catch(System.Text.DecoderFallbackException)
+				{
+					throw new InvalidCastException();
+				}
 			}
 			else
 				throw new InvalidCastException();
