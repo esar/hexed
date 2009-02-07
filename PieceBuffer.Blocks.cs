@@ -75,7 +75,7 @@ public partial class PieceBuffer
 		}
 	}
 	
-	protected class FileBlock : Block
+	protected class FileBlock : Block, IDisposable
 	{
 		private FileStream	FS;
 		private byte[]		Buffer = new byte[4096];
@@ -158,6 +158,18 @@ public partial class PieceBuffer
 		public override void SetBytes(long start, long length, byte[] src, long srcOffset)
 		{
 			throw new Exception("Can't SetBytes() on a FileBlock");
+		}
+		
+		protected virtual void Dispose(bool disposing)
+		{
+			if(disposing)
+				FS.Close();
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);			
 		}
 	}
 	
