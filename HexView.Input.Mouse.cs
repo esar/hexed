@@ -94,18 +94,16 @@ public partial class HexView
 
 		if(((int)e.Button & (int)MouseButtons.Left) != 0)
 		{
-			if(!Dragging && (	e.X >= DragStartPos.X + 5 ||
-								e.X <= DragStartPos.X - 5 ||
-								e.Y >= DragStartPos.Y + 5 ||
-								e.Y <= DragStartPos.Y - 5))
+			if(!Dragging && (e.X >= DragStartPos.X + 5 ||
+			                 e.X <= DragStartPos.X - 5 ||
+			                 e.Y >= DragStartPos.Y + 5 ||
+			                 e.Y <= DragStartPos.Y - 5))
 			{
 				OnBeginDrag(e);
 				Dragging = true;
 			}
 			else if(Dragging)
-			{
 				OnDrag(e);
-			}
 		}
 	}
 
@@ -184,3 +182,4 @@ public partial class HexView
 		DragScrollTimer.Enabled = false;
 	}
 }
+

@@ -27,15 +27,15 @@ public partial class HexView : Control
 
 		public event EventHandler Changed;
 
-		private long		_Start = 0;
-		private long		_End = 0;
-		private PieceBuffer.Range	_Range;
-		
-		public int		BorderWidth = 1;
-		public Color	BorderColor = Color.Blue;
-		public Color	BackColor = Color.AliceBlue;
+		private long              _Start = 0;
+		private long              _End = 0;
+		private PieceBuffer.Range _Range;
 
-		
+		public int    BorderWidth = 1;
+		public Color  BorderColor = Color.Blue;
+		public Color  BackColor = Color.AliceBlue;
+
+
 		public SelectionRange(HexView view)
 		{
 			View = view;
@@ -45,10 +45,7 @@ public partial class HexView : Control
 
 		public long Start
 		{
-			get
-			{
-				return _Start;
-			}
+			get { return _Start; }
 
 			set
 			{
@@ -69,10 +66,7 @@ public partial class HexView : Control
 
 		public long End
 		{
-			get
-			{
-				return _End;
-			}
+			get { return _End; }
 
 			set
 			{
@@ -98,10 +92,7 @@ public partial class HexView : Control
 		
 		public long Length
 		{
-			get
-			{
-				return _End - _Start;
-			}
+			get { return _End - _Start; }
 		}
 
 		public void Set(long start, long end)
@@ -142,7 +133,7 @@ public partial class HexView : Control
 			if(Length > 0)
 			{
 				string s = String.Empty;
-				
+
 				// Limit to 256
 				long end = End;
 				if(end - Start > 0x100 * 8)
@@ -164,7 +155,7 @@ public partial class HexView : Control
 				long len = Length / 8;
 				if(len > 0x100)
 					len = 0x100;
-				
+
 				byte[] data = new byte[len];
 				for(int i = 0; i < len; ++i)
 					data[i] = View.Document[Start/8 + i];
@@ -189,7 +180,7 @@ public partial class HexView : Control
 				long len = Length / 8;
 				if(len > 0x100)
 					len = 0x100;
-				
+
 				byte[] data = new byte[len];
 				for(int i = 0; i <len; ++i)
 					data[i] = View.Document[Start/8 + i];
@@ -258,66 +249,66 @@ public partial class HexView : Control
 	public new event ContextMenuEventHandler ContextMenu;
 	public event EventHandler EditModeChanged;
 
-	
+
 	private class Dimensions
 	{
-		public RectangleF		AddressRect			= new RectangleF(0, 0, 0, 0);
-		public RectangleF		DataRect			= new RectangleF(0, 0, 0, 0);
-		public RectangleF		AsciiRect			= new RectangleF(0, 0, 0, 0);
+		public RectangleF        AddressRect           = new RectangleF(0, 0, 0, 0);
+		public RectangleF        DataRect              = new RectangleF(0, 0, 0, 0);
+		public RectangleF        AsciiRect             = new RectangleF(0, 0, 0, 0);
 
-		public RectangleF[]		WordRects;
-		
-		public SizeF			WordSize			= new SizeF(0, 0);
-		public float			WordSpacing			= 5;
-		public float			WordGroupSpacing	= 10;
+		public RectangleF[]      WordRects;
 
-		public float			LeftGutterWidth		= 10;
-		public float			CentralGutterWidth	= 10;
-		public float			RightGutterWidth	= 10;
+		public SizeF             WordSize              = new SizeF(0, 0);
+		public float             WordSpacing           = 5;
+		public float             WordGroupSpacing      = 10;
 
-		public int				BitsPerRow			= 0;
-		public int				BitsPerDigit		= 0;
-//		public int				WordsPerRow			= 0;
-//		public int				GroupsPerRow		= 0;
-		public int				NumAddressDigits	= 0;
-		public int				NumWordDigits		= 0;
-		public int				VisibleLines		= 0;
+		public float             LeftGutterWidth       = 10;
+		public float             CentralGutterWidth    = 10;
+		public float             RightGutterWidth      = 10;
+
+		public int               BitsPerRow            = 0;
+		public int               BitsPerDigit          = 0;
+//		public int               WordsPerRow           = 0;
+//		public int               GroupsPerRow          = 0;
+		public int               NumAddressDigits      = 0;
+		public int               NumWordDigits         = 0;
+		public int               VisibleLines          = 0;
 	}
 
 
 
 
-	private Font		_Font				= new Font(FontFamily.GenericMonospace, 10);
-	private Brush		_Brush				= SystemBrushes.WindowText;
-	private Brush		_GrayBrush			= SystemBrushes.GrayText;
-	private Color		_EvenColumnColor	= Color.Transparent;
-	private Color		_OddColumnColor		= Color.Transparent;
-	private uint		_AddressRadix		= 16;
-	private uint		_DataRadix			= 16;
+	private Font                       _Font             = new Font(FontFamily.GenericMonospace, 10);
+	private Brush                      _Brush            = SystemBrushes.WindowText;
+	private Brush                      _GrayBrush        = SystemBrushes.GrayText;
+	private Color                      _EvenColumnColor  = Color.Transparent;
+	private Color                      _OddColumnColor   = Color.Transparent;
+	private uint                       _AddressRadix     = 16;
+	private uint                       _DataRadix        = 16;
 
-	private int			_BytesPerWord		= 1;
-	private int			_WordsPerGroup		= 8;
-	private int			_WordsPerLine		= -1; //16;
-	private Endian		_Endian				= Endian.Little;
+	private int                        _BytesPerWord     = 1;
+	private int                        _WordsPerGroup    = 8;
+	private int                        _WordsPerLine     = -1; //16;
+	private Endian                     _Endian           = Endian.Little;
 	
-	private EditMode	_EditMode			= EditMode.OverWrite;
-	
-	private VScrollBar	VScroll				= new VScrollBar();
-	private	double		ScrollScaleFactor	= 1;
-	private long		ScrollPosition		= 0;
-	private long		ScrollHeight		= 0;
+	private EditMode                   _EditMode         = EditMode.OverWrite;
 
-	private Point		DragStartPos		= new Point(0, 0);
-	private HexViewHit	DragStartHit		= new HexViewHit(HexViewHit.HitType.Unknown);
-	private bool		Dragging			= false;
-	private Timer		DragScrollTimer		= new Timer();
+	private VScrollBar                 VScroll           = new VScrollBar();
+	private	double                     ScrollScaleFactor = 1;
+	private long                       ScrollPosition    = 0;
+	private long                       ScrollHeight      = 0;
 
-	public SelectionRange		Selection;
-	private List<SelectionRange>	Highlights = new List<SelectionRange>();
+	private Point                      DragStartPos      = new Point(0, 0);
+	private HexViewHit                 DragStartHit      = new HexViewHit(HexViewHit.HitType.Unknown);
+	private bool                       Dragging          = false;
+	private Timer                      DragScrollTimer   = new Timer();
+
+	public SelectionRange              Selection;
+	private List<SelectionRange>       Highlights        = new List<SelectionRange>();
 	
-	private PieceBuffer.ClipboardRange	ClipboardRange = null;
-	
-	private ManagedCaret		InsertCaret			= null;
+	private PieceBuffer.ClipboardRange ClipboardRange    = null;
+
+	private ManagedCaret               InsertCaret       = null;
 
 	
 	public EditMode EditMode
@@ -329,31 +320,32 @@ public partial class HexView : Control
 			if(_EditMode == EditMode.Insert)
 				InsertCaret.Size = new Size(2, (int)LayoutDimensions.WordSize.Height);
 			else
-				InsertCaret.Size = new Size((int)(LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits) + 1, 
-		                            		(int)LayoutDimensions.WordSize.Height);
+				InsertCaret.Size = new Size((int)(LayoutDimensions.WordSize.Width / 
+				                                  LayoutDimensions.NumWordDigits) + 1,
+				                            (int)LayoutDimensions.WordSize.Height);
 			if(EditModeChanged != null) 
 				EditModeChanged(this, new EventArgs());
 		}
 	}
-	
+
 	public Endian Endian
 	{
 		get { return _Endian; }
 		set { _Endian = value; Invalidate(); }
 	}
-	
+
 	public int BytesPerWord
 	{
 		get { return _BytesPerWord; }
 		set { _BytesPerWord = value; RecalcDimensions(); Invalidate(); EnsureVisible(Selection.Start); }
 	}
-	
+
 	public int WordsPerGroup
 	{
 		get { return _WordsPerGroup; }
 		set { _WordsPerGroup = value; RecalcDimensions(); Invalidate(); EnsureVisible(Selection.Start); }
 	}
-	
+
 	public int WordsPerLine
 	{
 		get { return _WordsPerLine; }
@@ -402,7 +394,7 @@ public partial class HexView : Control
 				DataRadixChanged(this, EventArgs.Empty);
 		}
 	}
-	
+
 	public override Color ForeColor
 	{
 		get { return base.ForeColor; }
@@ -410,40 +402,40 @@ public partial class HexView : Control
 	}
 
 	public Document Document = null;
-	private string[]	DataRadixString = new string[0x100];
+	private string[] DataRadixString = new string[0x100];
 
-	private static char[]		AsciiChar = {	'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '!', '\"', '#', '$', '%', '&', '\'',
-										'(', ')', '*', '+', ',', '-', '.', '/',
-										'0', '1', '2', '3', '4', '5', '6', '7',
-										'8', '9', ':', ';', '<', '=', '>', '?',
-										'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-										'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-										'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-										'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
-										'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
-										'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-										'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
-										'x', 'y', 'z', '{', '|', '}', '~', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.',
-										'.', '.', '.', '.', '.', '.', '.', '.' };
+	private static char[] AsciiChar = { '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '!', '\"', '#', '$', '%', '&', '\'',
+	                                    '(', ')', '*', '+', ',', '-', '.', '/',
+	                                    '0', '1', '2', '3', '4', '5', '6', '7',
+	                                    '8', '9', ':', ';', '<', '=', '>', '?',
+	                                    '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	                                    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	                                    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+	                                    'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
+	                                    '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+	                                    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	                                    'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+	                                    'x', 'y', 'z', '{', '|', '}', '~', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.',
+	                                    '.', '.', '.', '.', '.', '.', '.', '.' };
 
 	private long CurrentDocumentLength = 0;
 	private Dimensions	LayoutDimensions = new Dimensions();
@@ -479,7 +471,7 @@ public partial class HexView : Control
 
 		DragScrollTimer.Interval = 10;
 		DragScrollTimer.Tick += OnDragScrollTimer;
-		
+
 		InsertCaret = new ManagedCaret(this);
 		InsertCaret.Visible = true;
 		Selection = new SelectionRange(this);
@@ -494,7 +486,7 @@ public partial class HexView : Control
 	{
 		if(disposing)
 			InsertCaret.Dispose();
-		
+
 		base.Dispose(disposing);
 	}
 
@@ -513,25 +505,25 @@ public partial class HexView : Control
 		if(ClipboardRange != null)
 			Document.ClipboardPaste(Selection.BufferRange.Start, Selection.BufferRange.End, ClipboardRange);
 	}
-	
+
 	public void AddHighlight(SelectionRange s)
 	{
 		Highlights.Insert(0, s);
 		Invalidate();
 	}
-	
+
 	public void RemoveHighlight(SelectionRange s)
 	{
 		Highlights.Remove(s);
 		Invalidate();
 	}
-	
+
 	public void ClearHighlights()
 	{
 		Highlights.Clear();
 		Invalidate();
 	}
-	
+
 	public void EnsureVisible(long address)
 	{
 		double pixelOffset = ScrollPosition;
@@ -549,7 +541,6 @@ public partial class HexView : Control
 		if(address < Document.Length * 8 && LayoutDimensions.BitsPerRow > 0)
 			ScrollToPixel((long)((double)(address / LayoutDimensions.BitsPerRow) * (double)LayoutDimensions.WordSize.Height));
 	}
-
 
 	protected void OnScroll(object sender, ScrollEventArgs args)
 	{
@@ -585,8 +576,8 @@ public partial class HexView : Control
 	public string IntToRadixString(ulong x, uint radix, int minLength)
 	{
 		string str = String.Empty;
-		const string digit		= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		const string padding	= "00000000000000000000000000000000000000000000000000000000000000000";
+		const string digit   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		const string padding = "00000000000000000000000000000000000000000000000000000000000000000";
 
 		if(radix < 2 || radix > 36)
 			return null;
@@ -608,13 +599,13 @@ public partial class HexView : Control
 	{
 		address /= 8;
 		address = (address / _BytesPerWord) * _BytesPerWord;
-		
+
 		ulong x = 0;
-		
+
 		if(_Endian == Endian.Little)
 		{
 			for(int i = 0; i < _BytesPerWord; ++i)
-				x |= (ulong)Document[address + i] << (i*8);		
+				x |= (ulong)Document[address + i] << (i*8);
 		}
 		else
 		{
@@ -624,7 +615,7 @@ public partial class HexView : Control
 				x |= (ulong)Document[address + i];
 			}
 		}
-		
+
 		return x;
 	}
 	
@@ -670,14 +661,13 @@ public partial class HexView : Control
 		
 		address /= 8;
 		address = (address / _BytesPerWord) * _BytesPerWord;
-		
+
 		PieceBuffer.Mark a = Document.Marks.Add(address);
 		PieceBuffer.Mark b = Document.Marks.Add(address + _BytesPerWord);
 		Document.Insert(a, b, data, _BytesPerWord);
 		Document.Marks.Remove(a);
 		Document.Marks.Remove(b);
 	}
-	
 
 
 	public class HexViewHit
@@ -692,10 +682,10 @@ public partial class HexView : Control
 			AsciiSelection
 		}
 
-		public HitType	Type;
-		public long		Address;
-		public int		Character;
-		public Point	CharacterOrigin;
+		public HitType Type;
+		public long    Address;
+		public int     Character;
+		public Point   CharacterOrigin;
 
 		public HexViewHit(HitType type)
 		{
@@ -743,13 +733,16 @@ public partial class HexView : Control
 		else
 		{
 			InsertCaret.Visible = true;
-			if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
+			if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || 
+			                            DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
+			{
 				InsertCaret.Position = AddressToClientPointAscii(Selection.Start);
+			}
 			else
 				InsertCaret.Position = AddressToClientPoint(Selection.Start);
 		}
 	}
-	
+
 	protected void OnBufferChanged(object sender, PieceBuffer.BufferChangedEventArgs e)
 	{
 		if(Document.Length != CurrentDocumentLength)
@@ -757,7 +750,7 @@ public partial class HexView : Control
 			CurrentDocumentLength = Document.Length;
 			RecalcDimensions();
 		}
-		
+
 		// TODO: Only invalidate changed region (and only if it's on screen)
 		Invalidate();
 	}
@@ -767,7 +760,4 @@ public partial class HexView : Control
 		Selection.Set(e.NewItem.StartPosition * 8, e.NewItem.StartPosition * 8);
 	}
 }
-
-
-
 

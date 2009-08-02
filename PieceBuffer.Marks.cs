@@ -113,7 +113,7 @@ public partial class PieceBuffer
 		{
 			get { return End.Position - Start.Position; }
 		}
-		
+
 		public Range(Mark start, Mark end)
 		{
 			Start = start; 
@@ -134,37 +134,37 @@ public partial class PieceBuffer
 //			get { return (Mark)_Sentinel; }
 //		}
 
-		protected Mark	_Start;
-		public Mark	Start
+		protected Mark _Start;
+		public Mark    Start
 		{
 			get { return _Start; }
 		}
 
-		protected Mark	_End;
-		public Mark	End
+		protected Mark _End;
+		public Mark    End
 		{
 			get { return _End; }
 		}
 
-		protected Mark	_Insert;
-		public Mark	Insert
+		protected Mark _Insert;
+		public Mark    Insert
 		{
 			get { return _Insert; }
 		}
 
 		protected object _Pieces;
-		private Piece Pieces
+		private Piece    Pieces
 		{
 			get { return (Piece)_Pieces; }
 			set { _Pieces = value; }
 		}
-		protected object _Sentinel;
+		protected object     _Sentinel;
 		private InternalMark Sentinel
 		{
 			get { return (InternalMark)_Sentinel; }
 			set { _Sentinel = value; }
 		}
-		protected PieceBuffer		Buffer;
+		protected PieceBuffer Buffer;
 		
 		protected MarkCollection() {}
 
@@ -172,7 +172,7 @@ public partial class PieceBuffer
 		public Mark Add()
 		{
 			Debug.Assert(DebugMarkChainIsValid(), "CreateMark: Enter: Invalid mark chain");
-			
+
 			InternalMark mark = new InternalMark(this);
 			((InternalMark)_Insert).CopyTo(mark);
 			ListInsert((InternalMark)_Insert, mark);
@@ -202,9 +202,9 @@ public partial class PieceBuffer
 		{
 			if(mark == _Start || mark == _Insert || mark == _End)
 				return;
-			
+
 			ListRemove((InternalMark)mark);
-			
+
 			Debug.Assert(DebugMarkChainIsValid(), "DestroyMark: Invalid mark chain");
 		}
 		
@@ -219,7 +219,7 @@ public partial class PieceBuffer
 		private long MoveMarkRight(InternalMark mark, long distance)
 		{
 			Debug.Assert(DebugMarkChainIsValid(), "MoveMarkRight: Enter: Invalid mark chain");
-			
+
 			// If the desired position isn't contained in the current piece or the next
 			// mark is before the desired position
 			if(mark.Offset + distance >= mark.Piece.End - mark.Piece.Start ||
@@ -233,20 +233,20 @@ public partial class PieceBuffer
 				if(m.Prev != mark)
 				{
 					m = m.Prev;
-			
+
 					distance -= m.Position - mark.Position;
-					
+
 					ListRemove(mark);
 					m.CopyTo(mark);
 					ListInsert(m, mark);
 				}
-			
+
 
 				// Move the mark to the beginning of the current piece
 				distance += mark.Offset;
 				mark.Position -= mark.Offset;
 				mark.Offset = 0;
-				
+
 				// Move the specified mark by whole pieces
 				while(distance >= mark.Piece.End - mark.Piece.Start)
 				{
@@ -256,33 +256,33 @@ public partial class PieceBuffer
 						Debug.Assert(DebugMarkChainIsValid(), "MoveMarkRight: Leave: Invalid mark chain");
 						return mark.Position;
 					}
-			
+
 					distance -= mark.Piece.End - mark.Piece.Start;
 					mark.Position += mark.Piece.End - mark.Piece.Start;
-					mark.Piece = mark.Piece.Next;			
+					mark.Piece = mark.Piece.Next;
 				}
 			}
-				
+
 			// Move the specified mark to the correct location in the piece
 			mark.Offset += distance;
 			mark.Position += distance;
-			
-			
+
+
 			Debug.Assert(DebugMarkChainIsValid(), "MoveMarkRight: Leave: Invalid mark chain");
 			
 			return mark.Position;
 		}
-		
+
 		private long MoveMarkLeft(InternalMark mark, long distance)
 		{
 			Debug.Assert(DebugMarkChainIsValid(), "MoveMarkLeft: Enter: Invalid mark chain");
-			
+
 			if(distance > mark.Position)
 				distance = mark.Position;
-			
-			if(	distance - mark.Offset > 0 ||
-			    mark.Prev.Position >= mark.Position - distance ||
-				mark.Prev == _Sentinel)
+
+			if(distance - mark.Offset > 0 ||
+			   mark.Prev.Position >= mark.Position - distance ||
+			   mark.Prev == _Sentinel)
 			{
 				// Find nearest mark after the destination position and move the
 				// specified mark to that position (must be to left in mark chain)
@@ -296,12 +296,12 @@ public partial class PieceBuffer
 					m.Next.CopyTo(mark);
 					ListInsert(m, mark);
 				}
-					
+
 				// Move the mark to the beginning of the current piece
 				distance -= mark.Offset;
 				mark.Position -= mark.Offset;
 				mark.Offset = 0;
-					
+
 				// Move the specified mark by whole pieces
 				while(distance > 0) // mark->piece->end - mark->piece->start)
 				{
@@ -316,12 +316,12 @@ public partial class PieceBuffer
 					distance -= mark.Piece.End - mark.Piece.Start;
 				}
 			}
-			
-			// Move the specified mark to the correct location in the piece		
+
+			// Move the specified mark to the correct location in the piece
 			mark.Offset -= distance;
 			mark.Position -= distance;
-			
-			
+
+
 			Debug.Assert(DebugMarkChainIsValid(), "MoveMarkLeft: Leave: Invalid mark chain");
 			return mark.Position;
 		}
@@ -329,12 +329,12 @@ public partial class PieceBuffer
 		public override string ToString()
 		{
 			System.Text.StringBuilder tmp = new System.Text.StringBuilder();
-			
+
 			InternalMark mark = Sentinel;
 			while((mark = mark.Next) != _Sentinel)
 				tmp.AppendFormat("{{{0},{1}}}", mark.Offset, mark.Position);
-			
-			return tmp.ToString();		
+
+			return tmp.ToString();
 		}
 		
 		protected static void ListInsert(Mark list, Mark item)
@@ -358,50 +358,50 @@ public partial class PieceBuffer
 			((InternalMark)item).Prev.Next = ((InternalMark)item).Next;
 			((InternalMark)item).Next.Prev = ((InternalMark)item).Prev;
 		}
-												
+
 		protected static void ListRemoveRange(Mark first, Mark last)
 		{
 			((InternalMark)first).Prev.Next = ((InternalMark)last).Next;
 			((InternalMark)last).Next.Prev = ((InternalMark)first).Prev;
-		}		
+		}
 
 		public bool DebugMarkChainIsValid()
 		{
 			InternalMark m = Sentinel;
-			
+
 			// List sentinal's values must never change
 			Debug.Assert(m.Piece == null, "Mark chain sentinel's piece is not null");
 			Debug.Assert(m.Offset == Int64.MaxValue, "Mark chain sentinel's offset wrong");
 			Debug.Assert(m.Position == Int64.MaxValue, "Mark chain sentinel's position wrong");
-			
+
 			// Sentinal links must be valid
 			Debug.Assert(m.Next.Prev == m, "Mark chain sentinel's next pointer is bad");
 			Debug.Assert(m.Prev.Next == m, "Mark chain sentinel's prev pointer is bad");
-			
+
 			// List must never be empty, insert_mark always exists
 			Debug.Assert(m.Prev != _Sentinel, "Mark chain is empty");
-			
+
 			while((m = m.Prev) != _Sentinel)
 			{
 				// List links must be valid
 				Debug.Assert(m.Next.Prev == m, "Mark chain node's next pointer is bad");
 				Debug.Assert(m.Prev.Next == m, "Mark chain node's prev pointer is bad");
-			
+
 				// Each mark should be in sorted order
 				Debug.Assert(m.Position <= m.Next.Position, "Mark chain node's position is out of order");
-				
+
 				if(m.Piece == m.Next.Piece)
 				{
 					// Each mark that shares the same piece must have their
 					// offsets in sorted order
 					Debug.Assert(m.Offset <= m.Next.Offset, "Mark chain node's offset is out of order");
-					
+
 					// Each mark that shares the same piece must have the
 					// same distance between offsets as positions
 					Debug.Assert(m.Next.Offset - m.Offset == m.Next.Position - m.Position, "Mark chain node's position/offset don't match");
 				}
 			}
-			
+
 			return true;
 		}
 	}
@@ -433,7 +433,8 @@ public partial class PieceBuffer
 			ListInsert(Sentinel, (InternalMark)_Start);			
 		}
 
-		public void UpdateAfterReplace(Mark start, Mark end, long removedLength, long insertedLength, Piece firstInsertedPiece)
+		public void UpdateAfterReplace(Mark start, Mark end, long removedLength, 
+		                               long insertedLength, Piece firstInsertedPiece)
 		{
 			InternalMark curStart = (InternalMark)start;
 			InternalMark curEnd = (InternalMark)end;
@@ -443,7 +444,7 @@ public partial class PieceBuffer
 			InternalMark m = curEnd;
 			while(m.Position == m.Prev.Position)
 				m = m.Prev;
-			
+
 			// Move any marks within the removed region to the point
 			// immediately following the removed region (curEnd or m)
 			if(curStart.Position != curEnd.Position)
@@ -452,7 +453,7 @@ public partial class PieceBuffer
 				// the same position, otherwise we might miss some.
 				while(curStart.Position == curStart.Prev.Position)
 					curStart = curStart.Prev;
-				
+
 				// Loop through setting their position to match curEnd / m
 				// until we get to m
 				if(firstInsertedPiece == null)
@@ -478,10 +479,10 @@ public partial class PieceBuffer
 					}
 				}
 			}
-			
+
 			// Flag first mark after insert/remove as modified
 			//m.Modified = true;
-			
+
 			// Update the position of all marks following the removed/inserted
 			// pieces if the change is non zero
 			if(insertedLength - removedLength != 0)
@@ -489,10 +490,10 @@ public partial class PieceBuffer
 				do
 				{
 					m.Position += insertedLength - removedLength;
-					
+
 				} while((m = m.Next) != _Sentinel);
 			}
-			
+
 			// Finally, position the insert mark immediately 
 			// after the removed/inserted pieces (curEnd)
 			// and make sure the start mark is still at the start
@@ -501,10 +502,10 @@ public partial class PieceBuffer
 				ListRemove((InternalMark)_Insert);
 				curEnd.CopyTo((InternalMark)_Insert);
 				ListInsert(curEnd, (InternalMark)_Insert);
-			
+
 			}
 			if(_Start.Position != 0)
-			{		
+			{
 				ListRemove(_Start);
 				((InternalMark)_Start).Piece = Pieces.Next;
 				((InternalMark)_Start).Offset = 0;
@@ -521,13 +522,14 @@ public partial class PieceBuffer
 				InternalMark m = Sentinel;
 				while((m = m.Next) != Sentinel)
 					Debug.Assert(m.Piece != p, "Mark references removed piece");
-				
+
 				if(p == removedEnd)
 					break;
 				p = p.Next;
 			}
-			
+
 			return true;
 		}
 	}
 }
+

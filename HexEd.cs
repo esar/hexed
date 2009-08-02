@@ -126,7 +126,8 @@ class OpenWindowMenu : ToolStripMenuItem
 		if(path.Length < maxLength)
 			return path;
 		
-		string[] parts = path.Split(new char[] {System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar});
+		string[] parts = path.Split(new char[] { System.IO.Path.DirectorySeparatorChar, 
+		                                         System.IO.Path.AltDirectorySeparatorChar});
 		
 		// If first part is empty, remove it and add '/' to front of new first entry
 		if(parts[0].Length == 0)
@@ -145,7 +146,8 @@ class OpenWindowMenu : ToolStripMenuItem
 		// If the first directory doesn't fit, return "firstDir.../filename"
 		maxLength -= filename.Length + 5; // 5 = "/.../"
 		if(parts[0].Length >= maxLength)
-			return String.Format("{0}...{1}{2}", parts[0].Substring(0, maxLength), System.IO.Path.DirectorySeparatorChar, filename);
+			return String.Format("{0}...{1}{2}", parts[0].Substring(0, maxLength), 
+			                     System.IO.Path.DirectorySeparatorChar, filename);
 		
 		// Return as many of the first directories as possible, "dir/dir/.../filename"
 		System.Text.StringBuilder result = new System.Text.StringBuilder();
@@ -234,37 +236,37 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 
 	private Dictionary< Document, List< HexViewForm > > Documents = new Dictionary<Document,List<HexViewForm>>();
 	
-	private DockingManager		_dockingManager = null;
-	private TabbedGroups		_TabbedGroups = null;
-	private ToolStripPanel		ToolStripPanel;
-	private ToolStrip			FileToolStrip = new ToolStrip();
-	private ToolStrip			EditToolStrip = new ToolStrip();
-	private ToolStrip			ViewToolStrip = new ToolStrip();
-	private StatusStrip			StatusBar = new StatusStrip();
-	private SelectionPanel		selectionPanel;
-	private HistoryPanel		HistoryPanel;
-	private ImageList			WindowImageList;
+	private DockingManager          _dockingManager = null;
+	private TabbedGroups            _TabbedGroups = null;
+	private ToolStripPanel          ToolStripPanel;
+	private ToolStrip               FileToolStrip = new ToolStrip();
+	private ToolStrip               EditToolStrip = new ToolStrip();
+	private ToolStrip               ViewToolStrip = new ToolStrip();
+	private StatusStrip             StatusBar = new StatusStrip();
+	private SelectionPanel          selectionPanel;
+	private HistoryPanel            HistoryPanel;
+	private ImageList               WindowImageList;
 	
-	private Content[]			DefaultWindowPositionContent = new Content[4];
+	private Content[]               DefaultWindowPositionContent = new Content[4];
 	
-	private RadixMenu				AddressRadixMenu;
-	private RadixMenu				DataRadixMenu;
-	private OpenWindowMenu			OpenWindowMenu;
+	private RadixMenu               AddressRadixMenu;
+	private RadixMenu               DataRadixMenu;
+	private OpenWindowMenu          OpenWindowMenu;
 
-	private ContextMenuStrip[]		ContextMenus;
+	private ContextMenuStrip[]      ContextMenus;
 	
-	private ToolStripProgressBar	ProgressBar;
-	private ToolStripStatusLabel	ProgressMessage;
-	private ToolStripStatusLabel	EditModeLabel;
-	private ToolStripStatusLabel	AddressLabel;
-	private ToolStripStatusLabel	ModifiedLabel;
+	private ToolStripProgressBar    ProgressBar;
+	private ToolStripStatusLabel    ProgressMessage;
+	private ToolStripStatusLabel    EditModeLabel;
+	private ToolStripStatusLabel    AddressLabel;
+	private ToolStripStatusLabel    ModifiedLabel;
 
-	protected PluginManager _PluginManager;
-	public PluginManager PluginManager { get { return _PluginManager; } }
-	
-	private static CommandSet	_Commands = new CommandSet();
-	public CommandSet Commands { get { return _Commands; } }
-	
+	protected PluginManager         _PluginManager;
+	public PluginManager            PluginManager { get { return _PluginManager; } }
+
+	private static CommandSet       _Commands = new CommandSet();
+	public CommandSet               Commands { get { return _Commands; } }
+
 	public event EventHandler ActiveViewChanged;
 	
 	protected Timer ProgressNotificationTimer = new Timer();
@@ -274,17 +276,17 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 	{
 		get { return _ProgressNotifications; }
 	}
-	
-	
+
+
 	[STAThread]
 	public static void Main()
 	{
 #if DEBUG
 #if MONO
-System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListener());
+		System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListener());
 #endif
 #endif
-		
+
 		Application.EnableVisualStyles();
 		Application.DoEvents();
 		SplashScreen.Show();
@@ -314,7 +316,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 //		_TabbedGroups.ExternalDrop += OnTabbedGroupsExternalDrop;
 //		_TabbedGroups.ExternalDragEnter += OnTabbedGroupsExternalDragEnter;
 		Controls.Add(_TabbedGroups);
-				
+
 		ToolStripPanel = new ToolStripPanel();
 		MainMenuStrip = new MenuStrip();
 		ToolStripPanel.Controls.Add(MainMenuStrip);
@@ -331,11 +333,14 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		_dockingManager.InnerControl = _TabbedGroups;
 		_dockingManager.OuterControl = ToolStripPanel;
 
-		((IPluginHost)this).AddWindow(selectionPanel, "Selection", Settings.Instance.Image("selection_16.png"), DefaultWindowPosition.BottomLeft, true);
-		((IPluginHost)this).AddWindow(HistoryPanel, "History", Settings.Instance.Image("history_16.png"), DefaultWindowPosition.Left, true);
+		((IPluginHost)this).AddWindow(selectionPanel, "Selection", 
+		                              Settings.Instance.Image("selection_16.png"), 
+		                              DefaultWindowPosition.BottomLeft, true);
+		((IPluginHost)this).AddWindow(HistoryPanel, "History", 
+		                              Settings.Instance.Image("history_16.png"), 
+		                              DefaultWindowPosition.Left, true);
 
-		
-	
+
 		StatusBar.Dock = DockStyle.Bottom;
 		ProgressBar = new ToolStripProgressBar();
 		ProgressBar.Minimum = 0;
@@ -357,9 +362,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		ModifiedLabel.Enabled = false;
 		StatusBar.Items.Add(ModifiedLabel);
 		StatusBar.Items.Add(new ToolStripSeparator());
-		
-		Controls.Add(StatusBar);
 
+		Controls.Add(StatusBar);
 
 		_TabbedGroups.PageChanged += OnTabbedGroupsPageChanged;
 		_TabbedGroups.PageCloseRequest += OnTabbedGroupsPageCloseRequest;
@@ -372,9 +376,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		ProgressNotificationTimer.Tick += OnProgressNotificationTimerTick;
 		ProgressNotifications.NotificationAdded += OnProgressNotificationAdded;
 		ProgressNotifications.NotificationRemoved += OnProgressNotificationRemoved;
-		
+
 		Application.Idle += OnIdle;
-		
+
 		Size = new Size(1024, 768);		
 	}
 
@@ -429,7 +433,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		             null, 
 		             null, 
 		             OnFileExit, OnUpdateUiElement);
-		
+
 		Commands.Add("Edit/Undo", "Undoes the last operation", "&Undo",
 		             Settings.Instance.Image("undo_16.png"),
 		             new Keys[] { Keys.Control | Keys.Z }, 
@@ -470,7 +474,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		             Settings.Instance.Image("options_16.png"),
 		             null,
 		             OnEditPreferences, OnUpdateUiElement);
-		
+
 		Commands.Add("View/Address Radix", null, null,
 		             null,
 		             null,
@@ -532,7 +536,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		             null,
 		             null, OnUpdateUiElement);
 		
-		
+
 		Commands.Add("Window/Split", "Splits the current view", "&Split",
 		             Settings.Instance.Image("split_16.png"),
 		             null,
@@ -545,7 +549,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		             null,
 		             null,
 		             OnWindowOpenWindows, OnUpdateUiElement);
-		
+
 		Commands.Add("Help/About", "Displays the about box", "About",
 		             null,
 		             null,
@@ -611,7 +615,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		mi.DropDownItems.Add(mi2);
 		mi.DropDownItems.Add(new ToolStripSeparator());
 		MainMenuStrip.Items.Add(mi);
-		
+
 		mi = new ToolStripMenuItem("&Window");
 		mi.DropDownItems.Add(CreateMenuItem("Window/Split"));
 		mi.DropDownItems.Add(CreateMenuItem("Window/Duplicate"));
@@ -656,7 +660,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		FileToolStrip.Items.Add(new ToolStripSeparator());
 		FileToolStrip.Items.Add(CreateToolButton("File/Save"));
 		FileToolStrip.Items.Add(CreateToolButton("File/Save All"));
-		
+
 		EditToolStrip.Items.Add(CreateToolButton("Edit/Undo"));
 		EditToolStrip.Items.Add(CreateToolButton("Edit/Redo"));
 		EditToolStrip.Items.Add(new ToolStripSeparator());
@@ -664,7 +668,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		EditToolStrip.Items.Add(CreateToolButton("Edit/Copy"));
 		EditToolStrip.Items.Add(CreateToolButton("Edit/Paste"));
 		EditToolStrip.Items.Add(CreateToolButton("Edit/Delete"));
-		
+
 		ViewToolStrip.Items.Add(CreateToolButton("B", null, "View/Bytes", "Bytes"));
 		ViewToolStrip.Items.Add(CreateToolButton("W", null, "View/Words", "Words"));
 		ViewToolStrip.Items.Add(CreateToolButton("D", null, "View/Double Words", "Double Words"));
@@ -672,7 +676,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		ViewToolStrip.Items.Add(new ToolStripSeparator());
 		ViewToolStrip.Items.Add(CreateToolButton("LE", null, "View/Little Endian", "Little Endian"));
 		ViewToolStrip.Items.Add(CreateToolButton("BE", null, "View/Big Endian", "Big Endian"));
-		
+
 		ToolStripPanel.Join(ViewToolStrip, 1);
 		ToolStripPanel.Join(EditToolStrip, 1);
 		ToolStripPanel.Join(FileToolStrip, 1);
@@ -693,7 +697,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			i.ShortcutKeys = cmd.Shortcuts[0];
 		return i;
 	}
-	
+
 	public ToolStripMenuItem CreateMenuItem(string text, string image, string name, Keys shortcut)
 	{
 		ToolStripMenuItem i = new ToolStripMenuItem(text);
@@ -718,7 +722,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		i.ToolTipText = cmd.Label;
 		return i;
 	}
-	
+
 	public ToolStripButton CreateToolButton(string text, string image, string name, string tooltip)
 	{
 		ToolStripButton i = new ToolStripButton(text);
@@ -750,40 +754,40 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		
 		return list.ToArray();
 	}
-	
+
 	protected void OnUpdateUiElement(object sender, EventArgs e)
 	{
 		Command cmd = (Command)sender;
-		
-		ToolStripItem[] items = FindToolStripItems(MainMenuStrip.Items, cmd.Name, true, false); // TODO: MONO: mono Find() doesn't work: MainMenuStrip.Items.Find(cmd.Name, true);
+
+		ToolStripItem[] items = FindToolStripItems(MainMenuStrip.Items, cmd.Name, true, false);
 		foreach(ToolStripMenuItem i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
-		
-		items = FindToolStripItems(FileToolStrip.Items, cmd.Name, true, false); // FileToolStrip.Items.Find(cmd.Name, true);
+
+		items = FindToolStripItems(FileToolStrip.Items, cmd.Name, true, false);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
 
-		items = FindToolStripItems(EditToolStrip.Items, cmd.Name, true, false); //EditToolStrip.Items.Find(cmd.Name, true);
+		items = FindToolStripItems(EditToolStrip.Items, cmd.Name, true, false);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
-		
-		items = FindToolStripItems(ViewToolStrip.Items, cmd.Name, true, false); //ViewToolStrip.Items.Find(cmd.Name, true);
+
+		items = FindToolStripItems(ViewToolStrip.Items, cmd.Name, true, false);
 		foreach(ToolStripButton i in items)
 		{
 			i.Enabled = cmd.Enabled;
 			i.Checked = cmd.Checked;
 		}
 	}
-	
+
 	public void OnUiCommand(object sender, EventArgs e)
 	{
 		ToolStripItem item = (ToolStripItem)sender;
@@ -805,7 +809,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		return false;
 	}
 	
-	
+
 	protected void OnIdle(object sender, EventArgs e)
 	{
 		bool haveChild = (_TabbedGroups.ActiveTabPage != null);
@@ -821,7 +825,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands["File/Print Preview"].Enabled = haveChild;
 		Commands["File/Print"].Enabled = haveChild;
 		Commands["File/File Properties"].Enabled = haveChild;
-		
+
 		Commands["Edit/Undo"].Enabled = haveChild && view.Document.CanUndo;
 		Commands["Edit/Redo"].Enabled = haveChild && view.Document.CanRedo;
 		Commands["Edit/Cut"].Enabled = haveSelection;
@@ -853,8 +857,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		Commands["View/Little Endian"].Checked = (haveChild && ActiveView.Endian == Endian.Little);
 		Commands["View/Big Endian"].Enabled = haveChild;
 		Commands["View/Big Endian"].Checked = (haveChild && ActiveView.Endian == Endian.Big);
-		
-		Commands["Window/Split"].Enabled = haveChild;		
+
+		Commands["Window/Split"].Enabled = haveChild;
 		Commands["Window/Duplicate"].Enabled = haveChild;
 		
 		if(view != null)
@@ -873,7 +877,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		EditModeLabel.Enabled = haveChild;
 		ModifiedLabel.Enabled = haveChild && view.Document.IsModified;
 	}
-	
+
 	protected override void OnLoad(EventArgs e)
 	{
 		base.OnLoad(e);
@@ -886,15 +890,15 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		SplashScreen.Hide();
 	}
 
-	
+
 	protected void UpdateWindowTitle(string documentTitle)
 	{
 		string[] parts = Text.Split(new string[] {" - "}, 2, StringSplitOptions.None);
 		Text = parts[0] + " - " + documentTitle;
 	}
-	
+
 	protected void OnTabbedGroupsPageChanged(object sender, Crownwood.DotNetMagic.Controls.TabPage e)
-	{	
+	{
 		if(_TabbedGroups.ActiveTabPage != null)
 		{
 			OpenWindowMenu.SetSelectedItem(_TabbedGroups.ActiveTabPage);
@@ -970,13 +974,13 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		if(doc != null)
 			CreateView(doc);
 	}
-	
+
 	private void OnFileOpen(object sender, EventArgs args)
 	{
 		OpenFileDialog ofd = new OpenFileDialog();
 		ofd.Title = "Select File";
 		ofd.Filter = "All Files (*.*)|*.*";
-		
+
 		if(ofd.ShowDialog() == DialogResult.OK)
 		{
 			Document doc = OpenDocument(ofd.FileName);
@@ -1012,7 +1016,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		dlg.StartPosition = FormStartPosition.CenterParent;
 		dlg.ShowDialog();
 	}
-	
+
 	private void OnWindowDuplicate(object sender, EventArgs e)
 	{/*
 		HexViewForm form = new HexViewForm(ActiveView.Document);
@@ -1022,7 +1026,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
 		form.Show();*/
 	}
-	
+
 	private void OnWindowSplit(object sender, EventArgs e)
 	{
 		//((HexViewForm)ActiveMdiChild).Split();
@@ -1036,7 +1040,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	protected void OnSelectionContextMenuDefineField(object sender, EventArgs e)
 	{
 		// TODO: StructureTree:
-		
+
 //		TreeListViewItem n = structurePanel.Tree.Items.Add("New Field");
 //		n.Tag = new Record("New Field", (ulong)((HexViewForm)ActiveMdiChild).View.Selection.Start * 8,
 //		                   (ulong)(((HexViewForm)ActiveMdiChild).View.Selection.End - ((HexViewForm)ActiveMdiChild).View.Selection.Start) / 8, 1);
@@ -1055,7 +1059,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		_dockingManager.ShowContent(content);
 		content.BringToFront();
 	}
-	
+
 	private void OnHelpAbout(object sender, EventArgs args)
 	{
 		AboutDialog dlg = new AboutDialog();
@@ -1082,7 +1086,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		OnProgressNotificationChanged(e.Notification, EventArgs.Empty);
 		e.Notification.Changed += OnProgressNotificationChanged;
 	}
-	
+
 	protected void OnProgressNotificationRemoved(object sender, ProgressNotificationEventArgs e)
 	{
 		// If we were subscribed to this notification, we need to change to a different one
@@ -1123,7 +1127,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	protected void OnProgressNotificationTimerTick(object sender, EventArgs e)
 	{
 		int next = (CurrentProgressNotification.Index + 1) % ProgressNotifications.Count;
-		Console.WriteLine(String.Format("Progress notification timer TICK: {0} -> {1}", CurrentProgressNotification.Index, next));
+		Console.WriteLine(String.Format("Progress notification timer TICK: {0} -> {1}", 
+		                                CurrentProgressNotification.Index, next));
 		CurrentProgressNotification.Changed -= OnProgressNotificationChanged;
 		CurrentProgressNotification = ProgressNotifications[next];
 		CurrentProgressNotification.Changed += OnProgressNotificationChanged;
@@ -1142,7 +1147,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		ProgressBar.Value = percent; 
 		ProgressMessage.Text = String.Format("{0}% {1}", percent, progress.Message);
 	}
-	
+
 	
 	/**********************************************
 	      Document Collection Functions
@@ -1169,11 +1174,13 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			}
 			catch(System.Security.SecurityException ex)
 			{
-				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(this, ex.Message, "Permission Denied", 
+				                MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 			catch(UnauthorizedAccessException ex)
 			{
-				MessageBox.Show(this, ex.Message, "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(this, ex.Message, "Permission Denied", 
+				                MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 		
@@ -1201,7 +1208,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		HexViewForm form = new HexViewForm(doc);
 		if(doc.FileName != null)
 		{
-			string[] filenameParts = doc.FileName.Split(new char[] {Path.PathSeparator, Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
+			string[] filenameParts = doc.FileName.Split(new char[] {Path.PathSeparator, 
+			                                                        Path.DirectorySeparatorChar, 
+			                                                        Path.AltDirectorySeparatorChar});
 			form.Title = filenameParts[filenameParts.Length - 1];
 		}
 		else
@@ -1248,9 +1257,8 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	}
 	
 	
-	
-	
-	public HexView ActiveView 
+
+	public HexView ActiveView
 	{
 		get
 		{
@@ -1265,7 +1273,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		get { return Settings.Instance; }
 	}
-	
+
 	HexView IPluginHost.ActiveView
 	{
 		get
@@ -1281,8 +1289,9 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 	{
 		return ContextMenus[(int)menu];
 	}
-	
-	void IPluginHost.AddWindow(Control control, string name, Image image, DefaultWindowPosition defaultPosition, bool visibleByDefault)
+
+	void IPluginHost.AddWindow(Control control, string name, Image image, 
+	                           DefaultWindowPosition defaultPosition, bool visibleByDefault)
 	{	
 		Content content;
 		if(image != null)
@@ -1303,7 +1312,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			item.Click += OnViewWindowsMenuItemClicked;
 			AddMenuItem(Menus.Main, "View", item); 
 		}
-			
+
 		content.DisplaySize = new Size(400, 240);
 		
 		if(DefaultWindowPositionContent[(int)defaultPosition] == null)
@@ -1316,7 +1325,7 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 				_dockingManager.AddContentToZone(content, DefaultWindowPositionContent[(int)DefaultWindowPosition.BottomRight].ParentWindowContent.ParentZone, 0);
 			}
 			else if(defaultPosition == DefaultWindowPosition.BottomRight && 
-			   DefaultWindowPositionContent[(int)DefaultWindowPosition.BottomLeft] != null)
+			        DefaultWindowPositionContent[(int)DefaultWindowPosition.BottomLeft] != null)
 			{
 				_dockingManager.AddContentToZone(content, DefaultWindowPositionContent[(int)DefaultWindowPosition.BottomLeft].ParentWindowContent.ParentZone, 1);
 			}
@@ -1350,12 +1359,12 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			if(c.Control == control)
 				c.BringToFront();
 	}
-	
+
 	public void AddMenuItem(Menus menu, string path, ToolStripItem menuItem)
 	{
 		path = path.Replace("&", String.Empty);
 		string[] parts = path.Split(new char[] {'/', '\\'});
-		
+
 		int i = 0;
 		ToolStripMenuItem item = null;
 		ToolStripItemCollection m = null;
@@ -1365,13 +1374,13 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 			m = ContextMenus[(int)menu].Items;
 		for(i = 0; i < parts.Length; ++i)
 		{
-			ToolStripItem[] items = FindToolStripItems(m, parts[i], false, true); //m.Find(parts[i], false);
+			ToolStripItem[] items = FindToolStripItems(m, parts[i], false, true);
 			if(items.Length == 1)
 				m = ((ToolStripMenuItem)items[0]).DropDownItems;
 			else
 				break;
 		}
-		
+
 		for(; i < parts.Length; ++i)
 		{
 			if(parts[i].Length > 0)
@@ -1384,3 +1393,4 @@ System.Diagnostics.Debug.Listeners.Add(new System.Diagnostics.ConsoleTraceListen
 		m.Add(menuItem);
 	}
 }
+

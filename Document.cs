@@ -18,7 +18,7 @@ public class MetaDataItemChangedEventArgs : EventArgs
 }
 
 public delegate void MetaDataItemChangedEventHandler(object sender, MetaDataItemChangedEventArgs e);
-	
+
 public class MetaDataDictionary : Dictionary<string, object>
 {
 	public event MetaDataItemChangedEventHandler ItemChanged;
@@ -41,7 +41,7 @@ public class MetaDataDictionary : Dictionary<string, object>
 			ItemChanged(this, new MetaDataItemChangedEventArgs(key, val));
 	}
 }
-	
+
 public class Document : PieceBuffer
 {
 	protected MetaDataDictionary _MetaData = new MetaDataDictionary();
@@ -55,7 +55,7 @@ public class Document : PieceBuffer
 	{
 		get { return _PluginState; }
 	}
-	
+
 	public Document()
 	{
 	}
@@ -63,14 +63,14 @@ public class Document : PieceBuffer
 	public Document(string filename) : base(filename)
 	{
 	}
-		
+
 	public ulong GetInteger(long offset, int length, Endian endian)
 	{
 		ulong x = 0;
 		long byteOffset = offset / 8;
 		int bitOffset = (int)(offset % 8);
 		int len = length;
-		
+
 		// get first part byte
 		if(len < 8)
 		{
@@ -83,7 +83,7 @@ public class Document : PieceBuffer
 			x |= (ulong)(this[byteOffset++] & ((1 << (8 - bitOffset)) - 1));
 			len -= 8 - bitOffset;
 		}
-		
+
 		// get full bytes
 		while(len >= 8)
 		{
@@ -91,14 +91,14 @@ public class Document : PieceBuffer
 			x |= this[byteOffset++];
 			len -= 8;
 		}
-		
+
 		// get last part byte
 		if(len > 0)
 		{
 			x <<= len;
 			x |= (ulong)(this[byteOffset] >> (8 - len));
 		}
-		
+
 		if(endian == Endian.Little)
 		{
 			ulong y = 0;
@@ -109,7 +109,7 @@ public class Document : PieceBuffer
 				x >>= 8;
 				length -= 8;
 			}
-			
+
 			if(length > 0)
 			{
 				y <<= length;
@@ -117,7 +117,8 @@ public class Document : PieceBuffer
 			}
 			x = y;
 		}
-		
+
 		return x;
 	}
 }
+

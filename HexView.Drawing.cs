@@ -10,6 +10,11 @@ using System.Runtime.InteropServices;
 
 public partial class HexView
 {
+	private const string stringOfZeros = "0000000000000000000000000000000000000000000000000000000000000000" +
+	                                     "0000000000000000000000000000000000000000000000000000000000000000" +
+	                                     "0000000000000000000000000000000000000000000000000000000000000000" +
+	                                     "0000000000000000000000000000000000000000000000000000000000000000";
+
 	protected void ScrollToPixel(long NewPosition)
 	{
 		if(NewPosition < 0)
@@ -27,18 +32,28 @@ public partial class HexView
 		}
 		else
 		{
-			ScrollWindowEx(	this.Handle, 
-							0, 
-							(int)(ScrollPosition - NewPosition), 
-							new RECT(0, 0, ClientSize.Width, ClientSize.Height), 
-							null, 
-							IntPtr.Zero, 
-							null, 
-							2);
+			ScrollWindowEx(this.Handle, 
+			               0, 
+			               (int)(ScrollPosition - NewPosition), 
+			               new RECT(0, 0, ClientSize.Width, ClientSize.Height), 
+			               null, 
+			               IntPtr.Zero, 
+			               null, 
+			               2);
+
 			if(NewPosition < ScrollPosition)
-				Invalidate(new Rectangle(0, 0, ClientSize.Width, (int)(ScrollPosition - NewPosition)));
+			{
+				Invalidate(new Rectangle(0, 0, 
+				                         ClientSize.Width, 
+				                         (int)(ScrollPosition - NewPosition)));
+			}
 			else
-				Invalidate(new Rectangle(0, ClientSize.Height - (int)(NewPosition - ScrollPosition), ClientSize.Width, (int)(NewPosition - ScrollPosition)));
+			{
+				Invalidate(new Rectangle(0, 
+				                         ClientSize.Height - (int)(NewPosition - ScrollPosition), 
+				                         ClientSize.Width, 
+				                         (int)(NewPosition - ScrollPosition)));
+			}
 		}
 #endif
 
@@ -50,10 +65,10 @@ public partial class HexView
 
 	private RectangleF MeasureSubString(Graphics graphics, string text, int start, int length, Font font)
 	{
-		StringFormat		format	= new StringFormat ();
-		RectangleF			rect	= new RectangleF(0, 0, 1000, 1000);
-		CharacterRange[]	ranges	= { new CharacterRange(start, length) };
-		Region[]			regions	= new Region[1];
+		StringFormat        format   = new StringFormat ();
+		RectangleF          rect     = new RectangleF(0, 0, 1000, 1000);
+		CharacterRange[]    ranges   = { new CharacterRange(start, length) };
+		Region[]            regions  = new Region[1];
 
 		format.SetMeasurableCharacterRanges(ranges);
 		regions = graphics.MeasureCharacterRanges(text, font, rect, format);
@@ -65,24 +80,24 @@ public partial class HexView
 
 	public HexViewHit HitTest(Point p)
 	{
-		if(	p.X >= LayoutDimensions.AddressRect.Left &&
-			p.X <= LayoutDimensions.AddressRect.Right &&
-			p.Y >= LayoutDimensions.AddressRect.Top &&
-			p.Y <= LayoutDimensions.AddressRect.Bottom)
+		if(p.X >= LayoutDimensions.AddressRect.Left &&
+		   p.X <= LayoutDimensions.AddressRect.Right &&
+		   p.Y >= LayoutDimensions.AddressRect.Top &&
+		   p.Y <= LayoutDimensions.AddressRect.Bottom)
 		{
 			return HitTestAddress(p);
 		}
 		else if(p.X >= LayoutDimensions.DataRect.Left &&
-				p.X <= LayoutDimensions.DataRect.Right &&
-				p.Y >= LayoutDimensions.DataRect.Top &&
-				p.Y <= LayoutDimensions.DataRect.Bottom)
+		        p.X <= LayoutDimensions.DataRect.Right &&
+		        p.Y >= LayoutDimensions.DataRect.Top &&
+		        p.Y <= LayoutDimensions.DataRect.Bottom)
 		{
 			return HitTestData(p);
 		}
 		else if(p.X >= LayoutDimensions.AsciiRect.Left &&
-				p.X <= LayoutDimensions.AsciiRect.Right &&
-				p.Y >= LayoutDimensions.AsciiRect.Top &&
-				p.Y <= LayoutDimensions.AsciiRect.Bottom)
+		        p.X <= LayoutDimensions.AsciiRect.Right &&
+		        p.Y >= LayoutDimensions.AsciiRect.Top &&
+		        p.Y <= LayoutDimensions.AsciiRect.Bottom)
 		{
 			return HitTestAscii(p);
 		}
@@ -123,7 +138,7 @@ public partial class HexView
 		long line = (long)((double)(p.Y + ScrollPosition) / LayoutDimensions.WordSize.Height);
 		long lineAddress = line * LayoutDimensions.BitsPerRow;
 		float halfDigitWidth = LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits / 2;
-		
+
 		float x = p.X;// - LayoutDimensions.DataRect.Left;
 		int word = 0;
 		while(word < LayoutDimensions.WordRects.Length && x > LayoutDimensions.WordRects[word].Right)
@@ -137,7 +152,7 @@ public partial class HexView
 		int i;
 		for(i = 1; i <= LayoutDimensions.NumWordDigits; ++i)
 		{
-			RectangleF r = MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, i, _Font);
+			RectangleF r = MeasureSubString(g, stringOfZeros, 0, i, _Font);
 			if(x <= r.Width - halfDigitWidth)
 				break;
 		}
@@ -165,7 +180,7 @@ public partial class HexView
 		int i;
 		for(i = 1; i <= LayoutDimensions.BitsPerRow / 8; ++i)
 		{
-			RectangleF r = MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, i, _Font);
+			RectangleF r = MeasureSubString(g, stringOfZeros, 0, i, _Font);
 			if(p.X - LayoutDimensions.AsciiRect.Left + halfDigitWidth <= r.Width)
 				break;
 		}
@@ -187,17 +202,16 @@ public partial class HexView
 	protected void RecalcDimensions()
 	{
 		Graphics g = CreateGraphics();
-		const string digits = "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 
 		if(_BytesPerWord < 8)
 		{
 			ulong maxWordValue = ((ulong)1 << (_BytesPerWord * 8)) - 1;
-			LayoutDimensions.NumWordDigits = (int)Math.Log(maxWordValue, _DataRadix) + 1; //(int)(Math.Log(maxWordValue) / Math.Log(_DataRadix)) + 1;
+			LayoutDimensions.NumWordDigits = (int)Math.Log(maxWordValue, _DataRadix) + 1;
 		}
 		else
-			LayoutDimensions.NumWordDigits = (int)Math.Log(UInt64.MaxValue, _DataRadix); //(int)(Math.Log(maxWordValue) / Math.Log(_DataRadix)) + 1;
+			LayoutDimensions.NumWordDigits = (int)Math.Log(UInt64.MaxValue, _DataRadix);
 		LayoutDimensions.BitsPerDigit = (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits;
-		LayoutDimensions.WordSize = MeasureSubString(g, digits, 0, LayoutDimensions.NumWordDigits, _Font).Size; //g.MeasureString(digits.Substring(0, LayoutDimensions.NumWordDigits), _Font);
+		LayoutDimensions.WordSize = MeasureSubString(g, stringOfZeros, 0, LayoutDimensions.NumWordDigits, _Font).Size;
 
 		// Calculate number of visible lines
 		LayoutDimensions.VisibleLines = (int)Math.Ceiling(ClientSize.Height / LayoutDimensions.WordSize.Height);
@@ -207,16 +221,16 @@ public partial class HexView
 			LayoutDimensions.NumAddressDigits = 1;
 		else
 			LayoutDimensions.NumAddressDigits = (int)(Math.Log(Document.Length) / Math.Log(_AddressRadix)) + 1;
-		SizeF AddressSize = MeasureSubString(g, digits, 0, LayoutDimensions.NumAddressDigits, _Font).Size;
-		LayoutDimensions.AddressRect = new RectangleF(	0,
-														0,
-														AddressSize.Width,
-														ClientSize.Height);
+		SizeF AddressSize = MeasureSubString(g, stringOfZeros, 0, LayoutDimensions.NumAddressDigits, _Font).Size;
+		LayoutDimensions.AddressRect = new RectangleF(0,
+		                                              0,
+		                                              AddressSize.Width,
+		                                              ClientSize.Height);
 
 		float RemainingWidth =	ClientSize.Width - 
-								LayoutDimensions.AddressRect.Width -
-								LayoutDimensions.LeftGutterWidth -
-								LayoutDimensions.RightGutterWidth;
+		                        LayoutDimensions.AddressRect.Width -
+		                        LayoutDimensions.LeftGutterWidth -
+		                        LayoutDimensions.RightGutterWidth;
 
 		if(VScroll.Visible)
 			RemainingWidth -= VScroll.Width;
@@ -235,15 +249,17 @@ public partial class HexView
 				++GroupsPerRow;
 				WordsPerRow = GroupsPerRow * _WordsPerGroup;
 				LayoutDimensions.BitsPerRow = WordsPerRow * _BytesPerWord * 8;
-				width = (((LayoutDimensions.WordSize.Width + LayoutDimensions.WordSpacing) * _WordsPerGroup) + wordGroupSpacing) * GroupsPerRow;
+				width = (((LayoutDimensions.WordSize.Width + LayoutDimensions.WordSpacing) 
+				          * _WordsPerGroup) + wordGroupSpacing) * GroupsPerRow;
 				width += LayoutDimensions.RightGutterWidth;
-				width += MeasureSubString(g, digits, 0, LayoutDimensions.BitsPerRow / 8, _Font).Width;
-	
+				width += MeasureSubString(g, stringOfZeros, 0, 
+				                          LayoutDimensions.BitsPerRow / 8, _Font).Width;
+
 			} while(width <= RemainingWidth);
-			
+
 			if(GroupsPerRow > 1)
 				--GroupsPerRow;
-			
+
 			WordsPerRow = GroupsPerRow * _WordsPerGroup;
 			LayoutDimensions.BitsPerRow = WordsPerRow * _BytesPerWord * 8;
 		}
@@ -253,14 +269,16 @@ public partial class HexView
 			GroupsPerRow = _WordsPerLine / _WordsPerGroup;
 			LayoutDimensions.BitsPerRow = _WordsPerLine * _BytesPerWord * 8;
 		}
-		
+
 		float x = LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth;
 		LayoutDimensions.WordRects = new RectangleF[WordsPerRow];
 		for(int group = 0; group < GroupsPerRow; ++group)
 		{
 			for(int word = 0; word < _WordsPerGroup; ++word)
 			{
-				LayoutDimensions.WordRects[(group * _WordsPerGroup) + word] = new RectangleF(x, 0, LayoutDimensions.WordSize.Width, LayoutDimensions.WordSize.Height);
+				RectangleF r = new RectangleF(x, 0, LayoutDimensions.WordSize.Width, 
+				                              LayoutDimensions.WordSize.Height);
+				LayoutDimensions.WordRects[(group * _WordsPerGroup) + word] = r;
 				x += LayoutDimensions.WordSize.Width + LayoutDimensions.WordSpacing;
 			}
 			if(_WordsPerGroup > 1)
@@ -268,23 +286,26 @@ public partial class HexView
 			x += wordGroupSpacing;
 		}
 		x -= wordGroupSpacing;
-			
-		
-		
-		LayoutDimensions.DataRect = new RectangleF(	LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth,
-													0,
-													x - (LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth),
-													ClientSize.Height);
 
 
-		SizeF AsciiSize = MeasureSubString(g, digits, 0, LayoutDimensions.BitsPerRow / 8, _Font).Size;
-		LayoutDimensions.AsciiRect = new RectangleF(	LayoutDimensions.DataRect.Right + LayoutDimensions.RightGutterWidth,
-														0,
-														AsciiSize.Width,
-														ClientSize.Height);
+
+		LayoutDimensions.DataRect = new RectangleF(LayoutDimensions.AddressRect.Width + 
+		                                           LayoutDimensions.LeftGutterWidth,
+		                                           0,
+		                                           x - (LayoutDimensions.AddressRect.Width + 
+		                                                LayoutDimensions.LeftGutterWidth),
+		                                           ClientSize.Height);
+
+
+		SizeF AsciiSize = MeasureSubString(g, stringOfZeros, 0, LayoutDimensions.BitsPerRow / 8, _Font).Size;
+		LayoutDimensions.AsciiRect = new RectangleF(LayoutDimensions.DataRect.Right + LayoutDimensions.RightGutterWidth,
+		                                            0,
+		                                            AsciiSize.Width,
+		                                            ClientSize.Height);
 
 		const int IntMax = 0x6FFFFFFF;
-		ScrollHeight = (long)((((Document.Length * 8) / LayoutDimensions.BitsPerRow) + 1) * LayoutDimensions.WordSize.Height);
+		ScrollHeight = (long)((((Document.Length * 8) / LayoutDimensions.BitsPerRow) + 1) * 
+		                      LayoutDimensions.WordSize.Height);
 
 		if(ScrollHeight <= ClientSize.Height)
 		{
@@ -312,7 +333,7 @@ public partial class HexView
 			InsertCaret.Size = new Size(2, (int)LayoutDimensions.WordSize.Height);
 		else
 			InsertCaret.Size = new Size((int)(LayoutDimensions.WordSize.Width / LayoutDimensions.NumWordDigits) + 1, 
-	                            		(int)LayoutDimensions.WordSize.Height);
+			                            (int)LayoutDimensions.WordSize.Height);
 
 		g.Dispose();
 	}
@@ -324,10 +345,10 @@ public partial class HexView
 		y -= ScrollPosition;
 
 		address -= (address / LayoutDimensions.BitsPerRow) * LayoutDimensions.BitsPerRow;
-		
+
 		int word = (int)(address / 8) / _BytesPerWord;
 		float x = LayoutDimensions.WordRects[word].Left;
-		
+
 		address -= word * _BytesPerWord * 8;
 		address /= (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits;
 		if(address >= LayoutDimensions.NumWordDigits)
@@ -335,13 +356,13 @@ public partial class HexView
 		if(address > 0)
 		{
 			Graphics g = CreateGraphics();
-			x += MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, (int)address, _Font).Width;
+			x += MeasureSubString(g, stringOfZeros, 0, (int)address, _Font).Width;
 			g.Dispose();
 		}
-			
+
 		return new Point((int)x + 1, (int)(y + LayoutDimensions.WordSize.Height));
 	}
-	
+
 	protected Point AddressToClientPointAscii(long address)
 	{
 		double y = address / LayoutDimensions.BitsPerRow;
@@ -350,17 +371,17 @@ public partial class HexView
 
 		address -= (address / LayoutDimensions.BitsPerRow) * LayoutDimensions.BitsPerRow;
 		address /= 8;
-		
+
 		float x = LayoutDimensions.AsciiRect.Left;
-		
+
 		Graphics g = CreateGraphics();
-		x += MeasureSubString(g, "00000000000000000000000000000000000000000000000000000000000000000", 0, (int)address, _Font).Width;
+		x += MeasureSubString(g, stringOfZeros, 0, (int)address, _Font).Width;
 		g.Dispose();
-			
+
 		return new Point((int)x, (int)(y + LayoutDimensions.WordSize.Height));
 	}
-	
-	
+
+
 	protected GraphicsPath CreateRoundedRectPath(RectangleF rect)
 	{
 		Size	CornerSize = new Size(10, 10);
@@ -382,7 +403,8 @@ public partial class HexView
 	}
 
 	protected delegate Point AddressToPointDelegate(long address);
-	protected GraphicsPath CreateRoundedSelectionPath(long startAddress, long endAddress, float yOffset, AddressToPointDelegate addrToPoint)
+	protected GraphicsPath CreateRoundedSelectionPath(long startAddress, long endAddress, float yOffset, 
+	                                                  AddressToPointDelegate addrToPoint)
 	{
 		if(startAddress > endAddress)
 		{
@@ -390,7 +412,7 @@ public partial class HexView
 			startAddress = endAddress;
 			endAddress = tmp;
 		}
-		
+
 		--endAddress;
 
 		yOffset = 0 - yOffset;
@@ -472,7 +494,7 @@ public partial class HexView
 			PointF b = addrToPoint((lastVisibleRow + 1) * LayoutDimensions.BitsPerRow + LayoutDimensions.BitsPerRow - 1);
 			b.Y += 10 + yOffset;
 			b.X += 10;
-			path.AddLine(b, a);		
+			path.AddLine(b, a);
 		}
 		else if(endCol < LayoutDimensions.BitsPerRow && endRow > startRow)
 		{
@@ -521,52 +543,71 @@ public partial class HexView
 	{
 		base.OnPaint(e);
 		
-        e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+		e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
 
 		double pixelOffset = ScrollPosition + e.ClipRectangle.Top;
 		long firstLine = (long)(pixelOffset / LayoutDimensions.WordSize.Height);
 
 		double drawingOffset = e.ClipRectangle.Top - (pixelOffset % LayoutDimensions.WordSize.Height);
 		long dataOffset = firstLine * (LayoutDimensions.BitsPerRow / 8);
-		int visibleLines = (int)Math.Ceiling((e.ClipRectangle.Bottom - drawingOffset) / LayoutDimensions.WordSize.Height) + 1;
+		int visibleLines = (int)Math.Ceiling((e.ClipRectangle.Bottom - drawingOffset) / 
+		                                      LayoutDimensions.WordSize.Height) + 1;
 		if(visibleLines > ((Document.Length - dataOffset) / (LayoutDimensions.BitsPerRow / 8)) + 1)
 			visibleLines = (int)((Document.Length - dataOffset) / (LayoutDimensions.BitsPerRow / 8)) + 1;
 		long dataEndOffset = dataOffset + (visibleLines * (LayoutDimensions.BitsPerRow / 8));
 		if(dataEndOffset > Document.Length)
 			dataEndOffset = Document.Length;
 
-		e.Graphics.FillRectangle(new SolidBrush(Color.FromKnownColor(KnownColor.ButtonFace)), 0, 0, LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, LayoutDimensions.AddressRect.Height);
-		e.Graphics.DrawLine(new Pen(Color.FromKnownColor(KnownColor.ButtonShadow)), LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, 0, LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, LayoutDimensions.AddressRect.Height);
+		e.Graphics.FillRectangle(new SolidBrush(Color.FromKnownColor(KnownColor.ButtonFace)), 0, 0, 
+		                         LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, 
+		                         LayoutDimensions.AddressRect.Height);
+		e.Graphics.DrawLine(new Pen(Color.FromKnownColor(KnownColor.ButtonShadow)), 
+		                    LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, 
+		                    0, 
+		                    LayoutDimensions.AddressRect.Width + LayoutDimensions.LeftGutterWidth / 2, 
+		                    LayoutDimensions.AddressRect.Height);
 
 		if(_EvenColumnColor != Color.Transparent && _EvenColumnColor != BackColor)
 		{
 			for(int i = 0; i < LayoutDimensions.WordRects.Length; ++i)
+			{
 				if(i % 2 == 0)
-					e.Graphics.FillRectangle(new SolidBrush(_EvenColumnColor), new RectangleF(LayoutDimensions.WordRects[i].Left,
-					                                                                          0,
-					                                                                          LayoutDimensions.WordRects[i].Width,
-					                                                                          ClientRectangle.Height));
+				{
+					e.Graphics.FillRectangle(new SolidBrush(_EvenColumnColor), 
+					                         new RectangleF(LayoutDimensions.WordRects[i].Left,
+					                         0,
+					                         LayoutDimensions.WordRects[i].Width,
+					                         ClientRectangle.Height));
+				}
+			}
 		}
 
 		if(_OddColumnColor != Color.Transparent && _OddColumnColor != BackColor)
 		{
 			for(int i = 0; i < LayoutDimensions.WordRects.Length; ++i)
+			{
 				if(i % 2 == 0)
-					e.Graphics.FillRectangle(new SolidBrush(_OddColumnColor), new RectangleF(LayoutDimensions.WordRects[i].Left,
-					                                                                         0,
-					                                                                         LayoutDimensions.WordRects[i].Width,
-					                                                                         ClientRectangle.Height));
+				{
+					e.Graphics.FillRectangle(new SolidBrush(_OddColumnColor), 
+					                         new RectangleF(LayoutDimensions.WordRects[i].Left,
+					                         0,
+					                         LayoutDimensions.WordRects[i].Width,
+					                         ClientRectangle.Height));
+				}
+			}
 		}
-		
+
 		foreach(SelectionRange sel in Highlights)
 		{
 			long start = sel.Start;
 			long end = sel.End;
+
 			if(start > end)
 			{
 				start = sel.End;
 				end = sel.Start;
 			}
+
 			if(start / 8 <= dataEndOffset && end / 8 >= dataOffset)
 			{
 				GraphicsPath p = CreateRoundedSelectionPath(start, end, (float)0, AddressToClientPoint);
@@ -583,11 +624,13 @@ public partial class HexView
 		{
 			long start = Selection.Start;
 			long end = Selection.End;
+
 			if(start > end)
 			{
 				start = Selection.End;
 				end = Selection.Start;
 			}
+
 			if(start / 8 <= dataEndOffset && end / 8 >= dataOffset)
 			{
 				GraphicsPath p = CreateRoundedSelectionPath(start, end, (float)0, AddressToClientPoint);
@@ -596,7 +639,7 @@ public partial class HexView
 
 				p = CreateRoundedSelectionPath(start, end, (float)0, AddressToClientPointAscii);
 				e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 200, 255, 200)), p);
-				e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);			
+				e.Graphics.DrawPath(new Pen(Color.LightGreen, 1), p);
 			}
 		}
 
@@ -604,15 +647,18 @@ public partial class HexView
 		for(int line = 0; line < visibleLines; ++line)
 		{
 			str = IntToRadixString((ulong)dataOffset, _AddressRadix, LayoutDimensions.NumAddressDigits);
-			RectangleF rect = new RectangleF(LayoutDimensions.AddressRect.Left, (float)drawingOffset + line * LayoutDimensions.WordSize.Height, LayoutDimensions.AddressRect.Width, LayoutDimensions.WordSize.Height);
+			RectangleF rect = new RectangleF(LayoutDimensions.AddressRect.Left, 
+			                                 (float)drawingOffset + line * LayoutDimensions.WordSize.Height, 
+			                                 LayoutDimensions.AddressRect.Width, 
+			                                 LayoutDimensions.WordSize.Height);
 			e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
 
 
 			str = String.Empty;
-			rect = new RectangleF(	LayoutDimensions.DataRect.Left, 
-									(float)drawingOffset + line * LayoutDimensions.WordSize.Height,
-									LayoutDimensions.WordSize.Width,
-									LayoutDimensions.WordSize.Height);
+			rect = new RectangleF(LayoutDimensions.DataRect.Left, 
+			                      (float)drawingOffset + line * LayoutDimensions.WordSize.Height,
+			                      LayoutDimensions.WordSize.Width,
+			                      LayoutDimensions.WordSize.Height);
 
 
 			int off = 0;
@@ -620,11 +666,14 @@ public partial class HexView
 			{
 				if(dataOffset + off < Document.Length)
 				{
-					str = IntToRadixString(GetWord((dataOffset + off) * 8), _DataRadix, LayoutDimensions.NumWordDigits);
+					str = IntToRadixString(GetWord((dataOffset + off) * 8), 
+					                               _DataRadix, 
+					                               LayoutDimensions.NumWordDigits);
 					e.Graphics.DrawString(str, _Font, _Brush, wordRect.Left, rect.Top);
 				}
 				else
-					e.Graphics.DrawString(String.Empty.PadLeft(LayoutDimensions.NumWordDigits, '.'), _Font, _GrayBrush, wordRect.Left, rect.Top);
+					e.Graphics.DrawString(String.Empty.PadLeft(LayoutDimensions.NumWordDigits, '.'), 
+					                      _Font, _GrayBrush, wordRect.Left, rect.Top);
 				
 				off += _BytesPerWord;
 			}
@@ -633,7 +682,10 @@ public partial class HexView
 			long i;
 			for(i = 0; i < LayoutDimensions.BitsPerRow / 8 && dataOffset + i < Document.Length; ++i)
 				str += AsciiChar[Document[dataOffset + i]];
-			rect = new RectangleF(LayoutDimensions.AsciiRect.Left, (float)drawingOffset + line * LayoutDimensions.WordSize.Height, LayoutDimensions.AsciiRect.Width, LayoutDimensions.WordSize.Height);
+			rect = new RectangleF(LayoutDimensions.AsciiRect.Left, 
+			                      (float)drawingOffset + line * LayoutDimensions.WordSize.Height, 
+			                      LayoutDimensions.AsciiRect.Width, 
+			                      LayoutDimensions.WordSize.Height);
 			e.Graphics.DrawString(str, _Font, _Brush, rect.Location);
 			
 			if(i < LayoutDimensions.BitsPerRow / 8)
@@ -644,7 +696,7 @@ public partial class HexView
 			}
 
 			dataOffset += LayoutDimensions.BitsPerRow / 8;
-		}		
+		}
 	}
 
 
@@ -672,14 +724,14 @@ public partial class HexView
 	}
 
 	[DllImport("user32.dll")]
-	private static extern int ScrollWindowEx(	System.IntPtr hWnd, 
-												int dx, 
-												int dy, 
-												[MarshalAs(UnmanagedType.LPStruct)] RECT prcScroll,
-												[MarshalAs(UnmanagedType.LPStruct)]	RECT prcClip,
-												System.IntPtr hrgnUpdate,
-												[MarshalAs(UnmanagedType.LPStruct)] RECT prcUpdate,
-												System.UInt32 flags); 
+	private static extern int ScrollWindowEx(System.IntPtr hWnd, 
+	                                         int dx, 
+	                                         int dy, 
+	                                         [MarshalAs(UnmanagedType.LPStruct)] RECT prcScroll,
+	                                         [MarshalAs(UnmanagedType.LPStruct)] RECT prcClip,
+	                                         System.IntPtr hrgnUpdate,
+	                                         [MarshalAs(UnmanagedType.LPStruct)] RECT prcUpdate,
+	                                         System.UInt32 flags); 
 #endif
 }
-	
+

@@ -17,7 +17,7 @@ public partial class PieceBuffer
 	protected abstract class Block : IBlock
 	{
 		protected static Dictionary<string, Block> OpenBlocks = new Dictionary<string,Block>(); 
-		
+
 		protected long _Length;
 		public long Length { get { return _Length; } }
 		protected long _Used;
@@ -26,7 +26,7 @@ public partial class PieceBuffer
 			get { return _Used; }
 			set { _Used = value; }
 		}
-		
+
 		public abstract byte this[long index] { get; set; }
 		public abstract void GetBytes(long start, long length, byte[] dst, long dstOffset);
 		public abstract void SetBytes(long start, long length, byte[] src, long srcOffset);
@@ -74,19 +74,19 @@ public partial class PieceBuffer
 			throw new Exception("Can't SetBytes() on a ConstantBlock");
 		}
 	}
-	
+
 	protected class FileBlock : Block, IDisposable
 	{
-		private FileStream	FS;
-		private byte[]		Buffer = new byte[4096];
-		private uint		BufferedLength = 0;
-		private uint		MaxLength = 4096;
-		private long		StartAddress = 0;
-		private object      Lock = new object();
-				
+		private FileStream FS;
+		private byte[]     Buffer = new byte[4096];
+		private uint       BufferedLength = 0;
+		private uint       MaxLength = 4096;
+		private long       StartAddress = 0;
+		private object     Lock = new object();
+
 		public override byte this[long i]
 		{
-			get	
+			get
 			{
 				lock(Lock)
 				{
@@ -107,7 +107,7 @@ public partial class PieceBuffer
 			}
 			set	{ }
 		}
-		
+
 		private FileBlock(string filename)
 		{
 			FS = new FileStream(filename, FileMode.Open, FileAccess.Read);
@@ -154,7 +154,7 @@ public partial class PieceBuffer
 				}
 			}
 		}
-		
+
 		public override void SetBytes(long start, long length, byte[] src, long srcOffset)
 		{
 			throw new Exception("Can't SetBytes() on a FileBlock");
@@ -172,18 +172,18 @@ public partial class PieceBuffer
 			GC.SuppressFinalize(this);			
 		}
 	}
-	
+
 	protected class MemoryBlock : Block
 	{
 		private static int BlockNum = 0;
 		public byte[] Buffer;
-		
+
 		public override byte this[long index]
 		{
 			get { return Buffer[index]; }
 			set { Buffer[index] = value; }
 		}
-		
+
 		public MemoryBlock(long size)
 		{
 			Buffer = new byte[size];
@@ -192,15 +192,15 @@ public partial class PieceBuffer
 			
 			OpenBlocks.Add("Memory" + (BlockNum++), this);
 		}
-		
+
 		public override void GetBytes(long start, long length, byte[] dest, long destOffset)
 		{
 			Array.Copy(Buffer, start, dest, destOffset, length);
 		}
-		
+
 		public override void SetBytes(long start, long length, byte[] src, long srcOffset)
 		{
 			Array.Copy(src, srcOffset, Buffer, start, length);
 		}
 	}
-}
+

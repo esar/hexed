@@ -1,23 +1,24 @@
 ﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
   <Files>
     <File name="Welcome" />
-    <File name="HexEd.cs" line="48" column="24" />
-    <File name="StructurePlugin/Record.cs" line="344" column="51" />
-    <File name="StatisticsPlugin/Statistics.cs" line="98" column="6" />
-    <File name="SelectionPanel.cs" line="100" column="41" />
-    <File name="PieceBufferTest.cs" line="1" column="14" />
-    <File name="HexView.cs" line="587" column="28" />
-    <File name="HexView.Drawing.cs" line="608" column="22" />
-    <File name="PieceBuffer.cs" line="1583" column="23" />
-    <File name="SearchPlugin/Search.cs" line="241" column="88" />
+    <File name="HexEd.cs" line="378" column="28" />
+    <File name="ProgressNotification.cs" line="49" column="55" />
+    <File name="PieceBuffer.Blocks.cs" line="174" column="3" />
+    <File name="SelectionPanel.cs" line="191" column="2" />
+    <File name="HexView.cs" line="201" column="23" />
+    <File name="Document.cs" line="47" column="65" />
   </Files>
   <Views>
     <ViewMemento id="ProjectPad">
       <Node expanded="True">
-        <Node name="SearchPlugin" expanded="True" />
-        <Node name="StatisticsPlugin" expanded="True">
-          <Node name="Statistics.cs" selected="True" />
+        <Node name="CalculatorPlugin" expanded="True" />
+        <Node name="ChecksumPlugin" expanded="True" />
+        <Node name="hexed" expanded="True">
+          <Node name="References" expanded="True" selected="True" />
         </Node>
+        <Node name="PythonConsolePlugin" expanded="True" />
+        <Node name="SearchPlugin" expanded="True" />
+        <Node name="StatisticsPlugin" expanded="True" />
         <Node name="StructurePlugin" expanded="True" />
       </Node>
     </ViewMemento>
@@ -29,7 +30,7 @@
     </ViewMemento>
   </Views>
   <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/StatisticsPlugin/Statistics.cs" />
+    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
     <Property key="ActiveConfiguration" value="Debug" />
   </Properties>
 </UserCombinePreferences>

@@ -40,10 +40,12 @@ public partial class HexView
 				{
 					if(Selection.Length > 0)
 						Selection.Set(Selection.End, Selection.End);
-					else if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
-				        Selection.Set(Selection.End + 8, Selection.End + 8);
+					else if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || 
+					                                 DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
+						Selection.Set(Selection.End + 8, Selection.End + 8);
 					else
-						Selection.Set(Selection.End + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
+						Selection.Set(Selection.End + LayoutDimensions.BitsPerDigit, 
+						              Selection.End + LayoutDimensions.BitsPerDigit);
 				}
 				EnsureVisible(Selection.End);
 				break;
@@ -54,10 +56,12 @@ public partial class HexView
 				{
 					if(Selection.Length > 0)
 						Selection.Set(Selection.Start, Selection.Start);
-					else if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
+					else if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || 
+					                                 DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
 						Selection.Set(Selection.Start - 8, Selection.Start - 8);
 					else
-						Selection.Set(Selection.Start - LayoutDimensions.BitsPerDigit, Selection.Start - LayoutDimensions.BitsPerDigit);
+						Selection.Set(Selection.Start - LayoutDimensions.BitsPerDigit, 
+						              Selection.Start - LayoutDimensions.BitsPerDigit);
 				}
 				EnsureVisible(Selection.End);
 				break;
@@ -65,7 +69,8 @@ public partial class HexView
 				if(e.Shift)
 					Selection.End -= LayoutDimensions.BitsPerRow;
 				else
-					Selection.Set(Selection.Start - LayoutDimensions.BitsPerRow, Selection.Start - LayoutDimensions.BitsPerRow);
+					Selection.Set(Selection.Start - LayoutDimensions.BitsPerRow, 
+					              Selection.Start - LayoutDimensions.BitsPerRow);
 				EnsureVisible(Selection.End);
 				break;
 			case Keys.Down:
@@ -111,7 +116,8 @@ public partial class HexView
 				if((e.Modifiers & Keys.Control) != 0)
 					addr = Document.Length * 8;
 				else
-					addr = (((Selection.End / LayoutDimensions.BitsPerRow) + 1) * LayoutDimensions.BitsPerRow) - LayoutDimensions.BitsPerDigit;
+					addr = (((Selection.End / LayoutDimensions.BitsPerRow) + 1) 
+					        * LayoutDimensions.BitsPerRow) - LayoutDimensions.BitsPerDigit;
 				if(e.Shift)
 					Selection.End = addr + LayoutDimensions.BitsPerDigit;
 				else
@@ -134,10 +140,12 @@ public partial class HexView
 				else
 				{
 					if(e.KeyCode == Keys.Delete)
-						Document.Remove(Selection.BufferRange.Start.Position, Selection.BufferRange.Start.Position + 1);
+						Document.Remove(Selection.BufferRange.Start.Position, 
+						                Selection.BufferRange.Start.Position + 1);
 					else
 					{
-						Document.Remove(Selection.BufferRange.Start.Position - 1, Selection.BufferRange.Start.Position);
+						Document.Remove(Selection.BufferRange.Start.Position - 1, 
+						                Selection.BufferRange.Start.Position);
 						Selection.Set(Selection.Start - 8, Selection.End - 8);
 					}
 				}
@@ -146,12 +154,13 @@ public partial class HexView
 				break;
 		}
 	}
-	
+
 	protected override void OnKeyPress(KeyPressEventArgs e)
 	{
 		int x = -1;
 		
-		if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
+		if(DragStartHit != null && (DragStartHit.Type == HexViewHit.HitType.Ascii || 
+		                            DragStartHit.Type == HexViewHit.HitType.AsciiSelection))
 		{
 			x = e.KeyChar;
 
@@ -191,7 +200,7 @@ public partial class HexView
 			
 			if(x < 0 || x >= _DataRadix)
 				return;
-		
+
 			if(Selection.Length != 0)
 			{
 				Document.Insert(Selection.BufferRange.Start, Selection.BufferRange.End, (byte)x);
@@ -205,7 +214,8 @@ public partial class HexView
 						if(Selection.Start / 8 < Document.Length)
 						{
 							UpdateWord(Selection.Start, x);
-							Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
+							Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, 
+							              Selection.End + LayoutDimensions.BitsPerDigit);
 						}
 						break;
 					case EditMode.Insert:
@@ -219,10 +229,12 @@ public partial class HexView
 							Console.WriteLine("Updating at " + Selection.Start);
 							UpdateWord(Selection.Start, x);
 						}
-						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, Selection.End + LayoutDimensions.BitsPerDigit);
+						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, 
+						              Selection.End + LayoutDimensions.BitsPerDigit);
 						break;
 				}
 			}
 		}
 	}
 }
+
