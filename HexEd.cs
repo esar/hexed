@@ -1018,18 +1018,13 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 	}
 
 	private void OnWindowDuplicate(object sender, EventArgs e)
-	{/*
-		HexViewForm form = new HexViewForm(ActiveView.Document);
-		form.Text = ActiveMdiChild.Text;
-		form.MdiParent= this;
-		form.View.Selection.Changed += new EventHandler(OnSelectionChanged);
-		form.View.EditModeChanged += new EventHandler(OnEditModeChanged);
-		form.Show();*/
+	{
+		CreateView(ActiveView.Document);
 	}
 
 	private void OnWindowSplit(object sender, EventArgs e)
 	{
-		//((HexViewForm)ActiveMdiChild).Split();
+		((HexViewForm)_TabbedGroups.ActiveTabPage).Split();
 	}
 	
 	protected void OnWindowOpenWindows(object sender, EventArgs e)
