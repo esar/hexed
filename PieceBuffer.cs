@@ -1545,7 +1545,7 @@ public partial class PieceBuffer
 			InternalMark e = (InternalMark)end;
 
 			if(s.Piece == e.Piece)
-			
+			{
 				if(length > e.Position - s.Position)
 					length = e.Position - s.Position;
 

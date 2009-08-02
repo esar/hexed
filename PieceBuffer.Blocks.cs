@@ -203,4 +203,5 @@ public partial class PieceBuffer
 			Array.Copy(src, srcOffset, Buffer, start, length);
 		}
 	}
+}
 
