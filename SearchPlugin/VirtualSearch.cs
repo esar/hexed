@@ -123,7 +123,7 @@ namespace SearchPlugin
 		
 		public bool IsBusy
 		{
-			get { return Worker.IsBusy; }
+			get { return Worker != null && Worker.IsBusy; }
 		}
 		
 		public SearchResult this[long index]
@@ -154,15 +154,38 @@ namespace SearchPlugin
 			FirstCachedResult = 0;
 			Array.Clear(CachedResults, 0, CACHE_SIZE);
 			RestartPositions.Clear();
+
+			if(ResultCountChanged != null)
+				ResultCountChanged(this, EventArgs.Empty);
 		
+			NextWorkerIndex = -1;
+			NextWorkerCount = 0;
+			if(IsBusy)
+			{
+				ContinueFullScanIndex = 0;
+				ContinueFullScanDataOffset = 0;
+				Worker.CancelAsync();
+			}
+			else
+			{
+				ContinueFullScanIndex = -1;
+				ContinueFullScanDataOffset = -1;
+				RunWorker(0, 0, -1);
+			}
+		}
+		
+		public void Cancel()
+		{
+			Document = null;
+			Pattern = null;
 			NextWorkerIndex = -1;
 			NextWorkerCount = 0;
 			ContinueFullScanIndex = -1;
 			ContinueFullScanDataOffset = -1;
-			
-			RunWorker(0, 0, -1);
+			if(IsBusy && !Worker.CancellationPending)
+				Worker.CancelAsync();
 		}
-		
+
 		public void PreCache(long index)
 		{
 			if(WorkerCount <= 0 || index < WorkerIndex || index >= WorkerIndex + WorkerCount)
@@ -200,6 +223,9 @@ namespace SearchPlugin
 		{
 			if(Worker != null)
 			{
+				if(Worker.IsBusy && !Worker.CancellationPending)
+					Worker.CancelAsync();
+
 				Worker.DoWork -= OnWorkerDoWork;
 				Worker.ProgressChanged -= OnWorkerProgressChanged;
 				Worker.RunWorkerCompleted -= OnWorkerComplete;
@@ -306,14 +332,15 @@ namespace SearchPlugin
 				ResultCountChanged(this, EventArgs.Empty);
 			
 			if(ProgressChanged != null)
-				ProgressChanged(this, new VirtualSearchProgressEventArgs((int)((100.0 / Document.Length) * progress.EndOffset), progress.MBps));
+				ProgressChanged(this, new VirtualSearchProgressEventArgs((int)((100.0 / progress.Args.Document.Length) * progress.EndOffset), progress.MBps));
 		}
 		
 		protected void OnWorkerComplete(object sender, RunWorkerCompletedEventArgs e)
 		{
 			WorkerProgress result = (WorkerProgress)e.Result;
 
-			if(result.Args.MaxResults == -1)
+			// If we were doing a full scan on the current document for the current pattern
+			if(result.Args.Document == Document && result.Args.Pattern == Pattern && result.Args.MaxResults == -1)
 			{
 				if(result.Cancelled)
 				{

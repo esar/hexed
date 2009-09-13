@@ -113,6 +113,7 @@ namespace SearchPlugin
 		DocumentMatchIndicator MatchIndicator = new DocumentMatchIndicator();
 		ListView ListView = new ListView();
 		ToolStrip ToolBar = new ToolStrip();
+		ToolStripButton SearchButton;
 		VirtualSearch Search;
 		ProgressNotification Progress;
 		bool FoundFirstHit;
@@ -163,7 +164,8 @@ namespace SearchPlugin
 			Controls.Add(MatchIndicator);
 			
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
-			ToolBar.Items.Add(Host.CreateToolButton("Search/Search"));
+			SearchButton = Host.CreateToolButton("Search/Search");
+			ToolBar.Items.Add(SearchButton);
 			ToolBar.Items.Add(new ToolStripSeparator());
 			ToolBar.Items.Add(Host.CreateToolButton("Search/First"));
 			ToolBar.Items.Add(Host.CreateToolButton("Search/Prev"));
@@ -182,6 +184,8 @@ namespace SearchPlugin
 		{
 			if(Search.IsBusy)
 			{
+				SearchButton.Image = Host.Settings.Image("stop_16.png");
+
 				if(Progress == null)
 				{
 					Progress = new ProgressNotification();
@@ -192,6 +196,8 @@ namespace SearchPlugin
 			}
 			else
 			{
+				SearchButton.Image = Host.Settings.Image("search_16.png");
+
 				Host.ProgressNotifications.Remove(Progress);
 				Progress = null;
 			}
@@ -273,8 +279,22 @@ namespace SearchPlugin
 		
 		protected void OnSearch(object sender, EventArgs e)
 		{
+			if(Search.IsBusy)
+			{
+				Search.Cancel();
+				return;
+			}
+
 			Host.BringToFront(this);
 			
+			if(Host.ActiveView == null)
+			{
+				MessageBox.Show(this, "No document is open", "Search", 
+				                MessageBoxButtons.OK, 
+				                MessageBoxIcon.Error);
+				return;
+			}
+
 			SearchDialog dlg = new SearchDialog();
 			dlg.StartPosition = FormStartPosition.CenterParent;
 			if(dlg.ShowDialog() != DialogResult.OK)
@@ -284,7 +304,7 @@ namespace SearchPlugin
 			FoundFirstHit = false;
 			MatchIndicator.Reset(Host.ActiveView.Document.Length, 512);
 			Search.Initialize(Host.ActiveView.Document, dlg.Pattern, MatchIndicator.Matches);
-			ListView.Refresh();
+			//ListView.Refresh();
 		}
 		
 		protected void OnListViewSelectedIndexChanged(object sender, EventArgs e)
