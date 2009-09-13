@@ -247,6 +247,7 @@ class SelectionPanel : Panel
 			asciiItem.ForeColor = Color.FromKnownColor(KnownColor.GrayText);
 		}
 
+#if !MONO
 		try
 		{
 			unicodeItem.Text = view.Selection.AsUnicode();
@@ -268,5 +269,11 @@ class SelectionPanel : Panel
 			utf8Item.Text = "[Invalid Selection]";
 			utf8Item.ForeColor = Color.FromKnownColor(KnownColor.GrayText);
 		}
+#else
+		unicodeItem.Text = "[Disabled due to mono bug]";
+		unicodeItem.ForeColor = Color.FromKnownColor(KnownColor.GrayText);
+		utf8Item.Text = "[Disabled due to mono bug]";
+		utf8Item.ForeColor = Color.FromKnownColor(KnownColor.GrayText);
+#endif
 	}
 }
