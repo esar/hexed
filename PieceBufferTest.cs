@@ -49,28 +49,11 @@ public class PieceBufferTest
 	public string GetMarks()
 	{
 		return b.Marks.ToString();
-		/*
-		StringBuilder tmp = new StringBuilder();
-		
-		PieceBuffer.Mark mark = b.Marks;
-		while((mark = mark.Next) != b.Marks)
-			tmp.AppendFormat("{{{0},{1}}}", mark.Offset, mark.Position);
-		
-		return tmp.ToString();*/		
 	}
 	
 	public string GetPieces()
 	{
 		return b.DebugGetPieces();
-		/*
-		StringBuilder tmp = new StringBuilder();;
-	
-		PieceBuffer.Piece p = b.Pieces;
-		while((p = p.Next) != b.Pieces)
-			tmp.AppendFormat("{{{0},{1}}}", p.Start, p.End);
-		
-		return tmp.ToString();
-		*/
 	}
 	
 	public string GetText()
