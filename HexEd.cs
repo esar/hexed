@@ -404,11 +404,11 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		Commands.Add("File/Save", "Saves the current document", "&Save",    
 		             Settings.Instance.Image("save_16.png"), 
 		             new Keys[] { Keys.Control | Keys.S }, 
-		             null, OnUpdateUiElement);
+		             OnFileSave, OnUpdateUiElement);
 		Commands.Add("File/Save As", "Saves the current document with the specified file name", "Save &As", 
 		             null,                                   
 		             null,             
-		             null, OnUpdateUiElement);
+		             OnFileSaveAs, OnUpdateUiElement);
 		Commands.Add("File/Save All", "Saves all open documents", "Save All", 
 		             Settings.Instance.Image("saveall_16.png"), 
 		             new Keys[] { Keys.Control | Keys.Shift | Keys.S }, 
@@ -989,6 +989,35 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		}
 	}
 
+	protected void OnFileSave(object sender, EventArgs e)
+	{
+		if(ActiveView != null)
+		{
+			PieceBuffer.SavePlan plan = ActiveView.Document.BuildSavePlan();
+			ConfirmSaveDialog dlg = new ConfirmSaveDialog(plan);
+			if(dlg.ShowDialog() == DialogResult.OK)
+			{
+				if(dlg.SaveInPlace)
+					ActiveView.Document.SaveInPlace();
+				else
+					ActiveView.Document.Save();
+			}
+		}
+	}
+
+	protected void OnFileSaveAs(object sender, EventArgs e)
+	{
+		if(ActiveView != null)
+		{
+			SaveFileDialog sfd = new SaveFileDialog();
+			sfd.Title = "Select File";
+			sfd.Filter = "All Files (*.*)|*.*";
+
+			if(sfd.ShowDialog() == DialogResult.OK)
+				ActiveView.Document.SaveAs(sfd.FileName);
+		}
+	}
+
 	protected void OnFileClose(object sender, EventArgs e)
 	{
 		if(_TabbedGroups.ActiveTabPage != null)
@@ -1237,7 +1266,10 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 	{
 		Documents[e.Form.View.Document].Remove(e.Form);
 		if(Documents[e.Form.View.Document].Count == 0)
+		{
+			e.Form.View.Document.Close();
 			Documents.Remove(e.Form.View.Document);
+		}
 		OpenWindowMenu.Remove(e.Form);
 	}
 	

@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.IO;
 
 
-public partial class PieceBuffer
+public partial class PieceBuffer : IDisposable
 {
 	public class BufferChangedEventArgs : EventArgs
 	{
@@ -30,6 +31,110 @@ public partial class PieceBuffer
 		}
 	}
 	
+	public class SavePlan
+	{
+		protected long _TotalLength;
+		public long TotalLength
+		{
+			get { return _TotalLength; }
+		}
+
+		protected long _WriteLength;
+		public long WriteLength
+		{
+			get { return _WriteLength; }
+		}
+
+		protected long _BlockCount;
+		public long BlockCount
+		{
+			get { return _BlockCount; }
+		}
+
+		protected bool _IsInPlace;
+		public bool IsInPlace
+		{
+			get { return _IsInPlace; }
+		}
+	}
+
+	protected class InternalSavePlan : SavePlan
+	{
+		public Piece Pieces;
+		public List< KeyValuePair<long, Piece> > InPlacePieces;
+		public new long TotalLength
+		{
+			get { return _TotalLength; }
+			set { _TotalLength = value; }
+		}
+		public new long WriteLength
+		{
+			get { return _WriteLength; }
+			set { _WriteLength = value; }
+		}
+		public new long BlockCount
+		{
+			get { return _BlockCount; }
+			set { _BlockCount = value; }
+		}
+		public new bool IsInPlace
+		{
+			get { return _IsInPlace; }
+			set { _IsInPlace = value; }
+		}
+
+		public override string ToString()
+		{
+			System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+			sb.Append("SavePlan:\n");
+			sb.Append("    InPlace: " + IsInPlace + "\n");
+			sb.Append("    TotalLength: " + TotalLength + "\n");
+			sb.Append("    WriteLength: " + WriteLength + "\n");
+			sb.Append("    Blocks: " + BlockCount + "\n");
+			if(IsInPlace)
+			{
+				foreach(KeyValuePair<long, Piece> kvp in InPlacePieces)
+					sb.Append("        " + kvp.Value.Length + "@" + kvp.Key + "\n");
+			}
+			else
+			{
+				long offset = 0;
+				Piece p = Pieces;
+				while((p = p.Next) != Pieces)
+				{
+					sb.Append("        " + p.Length + "@" + offset + "\n");
+					offset += p.Length;
+				}
+			}
+
+			return sb.ToString();
+		}
+
+		public void Execute(FileStream stream)
+		{
+			if(IsInPlace)
+			{
+System.Console.WriteLine("Canwrite: " + stream.CanWrite);
+System.Console.WriteLine("Canseek: " + stream.CanSeek);
+
+				foreach(KeyValuePair<long, Piece> kvp in InPlacePieces)
+				{
+System.Console.WriteLine("writing " + kvp.Value.Length + "@" + kvp.Key);
+					stream.Seek(kvp.Key, SeekOrigin.Begin);
+					kvp.Value.Write(stream, 0, kvp.Value.Length);
+				}
+System.Console.WriteLine("finished writing to " + stream);
+stream.Flush();
+			}
+			else
+			{
+				Piece p = Pieces;
+				while((p = p.Next) != Pieces)
+					p.Write(stream, 0, p.Length);
+			}
+		}
+	}
 	
 	public class ClipboardRange
 	{
@@ -71,7 +176,24 @@ public partial class PieceBuffer
 		
 		public long Length { get { return _Length; } }
 		public long Used { get { return 0; } set {} }
-		
+
+		public bool CanSaveInPlace
+		{
+			get 
+			{
+				Piece p = StartPiece;
+				while(true)
+				{
+					if(!p.CanSaveInPlace)
+						return false;
+					if(p == EndPiece)
+						break;
+					p = p.Next;
+				}
+
+				return true;
+			}
+		}		
 		
 		public TransformOperationDataSource(Piece startPiece, long startOffset, Piece endPiece, long endOffset, long length)
 		{
@@ -82,6 +204,30 @@ public partial class PieceBuffer
 			_Length = length;
 		}
 		
+		public  bool GetOffsetsRelativeToBlock(IBlock block, out long start, out long end)
+		{
+			if(block == this)
+			{
+				start = 0;
+				end = _Length;
+			}
+			
+			long s, e;
+			if(StartPiece.GetOffsetsRelativeToBlock(block, out s, out e))
+			{
+				start = s + StartOffset;
+				if(EndPiece.GetOffsetsRelativeToBlock(block, out s, out e))
+				{
+					end = e + EndOffset;
+					return true;
+				}
+			}
+
+			start = StartOffset;
+			end = EndOffset;
+			return false; // Either start or end piece (or both) isn't related to block
+		}
+
 		public void GetBytes(long start, long length, byte[] dst, long dstOffset)
 		{
 			Piece p = StartPiece;
@@ -109,10 +255,26 @@ public partial class PieceBuffer
 		public void SetBytes(long start, long length, byte[] src, long srcOffset)
 		{
 		}
+		
+		public virtual void Write(FileStream stream, long start, long length)
+		{
+System.Console.WriteLine("TransformOpDataSource.Write");
+			byte[] data = new byte[4096];
+
+			while(length > 0)
+			{
+				int len = length > 4096 ? 4096 : (int)length;
+				GetBytes(start, len, data, 0);
+				stream.Write(data, 0, len);
+				start += len;
+				length -= len;
+			}
+		}
 	}
 	
 	public interface ITransformOperation
 	{
+		bool CanSaveInPlace { get; }
 		void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset);
 	}
 	
@@ -126,6 +288,11 @@ public partial class PieceBuffer
 			Array.Copy(constant, Constant, constant.Length);
 		}
 		
+		public bool CanSaveInPlace
+		{
+			get { return true; }
+		}
+
 		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
 		{
 			source.GetBytes(start, length, dest, destOffset);
@@ -142,6 +309,11 @@ public partial class PieceBuffer
 		{
 			Constant = new byte[constant.Length];
 			Array.Copy(constant, Constant, constant.Length);
+		}
+		
+		public bool CanSaveInPlace
+		{
+			get { return true; }
 		}
 		
 		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
@@ -162,6 +334,11 @@ public partial class PieceBuffer
 			Array.Copy(constant, Constant, constant.Length);
 		}
 		
+		public bool CanSaveInPlace
+		{
+			get { return true; }
+		}
+		
 		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
 		{
 			source.GetBytes(start, length, dest, destOffset);
@@ -172,6 +349,11 @@ public partial class PieceBuffer
 
 	public class TransformOperationInvert : ITransformOperation
 	{
+		public bool CanSaveInPlace
+		{
+			get { return true; }
+		}
+
 		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
 		{
 			source.GetBytes(start, length, dest, destOffset);
@@ -182,6 +364,11 @@ public partial class PieceBuffer
 
 	public class TransformOperationReverse : ITransformOperation
 	{
+		public bool CanSaveInPlace
+		{
+			get { return false; }
+		}
+
 		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
 		{
 			source.GetBytes(source.Length - start - length, length, dest, destOffset);
@@ -198,6 +385,11 @@ public partial class PieceBuffer
 			Distance = distance;
 		}
 		
+		public bool CanSaveInPlace
+		{
+			get { return Distance < 0; }
+		}
+
 		public void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset)
 		{
 			int distance = Distance / 8;
@@ -260,6 +452,11 @@ public partial class PieceBuffer
 	{
 		protected ITransformOperation Op;
 		
+		public override bool CanSaveInPlace
+		{
+			get { return Block.CanSaveInPlace && Op.CanSaveInPlace; }
+		}
+
 		public override byte this[long index]
 		{
 			get { return 0; }
@@ -279,6 +476,22 @@ public partial class PieceBuffer
 		public override void GetBytes(long start, long length, byte[] dst, long dstOffset)
 		{
 			Op.GetTransformedBytes(Block, start, length, dst, dstOffset);
+		}
+		
+		public override void Write(FileStream stream, long start, long length)
+		{
+System.Console.WriteLine("TransformPiece.Write");
+			byte[] data = new byte[4096];
+
+			while(length > 0)
+			{
+				int len = length > 4096 ? 4096 : (int)length;
+				Op.GetTransformedBytes(Block, start, len, data, 0);
+				stream.Write(data, 0, len);
+System.Console.WriteLine("writing " + data[0]);
+				start += len;
+				length -= len;
+			}
 		}
 	}
 
@@ -304,6 +517,11 @@ public partial class PieceBuffer
 			set { throw new Exception("Can't set Used on Piece"); }
 		}
 
+		public virtual bool CanSaveInPlace
+		{
+			get { return Block.CanSaveInPlace; }
+		}
+
 		public Piece()
 		{
 			Next = this;
@@ -321,15 +539,42 @@ public partial class PieceBuffer
 			Start = start;
 			End = end;
 		}
+		
+		public virtual bool GetOffsetsRelativeToBlock(IBlock block, out long start, out long end)
+		{
+			if(block == this)
+			{
+				start = 0;
+				end = End - Start;
+			}
+			
+			long s, e;
+			if(Block.GetOffsetsRelativeToBlock(block, out s, out e))
+			{
+				start = s + Start;
+				end = start + (End - Start);
+				return true;
+			}
+
+			start = Start;
+			end = End;
+			return false; // isn't related to block
+		}
 
 		public virtual void SetBytes(long start, long length, byte[] src, long srcOffset)
 		{
 			throw new Exception("Can't set data in Piece");
 		}
-		
+
 		public virtual void GetBytes(long start, long length, byte[] dst, long dstOffset)
 		{
 			Block.GetBytes(Start + start, length, dst, dstOffset);
+		}
+		
+		public virtual void Write(FileStream stream, long start, long length)
+		{
+System.Console.WriteLine("Piece.Write*");
+			Block.Write(stream, Start, length);
 		}
 
 		public static void ListInsert(Piece list, Piece item)
@@ -499,9 +744,11 @@ public partial class PieceBuffer
 
 
 
-	protected Piece                  Pieces = new Piece();
+	protected Piece                  Pieces;
 	protected InternalMarkCollection _Marks;
 	public MarkCollection            Marks { get { return _Marks; } }
+	protected Dictionary<string, Block> OpenBlocks; 
+	protected FileBlock              OriginalFileBlock;
 	protected Block                  CurrentBlock;
 	protected InternalHistoryItem    _History;
 	public HistoryItem               History { get { return _History; } }
@@ -511,6 +758,7 @@ public partial class PieceBuffer
 	public bool                     CanRedo { get { return _History.FirstChild != null; } }
 	public bool                     IsModified { get { return _History.Parent != null; } }
 	protected int                   HistoryGroupLevel;
+	protected InternalSavePlan      CachedSavePlan;
 
 	const int IndexCacheSize = 4096;
 	long IndexCacheStartOffset;
@@ -524,6 +772,7 @@ public partial class PieceBuffer
 	public event HistoryEventHandler HistoryUndone;
 	public event HistoryEventHandler HistoryRedone;
 	public event HistoryEventHandler HistoryJumped;
+	public event EventHandler HistoryCleared;
 	
 	protected object Lock = new object();
 
@@ -575,29 +824,56 @@ public partial class PieceBuffer
 
 	public PieceBuffer()
 	{
+		New();
+	}
+
+	public PieceBuffer(string filename)
+	{
+		Open(filename);
+	}
+
+	public void New()
+	{
+		if(CurrentBlock != null)
+			throw new Exception("already open");
+
+		OpenBlocks  = new Dictionary<string,Block>();
+
+		Pieces = new Piece();
+
 		_Marks = new InternalMarkCollection(this, Pieces, Pieces, 0);
 
-		CurrentBlock = new MemoryBlock(4096);
+		CurrentBlock = MemoryBlock.Create(OpenBlocks, 4096);
 		
 		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.New, 0, 0, null, null, 0);
 		HistoryGroupLevel = 0;
 
 		IndexCacheBytes = new byte[IndexCacheSize];
 		IndexCacheStartOffset = Int64.MaxValue;
+
+		if(HistoryAdded != null)
+			HistoryAdded(this, new HistoryEventArgs(null, _History));
 	}
 
-	public PieceBuffer(string filename)
+	public void Open(string filename)
 	{
+		if(CurrentBlock != null)
+			throw new Exception("already open");
+
+		OpenBlocks  = new Dictionary<string,Block>();
+
 		_FileName = filename;
 
-		Block block = FileBlock.Create(filename);
+		OriginalFileBlock = FileBlock.Create(OpenBlocks, filename);
+		Block block = OriginalFileBlock;
 
+		Pieces = new Piece();
 		Piece piece = new Piece(block, 0, block.Length);
 		Piece.ListInsert(Pieces, piece);
 
 		_Marks = new InternalMarkCollection(this, Pieces, piece, block.Length);
 
-		CurrentBlock = new MemoryBlock(4096);
+		CurrentBlock = MemoryBlock.Create(OpenBlocks, 4096);
 
 		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.Open, 0, 
 		                                                  block.Length, null, null, 0);
@@ -605,11 +881,52 @@ public partial class PieceBuffer
 
 		IndexCacheBytes = new byte[IndexCacheSize];
 		IndexCacheStartOffset = Int64.MaxValue;
+
+		if(HistoryAdded != null)
+			HistoryAdded(this, new HistoryEventArgs(null, _History));
+	}
+
+	public void Reopen()
+	{
+		if(OriginalFileBlock == null)
+			throw new Exception("can't reopen, not backed by a file");
+
+		string filename = _FileName;
+		InternalMarkCollection marks = _Marks;
+		Close();
+		Open(filename);
+		_Marks = marks;
+		_Marks.UpdateAfterReopen(Pieces);
+	}
+
+	public void Close()
+	{
+		Pieces = null;
+		CurrentBlock = null;
+		OriginalFileBlock = null;
+		_Marks = null;
+		_HistoryRoot = _History = null;
+		IndexCacheBytes = null;
+		CachedSavePlan = null;
+
+		if(HistoryCleared != null)
+			HistoryCleared(this, EventArgs.Empty);
+
+		// Cleanup any open blocks
+		if(OpenBlocks != null)
+		{
+			foreach(KeyValuePair<string,Block> kvp in OpenBlocks)
+				kvp.Value.Close();
+			OpenBlocks.Clear();
+			OpenBlocks = null;
+		}
 	}
 
 	protected void OnChanged(BufferChangedEventArgs e)
 	{
-		Console.WriteLine("Buffer Changed: " + e.StartOffset + " => " + e.EndOffset);
+		//Console.WriteLine("Buffer Changed: " + e.StartOffset + " => " + e.EndOffset);
+
+		CachedSavePlan = null;
 
 		if((e.StartOffset >= IndexCacheStartOffset && e.StartOffset < IndexCacheStartOffset + IndexCacheSize) ||
 		   (e.EndOffset >= IndexCacheStartOffset && e.EndOffset < IndexCacheStartOffset + IndexCacheSize))
@@ -861,7 +1178,7 @@ public partial class PieceBuffer
 				// Make a new block if we've used all of the current one
 				if(CurrentBlock.Used == CurrentBlock.Length)
 				{
-					Block block = new MemoryBlock(4096);
+					Block block = MemoryBlock.Create(OpenBlocks, 4096);
 					CurrentBlock = block;
 				}
 			}
@@ -944,7 +1261,7 @@ public partial class PieceBuffer
 	{
 		lock(Lock)
 		{
-			Block block = FileBlock.Create(filename);
+			Block block = FileBlock.Create(OpenBlocks, filename);
 			Piece piece = new Piece(block, offset, offset + length);
 			Replace(HistoryOperation.InsertFile, (InternalMark)destStart, (InternalMark)destEnd, piece, piece, length);
 		}
@@ -958,7 +1275,7 @@ public partial class PieceBuffer
 		lock(Lock)
 		{
 			Piece piece = null;
-			Block block = ConstantBlock.Create(constant);
+			Block block = ConstantBlock.Create(OpenBlocks, constant);
 			piece = new Piece(block, 0, length);
 			Replace(HistoryOperation.FillConstant, (InternalMark)destStart, (InternalMark)destEnd, 
 			        piece, piece, length);
@@ -1329,6 +1646,168 @@ public partial class PieceBuffer
 	}
 	
 	
+	//
+	// Save
+	//
+
+	protected InternalSavePlan BuildInPlaceSavePlan()
+	{
+		if(OriginalFileBlock == null)
+		{
+			//System.Console.WriteLine("CanSaveInPlace: no original file block, can't save in-place");
+			return null;
+		}
+
+		InternalSavePlan plan = new InternalSavePlan();
+		plan.InPlacePieces = new List< KeyValuePair<long, Piece> >();
+		plan.IsInPlace = true;
+		plan.TotalLength = Length;
+		plan.WriteLength = 0;
+		plan.BlockCount = 0;
+
+		bool isContiguous = true;
+		long offset = 0;
+		Piece p = Pieces;
+		while((p = p.Next) != Pieces)
+		{
+			if(!p.CanSaveInPlace)
+			{
+				//System.Console.WriteLine("CanSaveInPlace: piece can't be saved in place");
+				return null;
+			}
+
+			long start, end = 0;
+			if(p.GetOffsetsRelativeToBlock(OriginalFileBlock, out start, out end))
+			{
+				//System.Console.WriteLine("CanSaveInPlace: orig piece: offset: " + offset + 
+				//			 ", start: " + start + 
+				//			 ", end: " + end);
+
+				if(start < offset || end != start + p.Length)
+				{
+					// Piece references an earlier part of original file so
+					// we can't do an in-place save as we'll have overwritten
+					// it by the time we need it.
+					//System.Console.WriteLine("Save: earlier reference, can't in-place save");
+					return null;
+				}
+
+				if(start != offset)
+					isContiguous = false;
+			}
+			else
+			{
+				//System.Console.WriteLine("CanSaveInPlace: new piece: offset: " + offset +
+				//			 ", length: " + p.Length);
+			}
+
+			if(!isContiguous || p.Block != OriginalFileBlock)
+			{
+				plan.InPlacePieces.Add(new KeyValuePair<long, Piece>(offset, p));
+				plan.BlockCount += 1;
+				plan.WriteLength += p.Length;
+			}
+
+			offset += p.Length;
+		}
+
+		return plan;
+	}
+
+	public SavePlan BuildSavePlan()
+	{
+		if(CachedSavePlan != null)
+			return CachedSavePlan;
+
+		CachedSavePlan = BuildInPlaceSavePlan();
+		if(CachedSavePlan == null)
+		{
+			CachedSavePlan = new InternalSavePlan();
+			CachedSavePlan.IsInPlace = false;
+			CachedSavePlan.TotalLength = Length;
+			CachedSavePlan.WriteLength = Length;
+		}
+
+		CachedSavePlan.Pieces = Pieces;
+			
+		return CachedSavePlan;
+	}		
+
+	public bool CanSaveInPlace
+	{
+		get { return BuildSavePlan().IsInPlace == true; }
+	}
+
+	public void SaveAs(string filename)
+	{
+		// TODO: Protect against overwritting the original file
+		//
+		FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
+		Piece p = Pieces;
+		while((p = p.Next) != Pieces)
+			p.Write(fs, 0, p.Length);
+		fs.Close();
+	}
+
+	public void SaveInPlace()
+	{
+		lock(Lock)
+		{
+			InternalSavePlan plan = (InternalSavePlan)BuildSavePlan();
+			if(plan.IsInPlace == false)
+				throw new Exception("Can't save in-place");
+			System.Console.WriteLine(plan.ToString());
+
+			FileStream stream = OriginalFileBlock.GetWriteStream();
+			plan.Execute(stream);
+			OriginalFileBlock.ReleaseWriteStream();
+
+			Reopen();
+		}
+	}
+
+	public void Save()
+	{
+		lock(Lock)
+		{
+			InternalSavePlan plan = (InternalSavePlan)BuildSavePlan();
+			bool wasInPlace = plan.IsInPlace;
+			plan.IsInPlace = false;
+			System.Console.WriteLine(plan.ToString());
+
+			// Make sure we have write access to the original file
+			OriginalFileBlock.GetWriteStream();
+
+			// open temp file
+			string origFilename = _FileName;
+			string tempFilename;
+			do
+			{
+				tempFilename = origFilename + Path.GetRandomFileName();
+			}
+			while(File.Exists(tempFilename));
+
+			System.Console.WriteLine("using tmp file: " + tempFilename);
+			FileStream stream = new FileStream(tempFilename, FileMode.Create, FileAccess.Write);
+
+			// write to temp file
+			plan.Execute(stream);
+			stream.Close();
+
+			OriginalFileBlock.ReleaseWriteStream();
+
+			InternalMarkCollection oldMarks = _Marks;
+			Close();
+			File.Delete(origFilename);
+			File.Move(tempFilename, origFilename);
+			Open(origFilename);
+			_Marks = oldMarks;
+			_Marks.UpdateAfterReopen(Pieces);
+
+			plan.IsInPlace = wasInPlace;
+		}
+	}
+
 
 	//
 	// History
@@ -1591,6 +2070,18 @@ public partial class PieceBuffer
 		}
 	}
 		
+	protected virtual void Dispose(bool disposing)
+	{
+		if(disposing)
+			Close();
+	}
+
+	public void Dispose()
+	{
+		Dispose(true);
+		GC.SuppressFinalize(this);			
+	}
+
 	protected void DebugDumpPieceText(string label, Piece head, Piece tail, bool between)
 	{
 		Console.Write(label);

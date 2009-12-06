@@ -106,6 +106,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			LastDocument.HistoryUndone -= OnHistoryUndone;
 			LastDocument.HistoryRedone -= OnHistoryRedone;
 			LastDocument.HistoryJumped -= OnHistoryJumped;
+			LastDocument.HistoryCleared -= OnHistoryCleared;
 		}
 		
 		if(Host.ActiveView != null)
@@ -115,6 +116,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			LastDocument.HistoryUndone += OnHistoryUndone;
 			LastDocument.HistoryRedone += OnHistoryRedone;
 			LastDocument.HistoryJumped += OnHistoryJumped;
+			LastDocument.HistoryCleared += OnHistoryCleared;
 			
 			if(StructureChanged != null)
 				StructureChanged(this, new Aga.Controls.Tree.TreePathEventArgs());
@@ -204,6 +206,12 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			//NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), new object[] {e.OldItem}));
 			//NodesChanged(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), new object[] {e.NewItem}));
 		}
+	}
+
+	public void OnHistoryCleared(object sender, EventArgs args)
+	{
+		if(StructureChanged != null)
+			StructureChanged(this, new Aga.Controls.Tree.TreePathEventArgs());
 	}
 	
 	//

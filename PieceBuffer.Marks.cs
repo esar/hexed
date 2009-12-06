@@ -433,6 +433,20 @@ public partial class PieceBuffer
 			ListInsert(Sentinel, (InternalMark)_Start);			
 		}
 
+		public void UpdateAfterReopen(Piece newPieces)
+		{
+			Pieces = newPieces;
+
+			InternalMark m = Sentinel;
+			while((m = m.Next) != Sentinel)
+			{
+				m.Piece = newPieces.Next;
+				m.Offset = m.Position;
+			}
+			((InternalMark)_End).Piece = newPieces;
+			((InternalMark)_End).Offset = 0;
+		}
+
 		public void UpdateAfterReplace(Mark start, Mark end, long removedLength, 
 		                               long insertedLength, Piece firstInsertedPiece)
 		{
