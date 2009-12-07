@@ -528,6 +528,24 @@ public partial class PieceBuffer
 			}
 		}
 
+		public void UpdateAfterSplice(Piece firstPiece, InternalMark newInsertMark)
+		{
+			if(_Insert != newInsertMark)
+			{
+				ListRemove((InternalMark)_Insert);
+				newInsertMark.CopyTo((InternalMark)_Insert);
+				ListInsert(newInsertMark, (InternalMark)_Insert);
+			}
+			if(_Start.Position != 0 || ((InternalMark)_Start).Piece != firstPiece)
+			{
+				ListRemove(_Start);
+				((InternalMark)_Start).Piece = firstPiece;
+				((InternalMark)_Start).Offset = 0;
+				((InternalMark)_Start).Position = 0;
+				ListInsert(Sentinel, (InternalMark)_Start);
+			}
+		}
+
 		public bool DebugMarkChainDoesntReferenceRemovePieces(Piece removedStart, Piece removedEnd)
 		{
 			Piece p = removedStart;

@@ -726,7 +726,26 @@ public class PieceBufferTest
 	[Test]
 	public void UndoReplace()
 	{
-		Assert.Fail("Test needs writing");
+		b.Insert("the quick brown fox jumps over the lazy dog");
+
+		PieceBuffer.Mark m1 = b.Marks.Add(16);
+		PieceBuffer.Mark m2 = b.Marks.Add(19);
+		b.Insert(m1, m2, "donkey");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,16}{0,22}{0,22}{0,46}");
+		Assert.AreEqual(GetPieces(), "{0,16}{43,49}{19,43}");
+		Assert.AreEqual(GetText(), "the quick brown donkey jumps over the lazy dog");
+
+		m1.Position = 4;
+		m2.Position = 42;
+		b.Insert(m1, m2, "big");
+		Assert.AreEqual(GetMarks(), "{0,0}{0,4}{0,7}{0,7}{0,11}");
+		Assert.AreEqual(GetPieces(), "{0,4}{49,52}{39,43}");
+		Assert.AreEqual(GetText(), "the big dog");
+
+		b.Undo();
+		Assert.AreEqual(GetMarks(), "{0,0}{0,46}{0,46}{0,46}{0,46}");
+		Assert.AreEqual(GetPieces(), "{0,16}{43,49}{19,43}");
+		Assert.AreEqual(GetText(), "the quick brown donkey jumps over the lazy dog");
 	}
 	
 	[Test]

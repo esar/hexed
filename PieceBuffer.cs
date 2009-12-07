@@ -115,17 +115,11 @@ public partial class PieceBuffer : IDisposable
 		{
 			if(IsInPlace)
 			{
-System.Console.WriteLine("Canwrite: " + stream.CanWrite);
-System.Console.WriteLine("Canseek: " + stream.CanSeek);
-
 				foreach(KeyValuePair<long, Piece> kvp in InPlacePieces)
 				{
-System.Console.WriteLine("writing " + kvp.Value.Length + "@" + kvp.Key);
 					stream.Seek(kvp.Key, SeekOrigin.Begin);
 					kvp.Value.Write(stream, 0, kvp.Value.Length);
 				}
-System.Console.WriteLine("finished writing to " + stream);
-stream.Flush();
 			}
 			else
 			{
@@ -258,7 +252,6 @@ stream.Flush();
 		
 		public virtual void Write(FileStream stream, long start, long length)
 		{
-System.Console.WriteLine("TransformOpDataSource.Write");
 			byte[] data = new byte[4096];
 
 			while(length > 0)
@@ -480,7 +473,6 @@ System.Console.WriteLine("TransformOpDataSource.Write");
 		
 		public override void Write(FileStream stream, long start, long length)
 		{
-System.Console.WriteLine("TransformPiece.Write");
 			byte[] data = new byte[4096];
 
 			while(length > 0)
@@ -488,7 +480,6 @@ System.Console.WriteLine("TransformPiece.Write");
 				int len = length > 4096 ? 4096 : (int)length;
 				Op.GetTransformedBytes(Block, start, len, data, 0);
 				stream.Write(data, 0, len);
-System.Console.WriteLine("writing " + data[0]);
 				start += len;
 				length -= len;
 			}
@@ -573,7 +564,6 @@ System.Console.WriteLine("writing " + data[0]);
 		
 		public virtual void Write(FileStream stream, long start, long length)
 		{
-System.Console.WriteLine("Piece.Write*");
 			Block.Write(stream, Start, length);
 		}
 
@@ -603,6 +593,26 @@ System.Console.WriteLine("Piece.Write*");
 		{
 			first.Prev.Next = last.Next;
 			last.Next.Prev = first.Prev;
+		}
+
+		public override string ToString()
+		{
+			System.Text.StringBuilder sb = new System.Text.StringBuilder();
+			sb.Append("Piece{");
+			sb.Append(Start.ToString());
+			sb.Append(",");
+			sb.Append(End.ToString());
+			if(Block != null)
+			{
+				byte[] data = new byte[End-Start];
+				GetBytes(0, End-Start, data, 0);
+				sb.Append(",\"");
+				sb.Append(System.Text.ASCIIEncoding.ASCII.GetString(data));
+				sb.Append("\"}");
+			}
+			else
+				sb.Append(",(null)}");
+			return sb.ToString();
 		}
 	}
 	
@@ -936,120 +946,141 @@ System.Console.WriteLine("Piece.Write*");
 	}
 
 
-	protected void SplitPiece(InternalMark start, InternalMark end)
+	protected void Splice(InternalMark start, InternalMark end, Piece newStart, Piece newEnd, long newLength)
 	{
-		if(start.Offset == 0 && end.Offset == 0)
-			return;
-
-		// If the marks are both splitting the same piece then
-		// the piece will be replaced with three new pieces
-		//
-		//              start            end
-		// +--------------+---------------+---------------+
-		// | A            | B             | C             |
-		// +--------------+---------------+---------------+
-		if(start.Piece == end.Piece && start.Offset != end.Offset && start.Offset != 0 && end.Offset != 0)
-		{
-			Piece old = start.Piece;
-			Piece A = new Piece(old.Block, old.Start, old.Start + start.Offset);
-			Piece B = new Piece(old.Block, old.Start + start.Offset, old.Start + end.Offset);
-			Piece C = new Piece(old.Block, old.Start + end.Offset, old.End);
-			Piece.ListRemove(old);
-			Piece.ListInsert(old.Prev, A);
-			Piece.ListInsert(A, B);
-			Piece.ListInsert(B, C);
-
-			InternalMark m = start;
-			while(m.Prev.Piece == old)
-				m = m.Prev;
-			while(m.Position < start.Position)
-			{
-				m.Piece = A;
-				m = m.Next;
-			}
-			while(m.Position < end.Position)
-			{
-				m.Piece = B;
-				m.Offset -= A.End - A.Start;
-				m = m.Next;
-			}
-			while(m != _Marks.Sentinel && m.Piece == old)
-			{
-				m.Piece = C;
-				m.Offset -= (A.End - A.Start) + (B.End - B.Start);
-				m = m.Next;
-			}
-		}
+		Piece A;
+		Piece C;
+		Piece APrev = start.Piece.Prev;
+		Piece CNext;
+		Piece oldStart;
+		Piece oldEnd;
+		if(end.Piece == start.Piece || end.Offset > 0)
+			CNext = end.Piece.Next;
 		else
+			CNext = end.Piece;
+		long oldLength = end.Position - start.Position;
+
+
+		// Create new A piece from first half of start piece if start
+		// offset isn't zero, otherwise A is piece immediately before
+		// the start piece
+		//
+		//                   start
+		//                     |
+		// +-------+   +=======+--------+   +---+   +--------+-------+   +-------+
+		// | APrev |<->|   A   |  B(0)  |<->|...|<->|  B(n)  |   C   |<->| CNext |
+		// +-------+   +=======+--------+   +---+   +--------+-------+   +-------+
+		if(start.Offset != 0)
+			A = new Piece(start.Piece.Block, start.Piece.Start, start.Piece.Start + start.Offset);
+		else
+			A = APrev;
+
+		// Create new C piece from second half of end piece if end
+		// offset isn't zero, otherwise C is the end piece
+		//
+		//                                                  end
+		//                                                   |
+		// +-------+   +-------+--------+   +---+   +--------+=======+   +-------+
+		// | APrev |<->|   A   |  B(0)  |<->|...|<->|  B(n)  |   C   |<->| CNext |
+		// +-------+   +-------+--------+   +---+   +--------+=======+   +-------+
+		if(end.Offset != 0)
+			C = new Piece(end.Piece.Block, end.Piece.Start + end.Offset, end.Piece.End);
+		else
+			C = end.Piece;
+
+		// Remove the old piece(s) (if they existed), leaving just APrev and CNext.
+		//
+		// +-------+   +-------+
+		// | APrev |<->| CNext |
+		// +-------+   +-------+
+		oldStart = APrev.Next;
+		oldEnd = CNext.Prev;
+		if(start.Piece != end.Piece || start.Offset != 0 || end.Offset != 0)
 		{
-			// Split start's piece into two new pieces
-			//
-			//                start
-			// +----------------+-----------------+
-			// | A              | B               |
-			// +----------------+-----------------+
-			if(start.Offset != 0)
+			Piece.ListRemoveRange(oldStart, oldEnd);
+		}
+
+		// Insert all the new pieces (all the ones that exist)
+		//
+		// +-------+   +=======+   +==========+   +===+   +========+   +=======+   +-------+
+		// | APrev |<->|   A   |<->| newStart |<->|...|<->| newEnd |<->|   C   |<->| CNext |
+		// +-------+   +=======+   +==========+   +===+   +========+   +=======+   +-------+
+		//
+		Piece X = APrev;
+		// Insert our new A (if we made one)
+		if(start.Offset != 0)
+		{
+			Piece.ListInsert(APrev, A);
+			X = A;
+		}
+		// Insert the new pieces (if there are any)
+		if(newStart != null && newEnd != null)
+		{
+			Piece.ListInsertRange(X, newStart, newEnd);
+			X = newEnd;
+		}
+		// Insert our new C (if we made one)
+		if(end.Offset != 0)
+			Piece.ListInsert(X, C);
+
+
+
+		// Find the left-most mark on the oldStart piece
+		InternalMark m = start;
+		while(m.Prev.Piece == oldStart && m.Prev != _Marks.Start)
+			m = m.Prev;
+
+		// Move all marks before the start position to the new A piece
+		// with the same offset and position
+		while(m.Position < start.Position)
+		{
+			m.Piece = A;
+			m = m.Next;
+		}
+
+		// Move all marks before the end position to the beginning
+		// of the newStart (B) piece
+		if(newStart == null)
+			newStart = C;
+		while(m.Position < end.Position)
+		{
+			m.Piece = newStart;
+			m.Offset = 0;
+			m.Position = start.Position;
+			m = m.Next;
+		}
+
+		// Move all marks after the end position that are still
+		// pointing to oldEnd to piece C
+		long cStartPos = end.Position + newLength - oldLength;
+		while(m != _Marks.Sentinel && m.Piece == oldEnd)
+		{
+			m.Piece = C;
+			m.Position += newLength - oldLength;
+			m.Offset = m.Position - cStartPos;
+			m = m.Next;
+		}
+
+		if(newLength - oldLength != 0)
+		{
+			while(m != _Marks.Sentinel)
 			{
-				Piece old = start.Piece;
-				Piece A = new Piece(old.Block, old.Start, old.Start + start.Offset);
-				Piece B = new Piece(old.Block, old.Start + start.Offset, old.End);
-				Piece.ListRemove(old);
-				Piece.ListInsert(old.Prev, A);
-				Piece.ListInsert(A, B);
-
-				InternalMark m = start;
-				while(m.Prev.Piece == old)
-					m = m.Prev;
-				while(m.Position < start.Position)
-				{
-					m.Piece = A;
-					m = m.Next;
-				}
-				while(m != _Marks.Sentinel && m.Piece == old)
-				{
-					m.Piece = B;
-					m.Offset -= (A.End - A.Start);
-					m = m.Next;
-				}
-			}
-
-			// Split end's piece into two new pieces
-			//
-			//                 end
-			// +----------------+-----------------+
-			// | A              | B               |
-			// +----------------+-----------------+
-			if(end.Offset != 0)
-			{
-				Piece old = end.Piece;
-				Piece A = new Piece(old.Block, old.Start, old.Start + end.Offset);
-				Piece B = new Piece(old.Block, old.Start + end.Offset, old.End);
-				Piece.ListRemove(old);
-				Piece.ListInsert(old.Prev, A);
-				Piece.ListInsert(A, B);
-
-				InternalMark m = end;
-				while(m.Prev.Piece == old)
-					m = m.Prev;
-				while(m.Position < end.Position)
-				{
-					m.Piece = A;
-					m = m.Next;
-				}
-				while(m != _Marks.Sentinel && m.Piece == old)
-				{
-					m.Piece = B;
-					m.Offset -= (A.End - A.Start);
-					m = m.Next;
-				}
+				m.Position += newLength - oldLength;
+				m = m.Next;
 			}
 		}
 
+		_Marks.UpdateAfterSplice(Pieces.Next, end);
+
+
+		Debug.Assert(oldLength == 0 || 
+		             _Marks.DebugMarkChainDoesntReferenceRemovePieces(oldStart, oldEnd), 
+		             "Splice: Leave: Mark chain references removed piece");
 		// Marks must now be immediately to the right of the splits
-		Debug.Assert(start.Offset == 0, "SplitPiece: Leave: Bad start mark offset");
-		Debug.Assert(end.Offset == 0, "SplitPiece: Leave: Bad end mark offset");
+		Debug.Assert(start.Offset == 0, "Splice: Leave: Bad start mark offset");
+		Debug.Assert(end.Offset == 0, "Splice: Leave: Bad end mark offset");
 		// Mark chain must still be in order
-		Debug.Assert(Marks.DebugMarkChainIsValid(), "SplitPiece: Leave: Invalid mark chain");
+		Debug.Assert(Marks.DebugMarkChainIsValid(), "Splice: Leave: Invalid mark chain");
 	}
 
 	protected void Replace(HistoryOperation operation, InternalMark curStart, InternalMark curEnd, 
@@ -1081,7 +1112,7 @@ System.Console.WriteLine("Piece.Write*");
 		}
 		else
 		{
-			if(curEnd.Piece == curStart.Piece)
+			if(curEnd.Piece == curStart.Piece || curEnd.Offset > 0)
 			{
 				AddHistory(operation, curStart.Position, curEnd.Position - curStart.Position, 
 				           curStart.Piece, curEnd.Piece);
@@ -1093,24 +1124,8 @@ System.Console.WriteLine("Piece.Write*");
 			}
 		}
 
-		// Ensure the marks are on a piece boundaries
-		SplitPiece(curStart, curEnd);
-
-		// If the range curStart to curEnd is not empty, remove the pieces.
-		long removedLength = 0;
-		if(curStart.Position != curEnd.Position)
-		{
-			removedLength = curEnd.Position - curStart.Position;
-
-			firstRemovedPiece = curStart.Piece;
-			lastRemovedPiece = curEnd.Piece.Prev;
-			Piece.ListRemoveRange(curStart.Piece, curEnd.Piece.Prev);
-		}
-
 		// If the new range of pieces is empty then delete them, 
 		// they're probably place holders from the history.
-		// Otherwise splice the new pieces into the piece chain
-		Piece firstInsertedPiece = null;
 		if(newStart != null && newEnd != null)
 		{
 			if((newStart.End - newStart.Start) + (newEnd.End - newEnd.Start) == 0)
@@ -1123,21 +1138,17 @@ System.Console.WriteLine("Piece.Write*");
 					//delete tmp;
 
 				} while(tmp != newEnd);
-			}
-			else
-			{
-				firstInsertedPiece = newStart;
-				Piece.ListInsertRange(curStart.Piece.Prev, newStart, newEnd);
+
+				newStart = null;
+				newEnd = null;
 			}
 		}
 
-		_Marks.UpdateAfterReplace(curStart, curEnd, removedLength, newLength, firstInsertedPiece);
+		// Ensure the marks are on a piece boundaries
+		Splice(curStart, curEnd, newStart, newEnd, newLength);
 
 		OnChanged(change);
 
-		Debug.Assert(firstRemovedPiece == null || lastRemovedPiece == null || 
-		             _Marks.DebugMarkChainDoesntReferenceRemovePieces(firstRemovedPiece, lastRemovedPiece), 
-		             "Replace: Leave: Mark chain references removed piece");
 		Debug.Assert(_Marks.DebugMarkChainIsValid(), "Replace: Leave: Invalid mark chain");
 	}
 
@@ -1861,7 +1872,7 @@ System.Console.WriteLine("Piece.Write*");
 				editPosition += p.End - p.Start;
 				p = p.Next;
 
-			} while(p != removeTail);
+			} while(p != Pieces && p != removeTail);
 			editPosition += p.End - p.Start;
 			editEndMark = (InternalMark)Marks.Add(editPosition);
 
@@ -1874,7 +1885,7 @@ System.Console.WriteLine("Piece.Write*");
 				_History.Tail = removeTail;
 
 				p = removeHead;
-				while(p != removeTail)
+				while(p != Pieces && p != removeTail)
 				{
 					lengthChange -= p.End - p.Start;
 					p = p.Next;
@@ -1895,7 +1906,7 @@ System.Console.WriteLine("Piece.Write*");
 			if(insertHead != insertTail)
 			{
 				p = insertHead;
-				while(p != insertTail)
+				while(p != Pieces && p != insertTail)
 				{
 					lengthChange += p.End - p.Start;
 					p = p.Next;
