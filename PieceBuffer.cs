@@ -277,7 +277,7 @@ public partial class PieceBuffer : IDisposable
 
 		CurrentBlock = MemoryBlock.Create(OpenBlocks, 4096);
 		
-		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.New, 0, 0, null, null, 0);
+		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.New, 0, 0, 0, 0, 0, 0, null, null, 0);
 		HistoryGroupLevel = 0;
 
 		IndexCacheBytes = new byte[IndexCacheSize];
@@ -307,8 +307,9 @@ public partial class PieceBuffer : IDisposable
 
 		CurrentBlock = MemoryBlock.Create(OpenBlocks, 4096);
 
-		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.Open, 0, 
-		                                                  block.Length, null, null, 0);
+		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.Open, 
+		                                                  0, 0, block.Length, 0, 0, block.Length, 
+		                                                  null, null, 0);
 		HistoryGroupLevel = 0;
 
 		IndexCacheBytes = new byte[IndexCacheSize];
@@ -356,7 +357,7 @@ public partial class PieceBuffer : IDisposable
 
 	protected void OnChanged(BufferChangedEventArgs e)
 	{
-		//Console.WriteLine("Buffer Changed: " + e.StartOffset + " => " + e.EndOffset);
+		Console.WriteLine("Buffer Changed: " + e.StartOffset + " => " + e.EndOffset);
 
 		CachedSavePlan = null;
 
@@ -530,18 +531,30 @@ public partial class PieceBuffer : IDisposable
 			Piece empty = new Piece();
 			empty.Prev = curStart.Piece.Prev;
 			empty.Next = curStart.Piece;
-			AddHistory(operation, curStart.Position, curEnd.Position - curStart.Position, empty, empty);
+			AddHistory(operation, curStart.Position, 0, newLength,
+			           curStart.Position, 0, newLength,
+			           empty, empty);
 		}
 		else
 		{
+			long oldLength = curEnd.Position - curStart.Position;
 			if(curEnd.Piece == curStart.Piece || curEnd.Offset > 0)
 			{
-				AddHistory(operation, curStart.Position, curEnd.Position - curStart.Position, 
+				long oldPieceLength = (curEnd.Position - curEnd.Offset + curEnd.Piece.Length) - 
+				                      (curStart.Position - curStart.Offset);
+				long newPieceLength = oldPieceLength + (newLength - oldLength);
+				AddHistory(operation, curStart.Position, oldLength, newLength,
+				           curStart.Position - curStart.Offset,
+				           oldPieceLength, newPieceLength,
 				           curStart.Piece, curEnd.Piece);
 			}
 			else
 			{
-				AddHistory(operation, curStart.Position, curEnd.Position - curStart.Position, 
+				long oldPieceLength = curEnd.Position;
+				long newPieceLength = oldPieceLength + (newLength - oldLength);
+				AddHistory(operation, curStart.Position, oldLength, newLength,
+				           curStart.Position - curStart.Offset,
+				           oldPieceLength, newPieceLength,
 				           curStart.Piece, curEnd.Piece.Prev);
 			}
 		}

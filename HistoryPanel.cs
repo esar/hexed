@@ -147,8 +147,8 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	public void OnRangeValueNeeded(object sender, Aga.Controls.Tree.NodeControls.NodeControlValueEventArgs e)
 	{
 		PieceBuffer.HistoryItem item = _TreeView.GetPath(e.Node).LastNode as PieceBuffer.HistoryItem;
-		if(item.Length > 1)
-			e.Value = String.Format("{0} -> {1}", item.StartPosition, item.StartPosition + item.Length - 1);
+		if(item.OldLength > 1)
+			e.Value = String.Format("{0} -> {1}", item.StartPosition, item.StartPosition + item.OldLength - 1);
 		else
 			e.Value = item.StartPosition.ToString();
 	}		
