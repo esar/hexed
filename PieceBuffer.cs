@@ -514,7 +514,9 @@ public partial class PieceBuffer : IDisposable
 		             (newStart != null && newEnd != null), "Replace: Enter: Invalid newStart/newEnd/newLength");
 		Debug.Assert(Marks.DebugMarkChainIsValid(), "Replace: Enter: Invalid mark chain");
 
-		BufferChangedEventArgs change = new BufferChangedEventArgs(curStart.Position, curEnd.Position);
+		BufferChangedEventArgs change = new BufferChangedEventArgs(curStart.Position, 
+		                                                           curEnd.Position - curStart.Position == newLength ?
+		                                                           curStart.Position + newLength : Length);
 		Piece firstRemovedPiece = null;
 		Piece lastRemovedPiece = null;
 
