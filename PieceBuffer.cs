@@ -359,11 +359,18 @@ public partial class PieceBuffer : IDisposable
 	{
 		Console.WriteLine("Buffer Changed: " + e.StartOffset + " => " + e.EndOffset);
 
+		// Invalidate any cached save plan
 		CachedSavePlan = null;
 
-		if((e.StartOffset >= IndexCacheStartOffset && e.StartOffset < IndexCacheStartOffset + IndexCacheSize) ||
-		   (e.EndOffset >= IndexCacheStartOffset && e.EndOffset < IndexCacheStartOffset + IndexCacheSize))
+		// Invalidate the index cache if the change covers all or part of it
+		long indexCacheEndOffset = IndexCacheStartOffset + IndexCacheSize;
+		if((e.StartOffset >= IndexCacheStartOffset && e.StartOffset < indexCacheEndOffset) ||
+		   (e.EndOffset >= IndexCacheStartOffset && e.EndOffset < indexCacheEndOffset) ||
+		   (e.StartOffset < IndexCacheStartOffset && e.EndOffset >= indexCacheEndOffset))
+		{
 			IndexCacheStartOffset = Int64.MaxValue;
+		}
+
 		if(Changed != null)
 			Changed(this, e);
 	}
