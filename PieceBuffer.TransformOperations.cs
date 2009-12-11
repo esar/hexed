@@ -103,7 +103,7 @@ public partial class PieceBuffer : IDisposable
 		{
 		}
 		
-		public virtual void Write(FileStream stream, long start, long length)
+		public virtual void Write(InternalSavePlan dest, long start, long length)
 		{
 			byte[] data = new byte[4096];
 
@@ -111,20 +111,20 @@ public partial class PieceBuffer : IDisposable
 			{
 				int len = length > 4096 ? 4096 : (int)length;
 				GetBytes(start, len, data, 0);
-				stream.Write(data, 0, len);
+				dest.Write(data, 0, len);
 				start += len;
 				length -= len;
 			}
 		}
 	}
 	
-	public interface ITransformOperation
+	protected interface ITransformOperation
 	{
 		bool CanSaveInPlace { get; }
 		void GetTransformedBytes(IBlock source, long start, long length, byte[] dest, long destOffset);
 	}
 	
-	public class TransformOperationOr : ITransformOperation
+	protected class TransformOperationOr : ITransformOperation
 	{
 		byte[] Constant;
 		
@@ -147,7 +147,7 @@ public partial class PieceBuffer : IDisposable
 		}
 	}
 	
-	public class TransformOperationAnd : ITransformOperation
+	protected class TransformOperationAnd : ITransformOperation
 	{
 		byte[] Constant;
 		
@@ -170,7 +170,7 @@ public partial class PieceBuffer : IDisposable
 		}
 	}
 	
-	public class TransformOperationXor : ITransformOperation
+	protected class TransformOperationXor : ITransformOperation
 	{
 		byte[] Constant;
 		
@@ -193,7 +193,7 @@ public partial class PieceBuffer : IDisposable
 		}
 	}
 
-	public class TransformOperationInvert : ITransformOperation
+	protected class TransformOperationInvert : ITransformOperation
 	{
 		public bool CanSaveInPlace
 		{
@@ -208,7 +208,7 @@ public partial class PieceBuffer : IDisposable
 		}
 	}
 
-	public class TransformOperationReverse : ITransformOperation
+	protected class TransformOperationReverse : ITransformOperation
 	{
 		public bool CanSaveInPlace
 		{
@@ -222,7 +222,7 @@ public partial class PieceBuffer : IDisposable
 		}
 	}
 	
-	public class TransformOperationShift : ITransformOperation
+	protected class TransformOperationShift : ITransformOperation
 	{
 		protected int Distance;
 		
@@ -324,7 +324,7 @@ public partial class PieceBuffer : IDisposable
 			Op.GetTransformedBytes(Block, start, length, dst, dstOffset);
 		}
 		
-		public override void Write(FileStream stream, long start, long length)
+		public override void Write(InternalSavePlan dest, long start, long length)
 		{
 			byte[] data = new byte[4096];
 
@@ -332,7 +332,7 @@ public partial class PieceBuffer : IDisposable
 			{
 				int len = length > 4096 ? 4096 : (int)length;
 				Op.GetTransformedBytes(Block, start, len, data, 0);
-				stream.Write(data, 0, len);
+				dest.Write(data, 0, len);
 				start += len;
 				length -= len;
 			}

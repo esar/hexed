@@ -119,9 +119,9 @@ public partial class PieceBuffer : IDisposable
 			Block.GetBytes(Start + start, length, dst, dstOffset);
 		}
 		
-		public virtual void Write(FileStream stream, long start, long length)
+		public virtual void Write(InternalSavePlan dest, long start, long length)
 		{
-			Block.Write(stream, Start, length);
+			Block.Write(dest, Start, length);
 		}
 
 		public static void ListInsert(Piece list, Piece item)
@@ -186,9 +186,9 @@ public partial class PieceBuffer : IDisposable
 	public HistoryItem               History { get { return _History; } }
 	protected InternalHistoryItem   _HistoryRoot;
 	public HistoryItem              HistoryRoot { get { return _HistoryRoot; } }
-	public bool                     CanUndo { get { return _History.Parent != null; } }
-	public bool                     CanRedo { get { return _History.FirstChild != null; } }
-	public bool                     IsModified { get { return _History.Parent != null; } }
+	public bool                     CanUndo { get { return _History != null && _History.Parent != null; } }
+	public bool                     CanRedo { get { return _History != null && _History.FirstChild != null; } }
+	public bool                     IsModified { get { return _History != null && _History.Parent != null; } }
 	protected int                   HistoryGroupLevel;
 	protected InternalSavePlan      CachedSavePlan;
 
@@ -524,8 +524,6 @@ public partial class PieceBuffer : IDisposable
 		BufferChangedEventArgs change = new BufferChangedEventArgs(curStart.Position, 
 		                                                           curEnd.Position - curStart.Position == newLength ?
 		                                                           curStart.Position + newLength : Length);
-		Piece firstRemovedPiece = null;
-		Piece lastRemovedPiece = null;
 
 		// Flip the marks if they're the wrong way round
 		if(curEnd.Position < curStart.Position)

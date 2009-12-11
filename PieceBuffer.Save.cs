@@ -7,7 +7,7 @@ using System.IO;
 
 public partial class PieceBuffer : IDisposable
 {
-	public class SavePlan
+	public class SavePlan : IAsyncResult
 	{
 		protected long _TotalLength;
 		public long TotalLength
@@ -32,12 +32,94 @@ public partial class PieceBuffer : IDisposable
 		{
 			get { return _IsInPlace; }
 		}
+
+		protected long _LengthWritten;
+		public long LengthWritten
+		{
+			get { return _LengthWritten; }
+		}
+
+		protected long _BlocksWritten;
+		public long BlocksWritten
+		{
+			get { return _BlocksWritten; }
+		}
+
+		protected bool _ShouldAbort;
+		public void Abort()
+		{
+			_ShouldAbort = true;
+		}
+
+		protected bool _Aborted;
+		public bool Aborted
+		{
+			get { return _Aborted; }
+		}
+
+
+		//
+		// IAsyncResult
+		//
+		protected IAsyncResult _AsyncResult;
+
+		protected object _AsyncState;
+		public object AsyncState
+		{
+			get { return _AsyncState; }
+		}
+
+		public WaitHandle AsyncWaitHandle
+		{
+			get 
+			{
+				if(_AsyncResult != null)
+					return _AsyncResult.AsyncWaitHandle;
+				else
+					return new EventWaitHandle(true, EventResetMode.ManualReset);
+			}
+		}
+
+		public bool CompletedSynchronously
+		{
+			get 
+			{ 
+				if(_AsyncResult != null) 
+					return _AsyncResult.CompletedSynchronously; 
+				else 
+					return true; 
+			}
+		}
+
+		public bool IsCompleted
+		{
+			get 
+			{ 
+				if(_AsyncResult != null)
+					return _AsyncResult.IsCompleted;
+				else
+					return true; 
+			}
+		}
 	}
+
+	protected class AbortSaveException : Exception {}
 
 	protected class InternalSavePlan : SavePlan
 	{
+
+		public AsyncCallback AsyncCallback;
+
+		protected Stream _Stream;
+		public Stream Stream
+		{
+			get { return _Stream; }
+			set { _Stream = value; }
+		}
+
 		public Piece Pieces;
 		public List< KeyValuePair<long, Piece> > InPlacePieces;
+
 		public new long TotalLength
 		{
 			get { return _TotalLength; }
@@ -58,6 +140,35 @@ public partial class PieceBuffer : IDisposable
 			get { return _IsInPlace; }
 			set { _IsInPlace = value; }
 		}
+		public new long LengthWritten
+		{
+			get { return _LengthWritten; }
+			set { _LengthWritten = value; }
+		}
+		public new long BlocksWritten
+		{
+			get { return _BlocksWritten; }
+			set { _BlocksWritten = value; }
+		}
+		public new bool Aborted
+		{
+			get { return _Aborted; }
+			set { _Aborted = value; }
+		}
+		
+		public IAsyncResult AsyncResult
+		{
+			get { return _AsyncResult; }
+			set { _AsyncResult = value; }
+		}
+
+		public new object AsyncState
+		{
+			get { return _AsyncState; }
+			set { _AsyncState = value; }
+		}
+
+		public Delegate ExecuteDelegate;
 
 		public override string ToString()
 		{
@@ -87,22 +198,20 @@ public partial class PieceBuffer : IDisposable
 			return sb.ToString();
 		}
 
-		public void Execute(FileStream stream)
+		public void Write(byte[] buffer, int offset, int length)
 		{
-			if(IsInPlace)
-			{
-				foreach(KeyValuePair<long, Piece> kvp in InPlacePieces)
-				{
-					stream.Seek(kvp.Key, SeekOrigin.Begin);
-					kvp.Value.Write(stream, 0, kvp.Value.Length);
-				}
-			}
-			else
-			{
-				Piece p = Pieces;
-				while((p = p.Next) != Pieces)
-					p.Write(stream, 0, p.Length);
-			}
+			if(_ShouldAbort)
+				throw new AbortSaveException();
+
+			_Stream.Write(buffer, offset, length);
+			LengthWritten += length;
+
+			System.Threading.Thread.Sleep(25);
+		}
+
+		public InternalSavePlan Clone()
+		{
+			return (InternalSavePlan)this.MemberwiseClone();
 		}
 	}
 
@@ -174,21 +283,21 @@ public partial class PieceBuffer : IDisposable
 
 	public SavePlan BuildSavePlan()
 	{
-		if(CachedSavePlan != null)
-			return CachedSavePlan;
-
-		CachedSavePlan = BuildInPlaceSavePlan();
 		if(CachedSavePlan == null)
 		{
-			CachedSavePlan = new InternalSavePlan();
-			CachedSavePlan.IsInPlace = false;
-			CachedSavePlan.TotalLength = Length;
-			CachedSavePlan.WriteLength = Length;
-		}
+			CachedSavePlan = BuildInPlaceSavePlan();
+			if(CachedSavePlan == null)
+			{
+				CachedSavePlan = new InternalSavePlan();
+				CachedSavePlan.IsInPlace = false;
+				CachedSavePlan.TotalLength = Length;
+				CachedSavePlan.WriteLength = Length;
+			}
 
-		CachedSavePlan.Pieces = Pieces;
+			CachedSavePlan.Pieces = Pieces;
+		}
 			
-		return CachedSavePlan;
+		return CachedSavePlan != null ? CachedSavePlan.Clone() : null;
 	}		
 
 	public bool CanSaveInPlace
@@ -196,76 +305,198 @@ public partial class PieceBuffer : IDisposable
 		get { return BuildSavePlan().IsInPlace == true; }
 	}
 
+	protected void ExecuteSavePlan(InternalSavePlan plan, Stream stream)
+	{
+		plan.Stream = stream;
+
+		if(plan.IsInPlace)
+		{
+			foreach(KeyValuePair<long, Piece> kvp in plan.InPlacePieces)
+			{
+				stream.Seek(kvp.Key, SeekOrigin.Begin);
+				kvp.Value.Write(plan, 0, kvp.Value.Length);
+				plan.BlocksWritten += 1;
+			}
+		}
+		else
+		{
+			Piece p = plan.Pieces;
+			while((p = p.Next) != plan.Pieces)
+			{
+				p.Write(plan, 0, p.Length);
+				plan.BlocksWritten += 1;
+			}
+		}
+	}
+
+	protected delegate void SaveAsDelegate(InternalSavePlan plan, string filename);
+	protected void SaveAs(InternalSavePlan plan, string filename)
+	{
+		// TODO: Protect against overwritting the original file
+		//
+		bool savedSuccessfully = false;
+		FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
+		try
+		{
+			ExecuteSavePlan(plan, fs);
+			savedSuccessfully = true;
+		}
+		finally
+		{
+			fs.Close();
+			if(!savedSuccessfully)
+				File.Delete(filename);
+		}
+	}
+
 	public void SaveAs(string filename)
 	{
 		lock(Lock)
 		{
-			// TODO: Protect against overwritting the original file
-			//
-			FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
-			Piece p = Pieces;
-			while((p = p.Next) != Pieces)
-				p.Write(fs, 0, p.Length);
-			fs.Close();
-		}
-	}
-
-	public void SaveInPlace()
-	{
-		lock(Lock)
-		{
 			InternalSavePlan plan = (InternalSavePlan)BuildSavePlan();
-			if(plan.IsInPlace == false)
-				throw new Exception("Can't save in-place");
-			System.Console.WriteLine(plan.ToString());
-
-			FileStream stream = OriginalFileBlock.GetWriteStream();
-			plan.Execute(stream);
-			OriginalFileBlock.ReleaseWriteStream();
-
-			Reopen();
-		}
-	}
-
-	public void Save()
-	{
-		lock(Lock)
-		{
-			InternalSavePlan plan = (InternalSavePlan)BuildSavePlan();
-			bool wasInPlace = plan.IsInPlace;
 			plan.IsInPlace = false;
-			System.Console.WriteLine(plan.ToString());
+			SaveAs(plan, filename);
+		}
+	}
 
+	public void SaveCompleteCallback(IAsyncResult result)
+	{
+		InternalSavePlan plan = (InternalSavePlan)result.AsyncState;
+		plan.AsyncCallback(plan);
+	}
+
+	public SavePlan BeginSaveAs(string filename, AsyncCallback callback, object state)
+	{
+		InternalSavePlan plan = (InternalSavePlan)BuildSavePlan();
+		plan.IsInPlace = false;
+		plan.Aborted = false;
+		plan.AsyncCallback = callback;
+		plan.AsyncState = state;
+		plan.ExecuteDelegate = new SaveAsDelegate(SaveAs);
+		plan.AsyncResult = ((SaveAsDelegate)plan.ExecuteDelegate).BeginInvoke(plan, filename, 
+		                          new AsyncCallback(SaveCompleteCallback), plan);
+		return plan;
+	}
+
+	public void EndSaveAs(SavePlan plan)
+	{
+		InternalSavePlan p = (InternalSavePlan)plan;
+		try
+		{
+			((SaveAsDelegate)p.ExecuteDelegate).EndInvoke(p.AsyncResult);
+		}
+		catch(AbortSaveException e)
+		{
+			System.Console.WriteLine("Caught abort save exception: " + e);
+		}
+	}
+
+	protected delegate void SaveDelegate(InternalSavePlan plan);
+	protected void InternalSave(InternalSavePlan plan)
+	{
+		if(plan.IsInPlace)
+		{
+			FileStream stream = OriginalFileBlock.GetWriteStream();
+			try
+			{
+				ExecuteSavePlan(plan, stream);
+			}
+			finally
+			{
+				OriginalFileBlock.ReleaseWriteStream();
+				Reopen();
+			}
+		}
+		else
+		{
 			// Make sure we have write access to the original file
 			OriginalFileBlock.GetWriteStream();
 
-			// open temp file
 			string origFilename = _FileName;
-			string tempFilename;
-			do
+			string tempFilename = null;
+			FileStream stream = null;
+			bool savedSuccessfully = false;
+
+			try
 			{
-				tempFilename = origFilename + Path.GetRandomFileName();
+				// open temp file
+				do
+				{
+					tempFilename = origFilename + Path.GetRandomFileName();
+				}
+				while(File.Exists(tempFilename));
+
+				System.Console.WriteLine("using tmp file: " + tempFilename);
+				stream = new FileStream(tempFilename, FileMode.Create, FileAccess.Write);
+
+				// write to temp file
+				ExecuteSavePlan(plan, stream);
+				stream.Close();
+				stream = null;
+				savedSuccessfully = true;
 			}
-			while(File.Exists(tempFilename));
+			finally
+			{
+				OriginalFileBlock.ReleaseWriteStream();
+				
+				if(savedSuccessfully)
+				{
+					InternalMarkCollection oldMarks = _Marks;
+					Close();
+					File.Delete(origFilename);
+					File.Move(tempFilename, origFilename);
+					Open(origFilename);
+					_Marks = oldMarks;
+					_Marks.UpdateAfterReopen(Pieces);
+				}
+				else
+				{
+					if(stream != null)
+					{
+						stream.Close();
+						File.Delete(tempFilename);
+					}
 
-			System.Console.WriteLine("using tmp file: " + tempFilename);
-			FileStream stream = new FileStream(tempFilename, FileMode.Create, FileAccess.Write);
+					Reopen();
+				}
+			}
+		}
+	}
 
-			// write to temp file
-			plan.Execute(stream);
-			stream.Close();
+	public void Save(bool allowInPlace)
+	{
+		InternalSavePlan plan = (InternalSavePlan)BuildSavePlan();
+		if(!allowInPlace)
+			plan.IsInPlace = false;
+		System.Console.WriteLine(plan.ToString());
 
-			OriginalFileBlock.ReleaseWriteStream();
+		InternalSave(plan);
+	}
 
-			InternalMarkCollection oldMarks = _Marks;
-			Close();
-			File.Delete(origFilename);
-			File.Move(tempFilename, origFilename);
-			Open(origFilename);
-			_Marks = oldMarks;
-			_Marks.UpdateAfterReopen(Pieces);
+	public SavePlan BeginSave(bool allowInPlace, AsyncCallback callback, object state)
+	{
+		InternalSavePlan plan = (InternalSavePlan)BuildSavePlan();
+		if(!allowInPlace)
+			plan.IsInPlace = false;
+		plan.Aborted = false;
+		plan.AsyncCallback = callback;
+		plan.AsyncState = state;
+		plan.ExecuteDelegate = new SaveDelegate(InternalSave);
+		plan.AsyncResult = ((SaveDelegate)plan.ExecuteDelegate).BeginInvoke(plan, 
+		                          new AsyncCallback(SaveCompleteCallback), plan);
+		return plan;
+	}
 
-			plan.IsInPlace = wasInPlace;
+	public void EndSave(SavePlan plan)
+	{
+		InternalSavePlan p = (InternalSavePlan)plan;
+		try
+		{
+			((SaveDelegate)p.ExecuteDelegate).EndInvoke(p.AsyncResult);
+		}
+		catch(AbortSaveException e)
+		{
+			System.Console.WriteLine("Caught abort save exception: " + e);
 		}
 	}
 }

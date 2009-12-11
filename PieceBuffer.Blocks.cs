@@ -5,7 +5,7 @@ using System.IO;
 
 public partial class PieceBuffer
 {
-	public interface IBlock
+	protected interface IBlock
 	{
 		long Length { get; }
 		long Used { get; set; }
@@ -14,7 +14,7 @@ public partial class PieceBuffer
 		bool GetOffsetsRelativeToBlock(IBlock block, out long start, out long end);
 		void GetBytes(long start, long length, byte[] dst, long dstOffset);
 		void SetBytes(long start, long length, byte[] src, long srcOffset);
-		void Write(FileStream stream, long start, long length);
+		void Write(InternalSavePlan dest, long start, long length);
 	}
 	
 	protected abstract class Block : IBlock
@@ -47,7 +47,7 @@ public partial class PieceBuffer
 		public abstract void Close();
 		public abstract void GetBytes(long start, long length, byte[] dst, long dstOffset);
 		public abstract void SetBytes(long start, long length, byte[] src, long srcOffset);
-		public abstract void Write(FileStream stream, long start, long length);
+		public abstract void Write(InternalSavePlan dest, long start, long length);
 	}
 	
 	protected class ConstantBlock : Block
@@ -98,7 +98,7 @@ public partial class PieceBuffer
 			throw new Exception("Can't SetBytes() on a ConstantBlock");
 		}
 
-		public override void Write(FileStream stream, long start, long length)
+		public override void Write(InternalSavePlan dest, long start, long length)
 		{
 System.Console.WriteLine("ConstantBlock.Write");
 			byte[] data = new byte[4096];
@@ -110,7 +110,7 @@ System.Console.WriteLine("ConstantBlock.Write");
 			{
 				len = length > 4096 ? 4096 : (int)length;
 				length -= len;
-				stream.Write(data, 0, len);
+				dest.Write(data, 0, len);
 			}
 		}
 	}
@@ -233,7 +233,7 @@ System.Console.WriteLine("Reopening stream read only after write: " + FileName);
 			throw new Exception("Can't SetBytes() on a FileBlock");
 		}
 		
-		public override void Write(FileStream stream, long start, long length)
+		public override void Write(InternalSavePlan dest, long start, long length)
 		{
 System.Console.WriteLine("FileBlock.Write");
 			lock(Lock)
@@ -255,7 +255,7 @@ System.Console.WriteLine("FileBlock.Write");
 
 					int offset = (int)(start - StartAddress);
 					int len = (int)(length > BufferedLength - offset ? BufferedLength - offset : length);
-					stream.Write(Buffer, offset, len);
+					dest.Write(Buffer, offset, len);
 					length -= len;
 					start += len;
 				}
@@ -320,11 +320,11 @@ System.Console.WriteLine("FileBlock.Write");
 			Array.Copy(src, srcOffset, Buffer, start, length);
 		}
 
-		public override void Write(FileStream stream, long start, long length)
+		public override void Write(InternalSavePlan dest, long start, long length)
 		{
 System.Console.WriteLine("MemoryBlock.Write");
 			// cast assumes we'll never have a single memory block over 2GB
-			stream.Write(Buffer, (int)start, (int)length);
+			dest.Write(Buffer, (int)start, (int)length);
 		}
 	}
 }

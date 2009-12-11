@@ -223,7 +223,6 @@ public partial class PieceBuffer : IDisposable
 			Piece insertHead = _History.Head;
 			Piece insertTail = _History.Tail;
 			Piece insertAfter = _History.Head.Prev;
-			Piece p;
 			Mark editStartMark = Marks.Add(editStartPos);
 			Mark editEndMark = Marks.Add(editEndPos);
 

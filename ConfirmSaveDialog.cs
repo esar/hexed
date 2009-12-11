@@ -6,78 +6,123 @@ using System.IO;
 
 class ConfirmSaveDialog : DialogBase
 {
-	protected PieceBuffer.SavePlan SavePlan;
-	
 	protected CheckBox InPlaceCheckbox;
 	protected Label    QuestionLabel;
-	protected Label    DescriptionLabel;
 	protected Label    DetailLabel;
+	protected ProgressBar  ProgressBar;
 
-	//protected TableLayoutPanel Panel;
+	protected TableLayoutPanel Panel;
 	
+	protected Timer Timer;
 
-	public bool SaveInPlace
-	{
-		get { return InPlaceCheckbox.Checked; }
-	}	
+	protected Document Doc;
+	protected PieceBuffer.SavePlan SavePlan;
+	protected string Filename;
 
-	public ConfirmSaveDialog(PieceBuffer.SavePlan plan) : base(DialogBase.Buttons.All)
+	public ConfirmSaveDialog(Document doc, PieceBuffer.SavePlan plan, string filename) : base(DialogBase.Buttons.OK | DialogBase.Buttons.Cancel)
 	{
+		Doc = doc;
 		SavePlan = plan;
+		Filename = filename;
 
 		Text = "Save Changes?";
 		
-		//Panel = new TableLayoutPanel();
-		//Panel.RowCount = 3;
-		//Panel.ColumnCount = 1;
+		Panel = new TableLayoutPanel();
+		Panel.RowCount = 3;
+		Panel.ColumnCount = 1;
 		
-		DetailLabel = new Label();
-		DetailLabel.Text = plan.ToString();
-		DetailLabel.Dock = DockStyle.Fill;
-		DetailLabel.BackColor = Color.Transparent;
-		Controls.Add(DetailLabel);
-
-		DescriptionLabel = new Label();
-		DescriptionLabel.AutoSize = true;
-		DescriptionLabel.Dock = DockStyle.Top;
-		DescriptionLabel.BackColor = Color.Transparent;
-		Controls.Add(DescriptionLabel);
-		//Panel.Controls.Add(DescriptionLabel);
-
 		QuestionLabel = new Label();
 		QuestionLabel.Text = "Are you sure you want to save your changes?";
 		QuestionLabel.AutoSize = true;
 		QuestionLabel.Dock = DockStyle.Top;
 		QuestionLabel.BackColor = Color.Transparent;
-		Controls.Add(QuestionLabel);
-		//Panel.Controls.Add(QuestionLabel);
+		Panel.Controls.Add(QuestionLabel);
 
-		InPlaceCheckbox = new CheckBox();
-		InPlaceCheckbox.Text = "Save In-Place";
-		InPlaceCheckbox.Checked = plan.IsInPlace;
-		if(!plan.IsInPlace)
-			InPlaceCheckbox.Enabled = false;
-		InPlaceCheckbox.CheckedChanged += OnInPlaceCheckboxChanged;
-		InPlaceCheckbox.Dock = DockStyle.Bottom;
-		Controls.Add(InPlaceCheckbox);
-		//Panel.Controls.Add(InPlaceCheckbox);
+		DetailLabel = new Label();
+		DetailLabel.Text = plan.ToString();
+		DetailLabel.Dock = DockStyle.Fill;
+		DetailLabel.BackColor = Color.Transparent;
+		Panel.Controls.Add(DetailLabel);
 
-		//Panel.Dock = DockStyle.Fill;
-		//Panel.BackColor = Color.Transparent;
-		//Controls.Add(Panel);
-
-		OnInPlaceCheckboxChanged(this, EventArgs.Empty);
+		Panel.Dock = DockStyle.Fill;
+		Panel.BackColor = Color.Transparent;
+		Controls.Add(Panel);
 
 		Size = new Size(480, 240);
 	}
 
-	protected void OnInPlaceCheckboxChanged(object sender, EventArgs e)
+	protected void SaveCompleteCallback(IAsyncResult result)
 	{
-		if(InPlaceCheckbox.Checked)
-			DescriptionLabel.Text = SavePlan.WriteLength + " of " + SavePlan.TotalLength + 
-			                        " bytes will be written in " + SavePlan.BlockCount + " pieces.";
+		if(Filename != null)
+			Doc.EndSaveAs((PieceBuffer.SavePlan)result);
 		else
-			DescriptionLabel.Text = SavePlan.TotalLength + " bytes will be written.";
+			Doc.EndSave((PieceBuffer.SavePlan)result);
+
+		ProgressBar.Value = 100;
+		QuestionLabel.Text = "Written " + SavePlan.TotalLength + " of " + SavePlan.TotalLength + " bytes";	
+
+		Timer.Stop();
+		Timer.Dispose();
+		Timer = null;
+
+		DialogResult = DialogResult.OK;
+		Close();
+	}
+
+	protected void OnTimerTick(object sender, EventArgs e)
+	{
+		ProgressBar.Value = (int)(((double)SavePlan.LengthWritten / SavePlan.TotalLength) * 100);
+		QuestionLabel.Text = "Written " + SavePlan.LengthWritten + " of " + SavePlan.TotalLength + " bytes";	
+	}
+
+	protected override void OnOK(object sender, EventArgs e)
+	{
+		Text = "Saving...";
+
+		OkButton.Enabled = false;
+
+		ProgressBar = new ProgressBar();
+		ProgressBar.Maximum = 100;
+		ProgressBar.Minimum = 0;
+		ProgressBar.Value = 0;
+
+		Panel.Controls.Remove(DetailLabel);
+		Panel.Controls.Add(ProgressBar);
+
+		QuestionLabel.Text = "Written 0 of " + SavePlan.TotalLength + " bytes";	
+
+		Timer = new Timer();
+		Timer.Interval = 100;
+		Timer.Tick += OnTimerTick;
+		Timer.Enabled = true;
+
+		if(Filename != null)
+			SavePlan = Doc.BeginSaveAs(Filename, new AsyncCallback(SaveCompleteCallback), null);
+		else
+			SavePlan = Doc.BeginSave(true, new AsyncCallback(SaveCompleteCallback), null);
+	}
+
+	protected override void OnCancel(object sender, EventArgs e)
+	{
+		if(ProgressBar != null)
+		{
+			if(MessageBox.Show("Are you sure you want to cancel the save operation?", "Cancel?", 
+			                   MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+			{
+				return;
+			}
+			
+			CancelButton.Enabled = false;
+			SavePlan.Abort();
+		}
+		else
+			Close();
+	}
+
+	protected override void OnFormClosing(FormClosingEventArgs e)
+	{
+		if(Timer != null && Timer.Enabled)
+			e.Cancel = true;
 	}
 }
 

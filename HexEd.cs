@@ -994,14 +994,8 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		if(ActiveView != null)
 		{
 			PieceBuffer.SavePlan plan = ActiveView.Document.BuildSavePlan();
-			ConfirmSaveDialog dlg = new ConfirmSaveDialog(plan);
-			if(dlg.ShowDialog() == DialogResult.OK)
-			{
-				if(dlg.SaveInPlace)
-					ActiveView.Document.SaveInPlace();
-				else
-					ActiveView.Document.Save();
-			}
+			ConfirmSaveDialog dlg = new ConfirmSaveDialog(ActiveView.Document, plan,  null);
+			dlg.ShowDialog();
 		}
 	}
 
@@ -1014,7 +1008,11 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 			sfd.Filter = "All Files (*.*)|*.*";
 
 			if(sfd.ShowDialog() == DialogResult.OK)
-				ActiveView.Document.SaveAs(sfd.FileName);
+			{
+				PieceBuffer.SavePlan plan = ActiveView.Document.BuildSavePlan();
+				ConfirmSaveDialog dlg = new ConfirmSaveDialog(ActiveView.Document, plan, sfd.FileName);
+				dlg.ShowDialog();
+			}
 		}
 	}
 
