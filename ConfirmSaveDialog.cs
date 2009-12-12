@@ -19,7 +19,8 @@ class ConfirmSaveDialog : DialogBase
 	protected PieceBuffer.SavePlan SavePlan;
 	protected string Filename;
 
-	public ConfirmSaveDialog(Document doc, PieceBuffer.SavePlan plan, string filename) : base(DialogBase.Buttons.OK | DialogBase.Buttons.Cancel)
+	public ConfirmSaveDialog(Document doc, PieceBuffer.SavePlan plan, string filename, bool confirm) : 
+	       base(DialogBase.Buttons.OK | DialogBase.Buttons.Cancel)
 	{
 		Doc = doc;
 		SavePlan = plan;
@@ -34,7 +35,7 @@ class ConfirmSaveDialog : DialogBase
 		QuestionLabel = new Label();
 		QuestionLabel.Text = "Are you sure you want to save your changes?";
 		QuestionLabel.AutoSize = true;
-		QuestionLabel.Dock = DockStyle.Top;
+		QuestionLabel.Dock = DockStyle.Fill;
 		QuestionLabel.BackColor = Color.Transparent;
 		Panel.Controls.Add(QuestionLabel);
 
@@ -49,6 +50,9 @@ class ConfirmSaveDialog : DialogBase
 		Controls.Add(Panel);
 
 		Size = new Size(480, 240);
+
+		if(!confirm)
+			OnOK(this, EventArgs.Empty);
 	}
 
 	protected void SaveCompleteCallback(IAsyncResult result)
@@ -85,11 +89,14 @@ class ConfirmSaveDialog : DialogBase
 		ProgressBar.Maximum = 100;
 		ProgressBar.Minimum = 0;
 		ProgressBar.Value = 0;
+		ProgressBar.Dock = DockStyle.Fill;
+		ProgressBar.Style = ProgressBarStyle.Continuous;
 
 		Panel.Controls.Remove(DetailLabel);
 		Panel.Controls.Add(ProgressBar);
 
 		QuestionLabel.Text = "Written 0 of " + SavePlan.TotalLength + " bytes";	
+		QuestionLabel.TextAlign = ContentAlignment.MiddleCenter;
 
 		Timer = new Timer();
 		Timer.Interval = 100;
