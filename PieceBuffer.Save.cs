@@ -206,7 +206,7 @@ public partial class PieceBuffer : IDisposable
 			_Stream.Write(buffer, offset, length);
 			LengthWritten += length;
 
-			System.Threading.Thread.Sleep(25);
+			//System.Threading.Thread.Sleep(25);
 		}
 
 		public InternalSavePlan Clone()
