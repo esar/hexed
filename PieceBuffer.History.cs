@@ -234,7 +234,7 @@ public partial class PieceBuffer : IDisposable
 			}
 			else
 			{
-				Piece empty = new Piece();
+				Piece empty = new Piece(AllocatedPieces);
 				empty.Prev = insertAfter;
 				empty.Next = insertAfter.Next;
 				_History.Head = empty;

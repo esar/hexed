@@ -309,7 +309,8 @@ public partial class PieceBuffer : IDisposable
 			set { throw new Exception("Can't set data in TransformPiece"); }
 		}
 		
-		public TransformPiece(ITransformOperation op, IBlock source) : base(source, 0, source.Length) 
+		public TransformPiece(List<Piece> allocatedPieces, ITransformOperation op, IBlock source) : 
+		       base(allocatedPieces, source, 0, source.Length) 
 		{
 			Op = op;
 		}

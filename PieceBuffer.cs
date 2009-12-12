@@ -26,6 +26,11 @@ public partial class PieceBuffer : IDisposable
 		{
 			get { return _Length; }
 		}
+
+		public virtual bool IsValid
+		{
+			get { return true; }
+		}
 		
 		protected ClipboardRange() {}
 	}
@@ -36,10 +41,16 @@ public partial class PieceBuffer : IDisposable
 		public long StartOffset;
 		public Piece EndPiece;
 		public long EndOffset;
+
 		public new long Length
 		{
 			get { return _Length; }
 			set { _Length = value; }
+		}
+
+		public override bool IsValid
+		{
+			get  { return StartPiece.Next != null && EndPiece.Next != null; }
 		}
 	}
 	
@@ -70,8 +81,10 @@ public partial class PieceBuffer : IDisposable
 			get { return Block.CanSaveInPlace; }
 		}
 
-		public Piece()
+		public Piece(List<Piece> allocatedPieces)
 		{
+			allocatedPieces.Add(this);
+
 			Next = this;
 			Prev = this;
 			Block = null;
@@ -79,8 +92,10 @@ public partial class PieceBuffer : IDisposable
 			End = Int64.MaxValue;
 		}
 
-		public Piece(IBlock block, long start, long end)
+		public Piece(List<Piece> allocatedPieces, IBlock block, long start, long end)
 		{
+			allocatedPieces.Add(this);
+
 			Next = this;
 			Prev = this;
 			Block = block;
@@ -175,7 +190,7 @@ public partial class PieceBuffer : IDisposable
 	
 
 
-
+	protected List<Piece>            AllocatedPieces;
 	protected Piece                  Pieces;
 	protected InternalMarkCollection _Marks;
 	public MarkCollection            Marks { get { return _Marks; } }
@@ -269,9 +284,10 @@ public partial class PieceBuffer : IDisposable
 		if(CurrentBlock != null)
 			throw new Exception("already open");
 
+		AllocatedPieces = new List<Piece>();
 		OpenBlocks  = new Dictionary<string,Block>();
 
-		Pieces = new Piece();
+		Pieces = new Piece(AllocatedPieces);
 
 		_Marks = new InternalMarkCollection(this, Pieces, Pieces, 0);
 
@@ -292,6 +308,7 @@ public partial class PieceBuffer : IDisposable
 		if(CurrentBlock != null)
 			throw new Exception("already open");
 
+		AllocatedPieces = new List<Piece>();
 		OpenBlocks  = new Dictionary<string,Block>();
 
 		_FileName = filename;
@@ -299,8 +316,8 @@ public partial class PieceBuffer : IDisposable
 		OriginalFileBlock = FileBlock.Create(OpenBlocks, filename);
 		Block block = OriginalFileBlock;
 
-		Pieces = new Piece();
-		Piece piece = new Piece(block, 0, block.Length);
+		Pieces = new Piece(AllocatedPieces);
+		Piece piece = new Piece(AllocatedPieces, block, 0, block.Length);
 		Piece.ListInsert(Pieces, piece);
 
 		_Marks = new InternalMarkCollection(this, Pieces, piece, block.Length);
@@ -334,6 +351,20 @@ public partial class PieceBuffer : IDisposable
 
 	public void Close()
 	{
+		// Some pieces may still be referenced by clipboard ranges.
+		// Unlink all the pieces so that all pieces not referenced by
+		// a clipboard range are inaccessible and eligible for garbage 
+		// collection. 
+		// Setting prev/next to null also marks the piece as invalid so
+		// if an attempt is made to perform a paste operation with an
+		// old piece, it will fail.
+		foreach(Piece p in AllocatedPieces)
+		{
+			p.Prev = null;
+			p.Next = null;
+		}
+		AllocatedPieces.Clear();
+
 		Pieces = null;
 		CurrentBlock = null;
 		OriginalFileBlock = null;
@@ -401,7 +432,7 @@ public partial class PieceBuffer : IDisposable
 		// | APrev |<->|   A   |  B(0)  |<->|...|<->|  B(n)  |   C   |<->| CNext |
 		// +-------+   +=======+--------+   +---+   +--------+-------+   +-------+
 		if(start.Offset != 0)
-			A = new Piece(start.Piece.Block, start.Piece.Start, start.Piece.Start + start.Offset);
+			A = new Piece(AllocatedPieces, start.Piece.Block, start.Piece.Start, start.Piece.Start + start.Offset);
 		else
 			A = APrev;
 
@@ -414,7 +445,7 @@ public partial class PieceBuffer : IDisposable
 		// | APrev |<->|   A   |  B(0)  |<->|...|<->|  B(n)  |   C   |<->| CNext |
 		// +-------+   +-------+--------+   +---+   +--------+=======+   +-------+
 		if(end.Offset != 0)
-			C = new Piece(end.Piece.Block, end.Piece.Start + end.Offset, end.Piece.End);
+			C = new Piece(AllocatedPieces, end.Piece.Block, end.Piece.Start + end.Offset, end.Piece.End);
 		else
 			C = end.Piece;
 
@@ -535,7 +566,7 @@ public partial class PieceBuffer : IDisposable
 
 		if(curStart.Position == curEnd.Position && curStart.Offset == 0)
 		{
-			Piece empty = new Piece();
+			Piece empty = new Piece(AllocatedPieces);
 			empty.Prev = curStart.Piece.Prev;
 			empty.Next = curStart.Piece;
 			AddHistory(operation, curStart.Position, 0, newLength,
@@ -615,7 +646,7 @@ public partial class PieceBuffer : IDisposable
 
 				// Create a new piece covering the inserted text, chaining it
 				// to any we've already created
-				Piece piece = new Piece(CurrentBlock, CurrentBlock.Used, CurrentBlock.Used + len);
+				Piece piece = new Piece(AllocatedPieces, CurrentBlock, CurrentBlock.Used, CurrentBlock.Used + len);
 				if(head == null)
 					head = piece;
 				else
@@ -715,7 +746,7 @@ public partial class PieceBuffer : IDisposable
 		lock(Lock)
 		{
 			Block block = FileBlock.Create(OpenBlocks, filename);
-			Piece piece = new Piece(block, offset, offset + length);
+			Piece piece = new Piece(AllocatedPieces, block, offset, offset + length);
 			Replace(HistoryOperation.InsertFile, (InternalMark)destStart, (InternalMark)destEnd, piece, piece, length);
 		}
 	}
@@ -729,7 +760,7 @@ public partial class PieceBuffer : IDisposable
 		{
 			Piece piece = null;
 			Block block = ConstantBlock.Create(OpenBlocks, constant);
-			piece = new Piece(block, 0, length);
+			piece = new Piece(AllocatedPieces, block, 0, length);
 			Replace(HistoryOperation.FillConstant, (InternalMark)destStart, (InternalMark)destEnd, 
 			        piece, piece, length);
 		}
@@ -792,13 +823,13 @@ public partial class PieceBuffer : IDisposable
 			
 		if(srcEndPiece != srcStartPiece)
 		{
-			head = new Piece(srcStartPiece.Block, srcStartPiece.Start + srcStartOffset, srcStartPiece.End);
+			head = new Piece(AllocatedPieces, srcStartPiece.Block, srcStartPiece.Start + srcStartOffset, srcStartPiece.End);
 			tail = head;
 			
 			Piece p = srcStartPiece.Next;
 			while(p != srcEndPiece)
 			{
-				newPiece = new Piece(p.Block, p.Start, p.End);
+				newPiece = new Piece(AllocatedPieces, p.Block, p.Start, p.End);
 				Piece.ListInsert(tail, newPiece);
 				tail = newPiece;
 				p = p.Next;
@@ -806,14 +837,14 @@ public partial class PieceBuffer : IDisposable
 			
 			if(srcEndPiece != Pieces)
 			{
-				newPiece = new Piece(srcEndPiece.Block, srcEndPiece.Start, srcEndPiece.Start + srcEndOffset);
+				newPiece = new Piece(AllocatedPieces, srcEndPiece.Block, srcEndPiece.Start, srcEndPiece.Start + srcEndOffset);
 				Piece.ListInsert(tail, newPiece);
 				tail = newPiece;
 			}
 		}
 		else
 		{
-			head = new Piece(srcStartPiece.Block, srcStartPiece.Start + srcStartOffset, 
+			head = new Piece(AllocatedPieces, srcStartPiece.Block, srcStartPiece.Start + srcStartOffset, 
 			                 srcStartPiece.Start + srcEndOffset);
 			tail = head;
 		}
@@ -962,7 +993,7 @@ public partial class PieceBuffer : IDisposable
 		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, 
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
-		Piece piece = new TransformPiece(new TransformOperationOr(constant), src);
+		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationOr(constant), src);
 		Replace(HistoryOperation.Or, s, e, piece, piece, e.Position - s.Position);
 	}
 	
@@ -983,7 +1014,7 @@ public partial class PieceBuffer : IDisposable
 		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, 
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
-		Piece piece = new TransformPiece(new TransformOperationAnd(constant), src);
+		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationAnd(constant), src);
 		Replace(HistoryOperation.And, s, e, piece, piece, e.Position - s.Position);
 	}		
 	
@@ -1003,7 +1034,7 @@ public partial class PieceBuffer : IDisposable
 		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, 
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
-		Piece piece = new TransformPiece(new TransformOperationXor(constant), src);
+		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationXor(constant), src);
 		Replace(HistoryOperation.Xor, s, e, piece, piece, e.Position - s.Position);
 	}		
 	
@@ -1023,7 +1054,7 @@ public partial class PieceBuffer : IDisposable
 		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, 
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
-		Piece piece = new TransformPiece(new TransformOperationInvert(), src);
+		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationInvert(), src);
 		Replace(HistoryOperation.Invert, s, e, piece, piece, e.Position - s.Position);
 	}		
 
@@ -1038,7 +1069,7 @@ public partial class PieceBuffer : IDisposable
 		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, 
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
-		Piece piece = new TransformPiece(new TransformOperationReverse(), src);
+		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationReverse(), src);
 		Replace(HistoryOperation.Reverse, s, e, piece, piece, e.Position - s.Position);
 	}		
 	
@@ -1053,7 +1084,7 @@ public partial class PieceBuffer : IDisposable
 		TransformOperationDataSource src = new TransformOperationDataSource(s.Piece, s.Offset, 
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
-		Piece piece = new TransformPiece(new TransformOperationShift(distance), src);
+		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationShift(distance), src);
 		Replace(distance > 0 ? HistoryOperation.ShiftRight : HistoryOperation.ShiftLeft, s, e, 
 		        piece, piece, e.Position - s.Position);
 	}
@@ -1093,6 +1124,12 @@ public partial class PieceBuffer : IDisposable
 		lock(Lock)
 		{
 			InternalClipboardRange r = (InternalClipboardRange)range;
+
+			// Check is the piece is invalid because it's from before
+			// a save operation and therefore a different piece chain
+			if(!r.IsValid)
+				return;
+
 			Copy((InternalMark)dstStart, (InternalMark)dstEnd, r.StartPiece, r.StartOffset, 
 			     r.EndPiece, r.EndOffset, r.Length);
 		}
