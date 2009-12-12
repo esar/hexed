@@ -751,6 +751,12 @@ public partial class HexView : Control
 			RecalcDimensions();
 		}
 
+		if(Selection.BufferRange.Start.Position != Selection.Start / 8 ||
+		   Selection.BufferRange.End.Position != Selection.End / 8)
+		{
+			Selection.Set(Selection.BufferRange.Start.Position * 8, Selection.BufferRange.End.Position * 8);
+		}
+
 		// TODO: Only invalidate changed region (and only if it's on screen)
 		Invalidate();
 	}
