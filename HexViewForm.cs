@@ -148,7 +148,7 @@ class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
 		{
 			byte[] pattern = dlg.Pattern;
 			if(pattern.Length > 0)
-				View.Document.FillConstant(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, pattern[0], View.Selection.Length / 8);
+				View.Document.FillConstant(View.Selection.BufferRange.Start, View.Selection.BufferRange.End, pattern, View.Selection.Length / 8);
 		}
 	}
 	

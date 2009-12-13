@@ -27,8 +27,8 @@ public partial class PieceBuffer : IDisposable
 			get { return _Length; }
 		}
 
-		public virtual bool IsValid
-		{
+		public virtual bool IsValid 
+		{ 
 			get { return true; }
 		}
 		
@@ -754,7 +754,7 @@ public partial class PieceBuffer : IDisposable
 	//
 	// Fill Constant
 	//
-	public void FillConstant(Mark destStart, Mark destEnd, byte constant, long length)
+	public void FillConstant(Mark destStart, Mark destEnd, byte[] constant, long length)
 	{
 		lock(Lock)
 		{
@@ -765,6 +765,12 @@ public partial class PieceBuffer : IDisposable
 			        piece, piece, length);
 		}
 	}
+
+	//public void FillConstant(Mark destStart, Mark destEnd, byte constant, long length)
+	//{
+	//	byte[] c = new byte[] { constant };
+	//	FillConstant(destStart, destEnd, c, length);
+	//}
 	
 	
 

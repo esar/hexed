@@ -52,31 +52,33 @@ public partial class PieceBuffer
 	
 	protected class ConstantBlock : Block
 	{
-		byte Constant;
+		byte[] Constant;
 		
 		public override byte this[long i]
 		{
-			get { return Constant; }
+			get { return Constant[i % Constant.Length]; }
 			set { }
 		}
 
-		private ConstantBlock(byte constant)
+		private ConstantBlock(byte[] constant)
 		{
-			Constant = constant;
+			Constant = new byte[constant.Length];
+			Array.Copy(constant, Constant, constant.Length);
 			_Length = Int64.MaxValue;
 			_Used = _Length;
 		}
 		
-		public static ConstantBlock Create(Dictionary<string,Block> openBlocks, byte constant)
+		public static ConstantBlock Create(Dictionary<string,Block> openBlocks, byte[] constant)
 		{
 			lock(openBlocks)
 			{
 				Block block;
-				if(!openBlocks.TryGetValue("Constant" + constant, out block))
-				{
+				// TODO: Need to lookup existing constant blocks
+				//if(!openBlocks.TryGetValue("Constant" + constant, out block))
+				//{
 					block = new ConstantBlock(constant);
-					openBlocks.Add("Constant" + constant, block);
-				}
+				//	openBlocks.Add("Constant" + constant, block);
+				//}
 				return (ConstantBlock)block;
 			}
 		}
@@ -89,8 +91,9 @@ public partial class PieceBuffer
 
 		public override void GetBytes(long start, long length, byte[] dst, long dstOffset)
 		{
-			for(int i = 0; i < length; ++i)
-				dst[dstOffset + i] = Constant;
+			int offset = (int)(start % Constant.Length);
+			for(int i = offset; i < length; ++i)
+				dst[dstOffset + i] = Constant[(offset + i) % Constant.Length];
 		}
 		
 		public override void SetBytes(long start, long length, byte[] src, long srcOffset)
@@ -102,15 +105,17 @@ public partial class PieceBuffer
 		{
 System.Console.WriteLine("ConstantBlock.Write");
 			byte[] data = new byte[4096];
-			int len = length > 4096 ? 4096 : (int)length;
-			for(int i = 0; i < len; ++i)
-				data[i] = Constant;
-			
+
+			int offset = (int)(start % Constant.Length);
 			while(length > 0)
 			{
-				len = length > 4096 ? 4096 : (int)length;
-				length -= len;
+				int len = length > 4096 ? 4096 : (int)length;
+				for(int i = offset; i < len; ++i)
+					data[i] = Constant[(offset + i) % Constant.Length];
+			
 				dest.Write(data, 0, len);
+				length -= len;
+				start += len;
 			}
 		}
 	}
