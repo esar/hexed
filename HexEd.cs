@@ -995,7 +995,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		{
 			PieceBuffer.SavePlan plan = ActiveView.Document.BuildSavePlan();
 			ConfirmSaveDialog dlg = new ConfirmSaveDialog(ActiveView.Document, plan,  null, true);
-			dlg.ShowDialog();
+			dlg.ShowDialog(this);
 		}
 	}
 
@@ -1011,7 +1011,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 			{
 				PieceBuffer.SavePlan plan = ActiveView.Document.BuildSavePlan();
 				ConfirmSaveDialog dlg = new ConfirmSaveDialog(ActiveView.Document, plan, sfd.FileName, false);
-				dlg.ShowDialog();
+				dlg.ShowDialog(this);
 			}
 		}
 	}

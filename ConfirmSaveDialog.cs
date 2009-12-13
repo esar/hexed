@@ -113,7 +113,7 @@ class ConfirmSaveDialog : DialogBase
 	{
 		if(ProgressBar != null)
 		{
-			if(MessageBox.Show("Are you sure you want to cancel the save operation?", "Cancel?", 
+			if(MessageBox.Show(this, "Are you sure you want to cancel the save operation?", "Cancel?", 
 			                   MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
 			{
 				return;
