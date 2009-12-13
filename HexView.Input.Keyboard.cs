@@ -219,18 +219,19 @@ public partial class HexView
 						}
 						break;
 					case EditMode.Insert:
-						if(Selection.Start % (_BytesPerWord * 8) == 0)
+						long start = Selection.Start;
+						if(start % (_BytesPerWord * 8) == 0)
 						{
-							Console.WriteLine("Inserting at " + Selection.Start); 
+							//Console.WriteLine("Inserting at " + start); 
 							Document.Insert((byte)(x << (_BytesPerWord * 8 - LayoutDimensions.BitsPerDigit)));
 						}
 						else
 						{
-							Console.WriteLine("Updating at " + Selection.Start);
-							UpdateWord(Selection.Start, x);
+							//Console.WriteLine("Updating at " + start);
+							UpdateWord(start, x);
 						}
-						Selection.Set(Selection.Start + LayoutDimensions.BitsPerDigit, 
-						              Selection.End + LayoutDimensions.BitsPerDigit);
+						Selection.Set(start + LayoutDimensions.BitsPerDigit, 
+						              start + LayoutDimensions.BitsPerDigit);
 						break;
 				}
 			}
