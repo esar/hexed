@@ -171,6 +171,7 @@ class SelectionPanel : Panel
 	protected void OnAnd(object sender, EventArgs e)
 	{
 		PatternDialog dlg = new PatternDialog();
+		dlg.Text = "AND Pattern";
 		if(dlg.ShowDialog() == DialogResult.OK)
 			CurrentView.Document.And(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, dlg.Pattern);
 	}
@@ -178,6 +179,7 @@ class SelectionPanel : Panel
 	protected void OnOr(object sender, EventArgs e)
 	{
 		PatternDialog dlg = new PatternDialog();
+		dlg.Text = "OR Pattern";
 		if(dlg.ShowDialog() == DialogResult.OK)
 			CurrentView.Document.Or(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, dlg.Pattern);
 	}
@@ -185,6 +187,7 @@ class SelectionPanel : Panel
 	protected void OnXor(object sender, EventArgs e)
 	{
 		PatternDialog dlg = new PatternDialog();
+		dlg.Text = "XOR Pattern";
 		if(dlg.ShowDialog() == DialogResult.OK)
 			CurrentView.Document.Xor(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, dlg.Pattern);
 	}
