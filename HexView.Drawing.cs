@@ -545,7 +545,7 @@ public partial class HexView
 		
 		e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
 
-		double pixelOffset = ScrollPosition + e.ClipRectangle.Top;
+		double pixelOffset = ScrollPosition + (e.ClipRectangle.Top > 0 ? e.ClipRectangle.Top : 0);
 		long firstLine = (long)(pixelOffset / LayoutDimensions.WordSize.Height);
 
 		double drawingOffset = e.ClipRectangle.Top - (pixelOffset % LayoutDimensions.WordSize.Height);
