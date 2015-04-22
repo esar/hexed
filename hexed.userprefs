@@ -1,36 +1,16 @@
-﻿<UserCombinePreferences version="1.0" filename="/home/stephen/projects/dotnet/hexed/hexed.sln">
-  <Files>
-    <File name="Welcome" />
-    <File name="HexEd.cs" line="378" column="28" />
-    <File name="ProgressNotification.cs" line="49" column="55" />
-    <File name="PieceBuffer.Blocks.cs" line="174" column="3" />
-    <File name="SelectionPanel.cs" line="191" column="2" />
-    <File name="HexView.cs" line="201" column="23" />
-    <File name="Document.cs" line="47" column="65" />
-  </Files>
-  <Views>
-    <ViewMemento id="ProjectPad">
-      <Node expanded="True">
-        <Node name="CalculatorPlugin" expanded="True" />
-        <Node name="ChecksumPlugin" expanded="True" />
-        <Node name="hexed" expanded="True">
-          <Node name="References" expanded="True" selected="True" />
-        </Node>
-        <Node name="PythonConsolePlugin" expanded="True" />
-        <Node name="SearchPlugin" expanded="True" />
-        <Node name="StatisticsPlugin" expanded="True" />
-        <Node name="StructurePlugin" expanded="True" />
-      </Node>
-    </ViewMemento>
-    <ViewMemento id="ClassPad">
-      <Node expanded="True" />
-    </ViewMemento>
-    <ViewMemento id="MonoDevelop.NUnit.TestPad">
-      <Node expanded="True" />
-    </ViewMemento>
-  </Views>
-  <Properties>
-    <Property key="ActiveWindow" value="/home/stephen/projects/dotnet/hexed/HexEd.cs" />
-    <Property key="ActiveConfiguration" value="Debug" />
-  </Properties>
-</UserCombinePreferences>
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="HexView.Drawing.cs">
+    <Files>
+      <File FileName="SearchPlugin/AssemblyInfo.cs" Line="31" Column="1" />
+      <File FileName="BookmarkPlugin/AssemblyInfo.cs" Line="24" Column="36" />
+      <File FileName="ChecksumPlugin/AssemblyInfo.cs" Line="24" Column="36" />
+      <File FileName="StructurePlugin/AssemblyInfo.cs" Line="31" Column="1" />
+      <File FileName="HexView.Drawing.cs" Line="35" Column="13" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

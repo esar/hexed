@@ -6,9 +6,19 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 
+#if DOTNETMAGIC
 using Crownwood.DotNetMagic.Docking;
 using Crownwood.DotNetMagic.Common;
 using Crownwood.DotNetMagic.Controls;
+using MagicTabPage = Crownwood.DotNetMagic.Controls.TabPage;
+using MagicTabControl = Crownwood.DotNetMagic.Controls.TabControl;
+#else
+using Crownwood.Magic.Docking;
+using Crownwood.Magic.Common;
+using Crownwood.Magic.Controls;
+using MagicTabPage = Crownwood.Magic.Controls.TabPage;
+using MagicTabControl = Crownwood.Magic.Controls.TabControl;
+#endif
 
 
 
@@ -295,6 +305,11 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 
 	public HexEdApp()
 	{
+#if DOTNETMAGIC
+		VisualStyle style = VisualStyle.Office2003;
+#else
+		VisualStyle style = VisualStyle.IDE;
+#endif
 		Text = "HexEd";
 
 		_PluginManager = new PluginManager(this);
@@ -304,7 +319,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		WindowImageList = new ImageList();
 		WindowImageList.ColorDepth = ColorDepth.Depth32Bit;
 		
-		_TabbedGroups = new TabbedGroups(VisualStyle.Office2003);
+		_TabbedGroups = new TabbedGroups(style);
 		_TabbedGroups.AllowDrop = true;
 		_TabbedGroups.AtLeastOneLeaf = true;
 		_TabbedGroups.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -329,7 +344,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		
 		selectionPanel = new SelectionPanel(this);
 		HistoryPanel = new HistoryPanel(this);
-		_dockingManager = new DockingManager(this, VisualStyle.Office2003);
+		_dockingManager = new DockingManager(this, style);
 		_dockingManager.InnerControl = _TabbedGroups;
 		_dockingManager.OuterControl = ToolStripPanel;
 
@@ -897,7 +912,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		Text = parts[0] + " - " + documentTitle;
 	}
 
-	protected void OnTabbedGroupsPageChanged(object sender, Crownwood.DotNetMagic.Controls.TabPage e)
+	protected void OnTabbedGroupsPageChanged(object sender, MagicTabPage e)
 	{
 		if(_TabbedGroups.ActiveTabPage != null)
 		{
@@ -915,7 +930,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 			ActiveViewChanged(this, new EventArgs());
 	}
 
-	protected void OnTabbedGroupsPageCloseRequest(object sender, Crownwood.DotNetMagic.Controls.TGCloseRequestEventArgs e)
+	protected void OnTabbedGroupsPageCloseRequest(object sender, TGCloseRequestEventArgs e)
 	{
 		HexViewForm form = (HexViewForm)e.TabPage;
 		
@@ -1056,7 +1071,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 	
 	protected void OnWindowOpenWindows(object sender, EventArgs e)
 	{
-		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = (HexViewForm)OpenWindowMenu.SelectedItem.Tag;
+		((MagicTabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = (HexViewForm)OpenWindowMenu.SelectedItem.Tag;
 	}
 
 	protected void OnSelectionContextMenuDefineField(object sender, EventArgs e)
@@ -1237,19 +1252,21 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		}
 		else
 			form.Title = "New File";
+#if DOTNETMAGIC			
 		form.Image = Settings.Instance.Image("document_16.png");
+#endif
 		if(form.View.Document.FileName != null)
 			OpenWindowMenu.Add(form.View.Document.FileName, form);
 		else
 			OpenWindowMenu.Add(form.Title, form);
 		_TabbedGroups.ActiveLeaf.TabPages.Add(form);
-		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
+		((MagicTabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 		Documents[doc].Add(form);
 	}
 		
 	public void CloseView(HexViewForm form)
 	{
-		((Crownwood.DotNetMagic.Controls.TabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
+		((MagicTabControl)_TabbedGroups.ActiveLeaf.GroupControl).SelectedTab = form;
 		_TabbedGroups.ActiveLeaf.TabPages.Remove(form);
 		OnViewClosed(new ViewClosedEventArgs(form));
 	}

@@ -2,10 +2,14 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-using Crownwood.DotNetMagic.Controls;
+#if DOTNETMAGIC
+using MagicTabPage = Crownwood.DotNetMagic.Controls.TabPage;
+#else
+using MagicTabPage = Crownwood.Magic.Controls.TabPage;
+#endif
 
 
-class HexViewForm : Crownwood.DotNetMagic.Controls.TabPage
+class HexViewForm : MagicTabPage
 {
 
 
