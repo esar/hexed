@@ -91,9 +91,10 @@ namespace StructurePlugin
     	public List<Record> ArrayElements;
     	public Document Document;
     	public long Position = -1;
-    	public long Length = 0;
+    	public long ElementLength = 0;
+		public long Length = 0;
     	public long ArrayLength = 1;
-		public bool VariableLength = false;		
+	public bool VariableLength = false;		
     	public Color BackColor = Color.Transparent;
     	
     	protected string _Name;
@@ -126,7 +127,8 @@ namespace StructurePlugin
 		
     		_Name = name;
     		Position = pos;
-    		Length = length;
+		Length = length;
+    		ElementLength = length;
     		ArrayLength = arrayLength;
     	}
     	
@@ -142,7 +144,7 @@ namespace StructurePlugin
 				Document = doc;
 			}
 		
-			pos += Length;
+			pos += ElementLength;
 		}
 
 		public virtual void SetValue(string s)
@@ -163,13 +165,30 @@ namespace StructurePlugin
 		{
 			Console.WriteLine(Name);
 			Console.WriteLine("    ArrayLength: " + ArrayLength);
-			Console.WriteLine("    Length: " + Length);
+			Console.WriteLine("    ElementLength: " + ElementLength);
 			Console.WriteLine("    ArrayElements: " + (ArrayElements != null));
 			Console.WriteLine("    VariableLength: " + VariableLength);
+			Console.WriteLine("    Length: " + Length);
 			Console.WriteLine("    Pos: " + Position);
 			Console.WriteLine("----");
-			for(int i = 0; i < _Children.Count; ++i)
-				_Children[i].Dump();
+			if(ArrayLength > 1)
+			{
+				if(ArrayElements != null)
+				{
+					foreach(Record r in ArrayElements)
+						r.Dump();
+				}
+				else
+				{
+					//for(int i = 0; i < (int)ArrayLength; ++i)
+					//	GetArrayElement((long)i).Dump();
+				}
+			}
+			else
+			{
+				foreach(Record r in _Children)
+					r.Dump();
+			}
 		}
 	
 		public IEnumerator GetEnumerator()
@@ -204,7 +223,7 @@ namespace StructurePlugin
 				if(ArrayElements != null)
 					return (CharRecord)ArrayElements[(int)index];
 			
-				CharRecord newRecord = new CharRecord(_Name, Position + (Length * index), Length, 1);
+				CharRecord newRecord = new CharRecord(_Name, Position + (ElementLength * index), ElementLength, 1);
 				newRecord.Index = index;
 				newRecord.Document = Document;
 				newRecord.Parent = this;
@@ -255,7 +274,7 @@ namespace StructurePlugin
     		
     		StringBuilder str = new StringBuilder();
     		str.Append("\"");
-    		for(long i = 0; i < (Length * ArrayLength) / 8 && i < 32; ++i)
+    		for(long i = 0; i < (ElementLength * ArrayLength) / 8 && i < 32; ++i)
     			str.Append(AsciiChar[Document[(long)(Position/8 + i)]]);
     		str.Append("\"");
     		return str.ToString();
@@ -264,7 +283,7 @@ namespace StructurePlugin
     
     public class IntRecord : Record
     {
-		public override string Type { get { return String.Format("int{0}", Length); } }
+		public override string Type { get { return String.Format("int{0}", ElementLength); } }
 		
     	public IntRecord(string name, 
     	                  long pos, 
@@ -273,7 +292,7 @@ namespace StructurePlugin
     	public static implicit operator int(IntRecord r)
     	{
     		int x = 0;
-    		for(long i = 0; i < r.Length / 8; ++i)
+    		for(long i = 0; i < r.ElementLength / 8; ++i)
     			x |= (int)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
     		return x;
     	}
@@ -281,7 +300,7 @@ namespace StructurePlugin
     	public static implicit operator long(IntRecord r)
     	{
     		long x = 0;
-    		for(long i = 0; i < r.Length / 8; ++i)
+    		for(long i = 0; i < r.ElementLength / 8; ++i)
     			x |= (long)r.Document[(long)(r.Position/8 + i)] << (int)(i * 8);
     		return x;
     	}
@@ -298,7 +317,7 @@ namespace StructurePlugin
 				if(ArrayElements != null)
 					return (IntRecord)ArrayElements[(int)index];
 			
-				IntRecord newRecord = new IntRecord(_Name, Position + (Length * index), Length, 1);
+				IntRecord newRecord = new IntRecord(_Name, Position + (ElementLength * index), ElementLength, 1);
 				newRecord.Index = index;
 				newRecord.Document = Document;
 				newRecord.Parent = this;
@@ -318,7 +337,7 @@ namespace StructurePlugin
     
     public class UintRecord : Record
     {
-		public override string Type { get { return String.Format("uint{0}", Length); } }
+		public override string Type { get { return String.Format("uint{0}", ElementLength); } }
 		
     	public UintRecord(string name, 
     	                  long pos, 
@@ -326,12 +345,12 @@ namespace StructurePlugin
     	                  int arrayLength) : base(name, pos, length, arrayLength) {}
     	public static implicit operator uint(UintRecord r)
     	{
-			return (uint)r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
+			return (uint)r.Document.GetInteger((long)r.Position, (int)r.ElementLength, Endian.Little);
     	}
 
     	public static implicit operator ulong(UintRecord r)
     	{
-			return r.Document.GetInteger((long)r.Position, (int)r.Length, Endian.Little);
+			return r.Document.GetInteger((long)r.Position, (int)r.ElementLength, Endian.Little);
     	}
 
 		public UintRecord this[long index]
@@ -346,7 +365,7 @@ namespace StructurePlugin
 				if(ArrayElements != null)
 					return (UintRecord)ArrayElements[(int)index];
 			
-				UintRecord newRecord = new UintRecord(_Name, Position + (Length * index), Length, 1);
+				UintRecord newRecord = new UintRecord(_Name, Position + (ElementLength * index), ElementLength, 1);
 				newRecord.Index = index;
 				newRecord.Document = Document;
 				newRecord.Parent = this;
@@ -367,16 +386,16 @@ namespace StructurePlugin
 		public override void SetValue(string s)
 		{
 			ulong x = Convert.ToUInt64(s);
-			byte[] data = new byte[this.Length / 8];
-			for(uint i = 0; i < Length/8; ++i)
+			byte[] data = new byte[this.ElementLength / 8];
+			for(uint i = 0; i < ElementLength/8; ++i)
 			{
 				data[i] = (byte)(x & 0xFF);
 				x >>= 8;
 			}
 		
 			PieceBuffer.Mark a = Document.Marks.Add((long)(Position/8));
-			PieceBuffer.Mark b = Document.Marks.Add((long)((Position+Length)/8));
-			Document.Insert(a, b, data, (long)Length/8);
+			PieceBuffer.Mark b = Document.Marks.Add((long)((Position+ElementLength)/8));
+			Document.Insert(a, b, data, (long)ElementLength/8);
 			Document.Marks.Remove(a);
 			Document.Marks.Remove(b);
 		}

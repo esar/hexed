@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.CodeDom.Compiler;
 
 namespace StructurePlugin
 {
@@ -37,8 +38,15 @@ namespace StructurePlugin
 			if(result.Structure != null)
 			{
 				long pos = 0;
-				result.Structure.ApplyStructure(Document, ref pos, true);
-//				result.Structure.Dump();
+				try
+				{
+					result.Structure.ApplyStructure(Document, ref pos, true);
+				}
+				catch(Exception ex)
+				{
+					result.Errors.Add(new CompilerError(null, 0, 0, "", ex.ToString()));
+				}
+				result.Structure.Dump();
 			}
 
 			e.Result = result;
@@ -292,7 +300,7 @@ namespace StructurePlugin
 				while(record != null)
 				{
 					HexView.SelectionRange sel = new HexView.SelectionRange(Host.ActiveView);
-					sel.Set((long)record.Position, (long)(record.Position + (record.Length * record.ArrayLength)));
+					sel.Set((long)record.Position, (long)(record.Position + record.Length));
 						
 					if(level++ == 0)
 					{

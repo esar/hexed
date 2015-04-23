@@ -282,34 +282,47 @@ namespace StructurePlugin
 {0}                    {{
 {0}                        Record old = (Record){1}.Clone();
 {0}                        old.Parent = {1};
+{0}                        foreach(Record child in old._Children)
+{0}                            child.Parent = old;
 {0}                        {1}._Children = new RecordCollection({1});
 {0}                        {1}.ArrayElements = new System.Collections.Generic.List<Record>();
 {0}                        {1}.ArrayElements.Add(old);
 {0}                        {1}.ArrayLength = 1;
 {0}                    }}
-{0}                    Record r = new {4}({1}.BaseName, -1, 0, 1);
+{0}                    Record r = new {4}({1}.BaseName, -1, {5}, 1);
 {0}                    r.ApplyStructure(doc, ref pos, true);
 {0}                    r.Parent = {1};
 {0}                    r.Index = {1}.ArrayElements.Count;
 {0}                    {1}.ArrayElements.Add(r);
 {0}                    {1}.ArrayLength += 1;
+{0}                    {1}.Length += r.ElementLength;
 {0}                }}
 {0}                else
 {0}                {{
-{0}                    {1}.ApplyStructure(doc, ref pos, count == 0);
-{0}                    if({1}.VariableLength == false)
+{0}                    if({1}.Position == -1)
 {0}                    {{
-{0}                        {1}.ArrayLength += ({2}) - 1;
-{0}                        Length += ({2}) * {1}.Length;
-{0}                        VariableLength = VariableLength || {3};
-{0}                        pos += (({2}) - 1) * {1}.Length;
-{0}                        break;
+{0}                        {1}.ApplyStructure(doc, ref pos, true);
+{0}                        {1}.ArrayLength += {2} - 1;
+{0}                        {1}.Length += ({2} - 1) * {1}.ElementLength;
+{0}                        pos += ({2} - 1) * {1}.ElementLength;
 {0}                    }}
+{0}                    else
+{0}                    {{
+{0}                        VariableLength = true;
+{0}                        {1}.ArrayLength += {2};
+{0}                        {1}.Length += {2} * {1}.ElementLength;
+{0}                        pos += {2} * {1}.ElementLength;
+{0}                    }}
+{0}                    ElementLength += ({2}) * {1}.ElementLength;
+{0}                    Length += {2} * {1}.ElementLength;
+{0}                    VariableLength = VariableLength || {3};
+{0}                    break;
 {0}                }}
 {0}                if({3} || {1}.VariableLength) VariableLength = true;
-{0}                Length += {1}.Length;
+{0}                ElementLength += {1}.ElementLength;
+{0}                Length += {1}.ElementLength;
 {0}            }}
-", pad, n.Name, n.ArrayLength != null ? n.ArrayLength : "1", isVariableLength ? "true" : "false", KnownTypes[n.TypeName].RecordType));
+", pad, n.Name, n.ArrayLength != null ? n.ArrayLength : "1", isVariableLength ? "true" : "false", KnownTypes[n.TypeName].RecordType, KnownTypes[n.TypeName].Length));
 					}
 					else if(n.Type == ParseNodeType.CSharp)
 						output.Append(n.Text);

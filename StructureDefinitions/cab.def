@@ -1,0 +1,90 @@
+
+
+record CAB
+{
+    record FileHeader
+    {
+        record char magic[4];
+        record uint32 reserved1;
+        record uint32 cabinetSize;
+        record uint32 reserved2;
+        record uint32 firstFileOffset;
+        record uint32 reserved3;
+        record uint8  versionMinor;
+        record uint8  versionMajor;
+        record uint16 numFolders;
+        record uint16 numFiles;
+        record uint16 flags;
+        record uint16 setId;
+        record uint16 cabinetId;
+
+    } FileHeader;
+
+    if((FileHeader.flags & 4) == 4)
+    {
+        record ReserveHeader
+        {
+            record uint16 header;
+            record uint8  folder;
+            record uint8  data;
+
+        } ReserveHeader;
+    }
+
+    if((FileHeader.flags & 4) == 4 && ReserveHeader.header != 0)
+    {
+        record char HeaderReserve[ReserveHeader.header];
+    }
+
+    for(int i = 0; i < FileHeader.numFolders; ++i)
+    {
+        record Folder
+        {
+            record uint32 firstDataOffset;
+            record uint16 numDataBlocks;
+            record uint16 compressionType;
+
+        } Folder;
+
+        if((FileHeader.flags & 4) == 4 && ReserveHeader.folder != 0)
+        {
+            record char FolderReserve[ReserveHeader.folder];
+        }
+    }
+
+    for(int i = 0; i < FileHeader.numFiles; ++i)
+    {
+       record File
+       {
+           record uint32 uncompressedSize;
+           record uint32 uncompressedOffset;
+           record uint16 folderIndex;
+           record uint16 date;
+           record uint16 time;
+           record uint16 attributes;
+           for(int i = 0; i < 1024; ++i)
+           {
+               record char filename;
+               if(filename[i] == '\0')
+                   break;
+           }
+
+       } File;
+    }
+
+    for(int i = 0; i < FileHeader.numFolders; ++i)
+    {
+        for(int j = 0; j < Folder[i].numDataBlocks; ++j)
+        {
+            record DataBlock
+            {
+                record uint32 checksum;
+                record uint16 compressedSize;
+                record uint16 uncompressedSize;
+                record char data[compressedSize];
+
+            } DataBlock;
+        }
+    }
+
+} CAB;
