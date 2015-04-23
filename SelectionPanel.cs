@@ -132,12 +132,12 @@ class SelectionPanel : Panel
 		if(CurrentView != null)
 			CurrentView.Selection.Changed += OnSelectionChanged;
 		
-		Update();
+		UpdateFields();
 	}
 	
 	protected void OnSelectionChanged(object sender, EventArgs e)
 	{
-		Update();
+		UpdateFields();
 	}
 	
 	protected void OnInvert(object sender, EventArgs e)
@@ -192,7 +192,7 @@ class SelectionPanel : Panel
 			CurrentView.Document.Xor(CurrentView.Selection.BufferRange.Start, CurrentView.Selection.BufferRange.End, dlg.Pattern);
 	}
 	
-	protected void Update()
+	protected void UpdateFields()
 	{
 		HexView view = Host.ActiveView;
 
