@@ -394,12 +394,15 @@ public partial class PieceBuffer : IDisposable
 		CachedSavePlan = null;
 
 		// Invalidate the index cache if the change covers all or part of it
-		long indexCacheEndOffset = IndexCacheStartOffset + IndexCacheSize;
-		if((e.StartOffset >= IndexCacheStartOffset && e.StartOffset < indexCacheEndOffset) ||
-		   (e.EndOffset >= IndexCacheStartOffset && e.EndOffset < indexCacheEndOffset) ||
-		   (e.StartOffset < IndexCacheStartOffset && e.EndOffset >= indexCacheEndOffset))
+		if(IndexCacheStartOffset != Int64.MaxValue)
 		{
-			IndexCacheStartOffset = Int64.MaxValue;
+			long indexCacheEndOffset = IndexCacheStartOffset + IndexCacheSize;
+			if((e.StartOffset >= IndexCacheStartOffset && e.StartOffset < indexCacheEndOffset) ||
+			   (e.EndOffset >= IndexCacheStartOffset && e.EndOffset < indexCacheEndOffset) ||
+			   (e.StartOffset < IndexCacheStartOffset && e.EndOffset >= indexCacheEndOffset))
+			{
+				IndexCacheStartOffset = Int64.MaxValue;
+			}
 		}
 
 		if(Changed != null)
