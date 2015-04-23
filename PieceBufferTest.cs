@@ -96,7 +96,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetMarks(), "{0,0}{0,2}{0,3}");
 		Assert.AreEqual(GetPieces(), "{0,1}{2,3}{1,2}");
 		Assert.AreEqual(GetText(), "acb");
-		Assert.AreEqual(GetChanges(), "{1,1}");
+		Assert.AreEqual(GetChanges(), "{1,2}");
 		
 		// seek forward one char, insert another
 		b.Marks.Insert.Position += 1;
@@ -112,7 +112,7 @@ public class PieceBufferTest
 		Assert.AreEqual(GetMarks(), "{0,0}{0,1}{0,5}");
 		Assert.AreEqual(GetPieces(), "{4,5}{0,1}{2,3}{1,2}{3,4}");
 		Assert.AreEqual(GetText(), "eacbd");
-		Assert.AreEqual(GetChanges(), "{0,0}");
+		Assert.AreEqual(GetChanges(), "{0,4}");
 		
 		// seek forward past end, insert another
 		b.Marks.Insert.Position += 100;
