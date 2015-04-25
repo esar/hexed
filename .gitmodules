@@ -1,0 +1,6 @@
+[submodule "extlib/treeviewadv"]
+	path = extlib/treeviewadv
+	url = https://github.com/esar/treeviewadv
+[submodule "extlib/magicdock"]
+	path = extlib/magicdock
+	url = https://github.com/esar/magicdock.git
