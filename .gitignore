@@ -1,5 +1,3 @@
-syntax: glob
-
 *~
 *.pidb
 *.pdb
@@ -14,3 +12,6 @@ NCover/*
 *.orig
 competition/*
 *.mdp
+*/obj/*
+*/bin/*
+bin
