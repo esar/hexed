@@ -51,10 +51,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
-    <Reference Include="MagicLocalLibrary" Condition=" '$(DotNetMagic)' != 'true' ">
-      <HintPath>bin\MagicLocalLibrary.dll</HintPath>
-    </Reference>
-    <Reference Include="MagicLocalLibrary" Condition=" '$(DotNetMagic)' == 'true' ">
+    <Reference Include="DotNetMagic2005" Condition=" '$(DotNetMagic)' == 'true' ">
       <HintPath>bin\DotNetMagic2005.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -105,9 +102,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
-    <ProjectReference Include="Aga.Controls\Aga.Controls.csproj">
+    <ProjectReference Include="extlib\treeviewadv\Aga.Controls\Aga.Controls.csproj">
       <Project>{E73BB233-D88B-44A7-A98F-D71EE158381D}</Project>
       <Name>Aga.Controls</Name>
+    </ProjectReference>
+    <ProjectReference Include="extlib\magicdock\Source\MagicLibrary\MagicLibrary.csproj" Condition=" '$(DotNetMagic)' != 'true' ">
+      <Project>{F284392F-6873-4BE5-99BA-24793532D930}</Project>
+      <Name>MagicLibrary</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>
