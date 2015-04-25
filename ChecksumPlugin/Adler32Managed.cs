@@ -5,10 +5,10 @@ namespace ChecksumPlugin
 {
 	class Adler32Managed : HashAlgorithm
 	{
-		private const UInt32	BASE = 65521;
-		private const int		MAX = 6552;
-		protected UInt32		A;
-		protected UInt32		B;
+		private const UInt32 BASE = 65521;
+		private const int    MAX = 6552;
+		protected UInt32     A;
+		protected UInt32     B;
 		
 		
 		public Adler32Managed()

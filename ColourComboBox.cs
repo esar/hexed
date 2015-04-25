@@ -96,10 +96,3 @@ using System.Drawing.Drawing2D;
 				base.OnSelectedIndexChanged(e);
 		}
 	}
-
-
-
-
-
-
-

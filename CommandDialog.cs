@@ -28,10 +28,10 @@ using System.Drawing;
 		[Flags]
 		public enum Buttons
 		{
-			None	= 0,
-			OK		= 1,
-			Cancel	= 2,
-			Apply	= 4
+			None   = 0,
+			OK     = 1,
+			Cancel = 2,
+			Apply  = 4
 		}
 
 		PictureBox	titleImage;
