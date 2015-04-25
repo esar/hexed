@@ -218,12 +218,14 @@ namespace StructurePlugin
 			_NodeControlName.ParentColumn = _TreeColumnName;
 			_NodeControlName.Trimming = System.Drawing.StringTrimming.EllipsisCharacter;
 			_NodeControlName.UseCompatibleTextRendering = true;
+			_NodeControlName.EditEnabled = false;
 
 			_NodeControlValue.DataPropertyName = "StringValue";
 			_NodeControlValue.ParentColumn = _TreeColumnValue;
 			
 			_NodeControlType.DataPropertyName = "Type";
 			_NodeControlType.ParentColumn = _TreeColumnType;
+			_NodeControlType.EditEnabled = false;
 			
 			_TreeView.Dock = DockStyle.Fill;
 			Controls.Add(_TreeView);

@@ -115,7 +115,11 @@ namespace StructurePlugin
 		public string BaseName { get { return _Name; } }
 		
 		public virtual string Type { get { return this.GetType().Name; } }
-		public virtual string StringValue { get { return this.ToString(); } set {} }
+		public virtual string StringValue
+		{
+			get { return this.ToString(); }
+			set { SetValue(value); }
+		}
 		
     	public Record()
     	{
@@ -279,6 +283,15 @@ namespace StructurePlugin
     		str.Append("\"");
     		return str.ToString();
     	}
+
+		public override void SetValue(string s)
+		{
+			PieceBuffer.Mark a = Document.Marks.Add((long)(Position/8));
+			PieceBuffer.Mark b = Document.Marks.Add((long)((Position+Length)/8));
+			Document.Insert(a, b, System.Text.Encoding.ASCII.GetBytes(s), (long)Length/8);
+			Document.Marks.Remove(a);
+			Document.Marks.Remove(b);
+		}
     }
     
     public class IntRecord : Record
