@@ -260,6 +260,7 @@ namespace StatisticsPlugin
 			SetStyle(ControlStyles.AllPaintingInWmPaint, true);
 			SetStyle(ControlStyles.DoubleBuffer, true);
 			SetStyle(ControlStyles.UserPaint, true);
+			BackColor = Color.White;
 		}
 	
 		protected override void OnMouseMove(MouseEventArgs e)
