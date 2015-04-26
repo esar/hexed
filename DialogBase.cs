@@ -158,6 +158,7 @@ public class DialogBase : Form
 		ContentPanel = new GradientPanel();
 		ContentPanel.Padding = new Padding(5, 5, 8, 5);
 		ContentPanel.Dock = DockStyle.Fill;
+		ContentPanel.DockPadding.All = 5;
 		
 		base.Controls.Add(ContentPanel);
 		base.Controls.Add(ButtonPanel);
