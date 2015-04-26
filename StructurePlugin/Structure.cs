@@ -241,6 +241,7 @@ namespace StructurePlugin
 
 			_NodeControlValue.DataPropertyName = "StringValue";
 			_NodeControlValue.ParentColumn = _TreeColumnValue;
+			_NodeControlValue.EditEnabled = true;
 			
 			_NodeControlType.DataPropertyName = "Type";
 			_NodeControlType.ParentColumn = _TreeColumnType;
