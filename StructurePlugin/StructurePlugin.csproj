@@ -41,6 +41,7 @@
     <Compile Include="StructureDefinitionCompiler.cs" />
     <Compile Include="Record.cs" />
     <Compile Include="CompileErrorDialog.cs" />
+    <Compile Include="ApplyStructureDialog.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>

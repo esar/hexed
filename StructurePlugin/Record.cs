@@ -95,6 +95,17 @@ namespace StructurePlugin
 			record.Parent = _Owner;
 			Records.Add(record);
 		}
+
+		public void Insert(int index, Record record)
+		{
+			record.Parent = _Owner;
+			Records.Insert(index, record);
+		}
+
+		public void Remove(Record record)
+		{
+			Records.Remove(record);
+		}
 		
 		public IEnumerator GetEnumerator()
 		{
@@ -131,7 +142,11 @@ namespace StructurePlugin
 				return name; 
 			} 
 		}
-		public string BaseName { get { return _Name; } }
+		public string BaseName 
+		{
+			get { return _Name; }
+			set { _Name = value; }
+		}
 		
 		public virtual string Type { get { return this.GetType().Name; } }
 		public virtual string StringValue
@@ -220,6 +235,16 @@ namespace StructurePlugin
 		}
     }
     
+	public class RootRecord : Record
+	{
+		public override Record GetArrayElement(long index)
+		{
+			if(ArrayElements != null)
+				return ArrayElements[(int)index];
+			return null;
+		}
+	}
+
     public class CharRecord : Record
     {
 		public override string Type { get { return "char"; } }

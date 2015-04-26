@@ -33,13 +33,19 @@ namespace StructurePlugin
 		public Document Document { get { return _Document; } }
 		protected string _DefinitionFilename;
 		public string DefinitionFilename { get { return _DefinitionFilename; } }
+		protected long _StartPosition;
+		public long StartPosition { get { return _StartPosition; } }
+		protected long _EndPosition;
+		public long EndPosition { get { return _EndPosition; } }
 		protected ProgressNotification _Progress;
 		public ProgressNotification Progress { get { return _Progress; } }
 		
-		public StructureWorker(Document document, string definitionFilename, ProgressNotification progress)
+		public StructureWorker(Document document, string definitionFilename, long startPosition, long endPosition, ProgressNotification progress)
 		{
 			_Document = document;
 			_DefinitionFilename = definitionFilename;
+			_StartPosition = startPosition;
+			_EndPosition = endPosition;
 			_Progress = progress;
 			WorkerReportsProgress = true;
 			WorkerSupportsCancellation = true;
@@ -56,7 +62,7 @@ namespace StructurePlugin
 			ReportProgress(50, "Applying structure definition...");
 			if(result.Structure != null)
 			{
-				long pos = 0;
+				long pos = StartPosition;
 				try
 				{
 					result.Structure.ApplyStructure(Document, ref pos, true);
@@ -65,7 +71,7 @@ namespace StructurePlugin
 				{
 					result.Errors.Add(new CompilerError(null, 0, 0, "", ex.ToString()));
 				}
-				result.Structure.Dump();
+				//result.Structure.Dump();
 			}
 
 			e.Result = result;
@@ -79,10 +85,36 @@ namespace StructurePlugin
 
 		protected override void OnRunWorkerCompleted(RunWorkerCompletedEventArgs e)
 		{
-			if(Document.MetaData.ContainsKey("Structure"))
-				Document.MetaData["Structure"] = ((CompilerResult)e.Result).Structure;
+			int index = 0;
+			Record root;
+			Record old = null;
+			Record record = ((CompilerResult)e.Result).Structure;
+
+			if(!Document.MetaData.ContainsKey("Structure"))
+			{
+				root = new RootRecord();
+				Document.MetaData.Add("Structure", root);
+			}
 			else
-				Document.MetaData.Add("Structure", ((CompilerResult)e.Result).Structure);
+				root = (Record)Document.MetaData["Structure"];
+
+			foreach(Record r in root._Children)
+			{
+				if(r.Position == record.Position && r.Type == record.Type)
+				{
+					old = r;
+					break;
+				}
+				else if(r.Position > record.Position)
+					break;
+
+				++index;
+			}
+
+			record.BaseName = record.Type;
+			root._Children.Insert(index, record);
+			if(old != null)
+				root._Children.Remove(old);
 			
 			base.OnRunWorkerCompleted(e);
 		}
@@ -264,7 +296,9 @@ namespace StructurePlugin
 			{
 				object obj;
 				if(Host.ActiveView.Document.MetaData.TryGetValue("Structure", out obj))
+				{
 					_TreeView.Model = new StructureTreeModel((Record)obj);
+				}
 				else
 					_TreeView.Model = null;
 			}
@@ -274,16 +308,15 @@ namespace StructurePlugin
 		
 		protected void OnOpenStructureDef(object sender, EventArgs e)
 		{
-			FileDialog dlg = new OpenFileDialog();
+			ApplyStructureDialog dlg = new ApplyStructureDialog(Host.ActiveView, Host.Settings.BasePath + "/StructureDefinitions");
 			
-			dlg.Title = "Open Structure Definition";
 			if(dlg.ShowDialog() == DialogResult.OK)
 			{
 				_TreeView.Model = null;
 				
 				ProgressNotification progress = new ProgressNotification(); 
 				Host.ProgressNotifications.Add(progress);
-				Worker = new StructureWorker(Host.ActiveView.Document, dlg.FileName, progress);
+				Worker = new StructureWorker(Host.ActiveView.Document, dlg.DefinitionPath, dlg.StartPosition, dlg.EndPosition, progress);
 				Worker.RunWorkerCompleted += OnWorkerCompleted;
 				Worker.RunWorkerAsync();
 			}
@@ -295,7 +328,15 @@ namespace StructurePlugin
 			
 			Host.ProgressNotifications.Remove(((StructureWorker)sender).Progress);
 			if(Host.ActiveView != null && Host.ActiveView.Document == ((StructureWorker)sender).Document && result.Structure != null)
-				_TreeView.Model = new StructureTreeModel(result.Structure);
+			{
+				object obj;
+				if(Host.ActiveView.Document.MetaData.TryGetValue("Structure", out obj))
+				{
+					_TreeView.Model = new StructureTreeModel((Record)obj);
+				}
+				else
+					_TreeView.Model = null;
+			}
 			
 			if(result.Errors.Count > 0)
 			{
