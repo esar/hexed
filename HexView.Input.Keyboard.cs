@@ -240,17 +240,19 @@ public partial class HexView
 					case EditMode.Insert:
 						long start = Selection.Start;
 						if(start % (_BytesPerWord * 8) == 0)
-						{
-							//Console.WriteLine("Inserting at " + start); 
-							Document.Insert((byte)(x << (_BytesPerWord * 8 - LayoutDimensions.BitsPerDigit)));
-						}
+							AddWord(start, x);
 						else
-						{
-							//Console.WriteLine("Updating at " + start);
 							UpdateWord(start, x);
-						}
-						Selection.Set(start + LayoutDimensions.BitsPerDigit, 
-						              start + LayoutDimensions.BitsPerDigit);
+
+						start += LayoutDimensions.BitsPerDigit;
+
+						// account for rounding error when using a radix like 10
+						// that doesn't have a whole number of bits per digit
+						int roundingError = (_BytesPerWord * 8) - (LayoutDimensions.BitsPerDigit * LayoutDimensions.NumWordDigits);
+						if((start + roundingError) % (_BytesPerWord * 8) == 0)
+							start += roundingError;
+
+						Selection.Set(start, start);
 						break;
 				}
 			}

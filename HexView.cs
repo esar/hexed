@@ -637,28 +637,9 @@ public partial class HexView : Control
 
 		return x;
 	}
-	
-	private void UpdateWord(long address, int newDigitVal)
-	{
-		ulong word = GetWord(address);
-		
-		// Work out which digit of the word we're changing
-		long digit = address - (address / LayoutDimensions.BitsPerRow) * LayoutDimensions.BitsPerRow;
-		int wordAddr = (int)(digit / 8) / _BytesPerWord;
-		digit -= wordAddr * _BytesPerWord * 8;
-		digit /= (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits;
-		
-		digit = LayoutDimensions.NumWordDigits - digit - 1;
 
-		// Find the old value of the digit
-		ulong oldDigitVal = word;
-		oldDigitVal /= (ulong)Math.Pow(_DataRadix, digit);
-		oldDigitVal %= _DataRadix;
-		
-		// Update the word to reflect the digit's new value
-		word -= oldDigitVal * (ulong)Math.Pow(_DataRadix, digit);
-		word += (ulong)newDigitVal * (ulong)Math.Pow(_DataRadix, digit);
-		
+	private void SetWord(long address, ulong word, bool insertNewWord)
+	{
 		// Update the buffer
 		byte[] data = new byte[_BytesPerWord];
 		if(_Endian == Endian.Little)
@@ -677,15 +658,45 @@ public partial class HexView : Control
 				word >>= 8;
 			}
 		}
-		
+
 		address /= 8;
 		address = (address / _BytesPerWord) * _BytesPerWord;
 
 		PieceBuffer.Mark a = Document.Marks.Add(address);
-		PieceBuffer.Mark b = Document.Marks.Add(address + _BytesPerWord);
+		PieceBuffer.Mark b = Document.Marks.Add(address + (insertNewWord ? 0 : _BytesPerWord));
 		Document.Insert(a, b, data, _BytesPerWord);
 		Document.Marks.Remove(a);
 		Document.Marks.Remove(b);
+	}
+
+	private void AddWord(long address, int firstDigitVal)
+	{
+		ulong word = (ulong)firstDigitVal * (ulong)Math.Pow(_DataRadix, LayoutDimensions.NumWordDigits - 1);
+		SetWord(address, word, true);
+	}
+
+	private void UpdateWord(long address, int newDigitVal)
+	{
+		ulong word = GetWord(address);
+
+		// Work out which digit of the word we're changing
+		long digit = address - (address / LayoutDimensions.BitsPerRow) * LayoutDimensions.BitsPerRow;
+		int wordAddr = (int)(digit / 8) / _BytesPerWord;
+		digit -= wordAddr * _BytesPerWord * 8;
+		digit /= (_BytesPerWord * 8) / LayoutDimensions.NumWordDigits;
+
+		digit = LayoutDimensions.NumWordDigits - digit - 1;
+
+		// Find the old value of the digit
+		ulong oldDigitVal = word;
+		oldDigitVal /= (ulong)Math.Pow(_DataRadix, digit);
+		oldDigitVal %= _DataRadix;
+
+		// Update the word to reflect the digit's new value
+		word -= oldDigitVal * (ulong)Math.Pow(_DataRadix, digit);
+		word += (ulong)newDigitVal * (ulong)Math.Pow(_DataRadix, digit);
+
+		SetWord(address, word, false);
 	}
 
 
