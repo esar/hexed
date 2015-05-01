@@ -22,7 +22,37 @@ using System.Reflection;
 using System.Text;
 using System.Collections.Generic;
 using NUnit.Framework;
+using System.Diagnostics;
 
+
+[SetUpFixture]
+public class NUnitSetup
+{
+	[SetUp]
+	public void SetUp()
+	{
+		Trace.Listeners.Add(new NUnitListener());
+	}
+
+	[TearDown]
+	public void TearDown()
+	{
+		Trace.Listeners.Clear();
+	}
+
+	public class NUnitListener : DefaultTraceListener
+	{
+		public override void Fail(string message)
+		{
+			Assert.Fail(message);
+		}
+
+		public override void Fail(string message, string detailMessage)
+		{
+			Assert.Fail("{0}: {1}", message, detailMessage);
+		}
+	}
+}
 
 [TestFixture()]
 public class PieceBufferTest
