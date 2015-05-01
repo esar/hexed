@@ -144,8 +144,8 @@ class PluginsSettingsPage : SettingsPage
 		List.SmallImageList.ColorDepth = ColorDepth.Depth24Bit;
 		List.SmallImageList.ImageSize = new System.Drawing.Size(15, 15);
 		List.SmallImageList.TransparentColor = System.Drawing.Color.Magenta;
-		List.SmallImageList.Images.Add(Settings.Instance.Image("enabled_16.bmp"));
-		List.SmallImageList.Images.Add(Settings.Instance.Image("disabled_16.bmp"));
+		List.SmallImageList.Images.Add(Settings.Instance.Image("icons.enabled_16.bmp"));
+		List.SmallImageList.Images.Add(Settings.Instance.Image("icons.disabled_16.bmp"));
 		foreach(IPlugin plugin in app.PluginManager.ActivePlugins.Values)
 		{
 			ListViewItem item = List.Items.Add(plugin.Name);
