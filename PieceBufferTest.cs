@@ -344,18 +344,18 @@ public class PieceBufferTest
 	{
 		b.Insert("fox jump dog");
 		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position - 12);
-		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 9);
-		PieceBuffer.Mark m3 = b.Marks.Add(b.Marks.Insert.Position - 8);
+		/*PieceBuffer.Mark m2 =*/ b.Marks.Add(b.Marks.Insert.Position - 9);
+		/*PieceBuffer.Mark m3 =*/ b.Marks.Add(b.Marks.Insert.Position - 8);
 		PieceBuffer.Mark m4 = b.Marks.Add(b.Marks.Insert.Position - 4);
-		PieceBuffer.Mark m5 = b.Marks.Add(b.Marks.Insert.Position - 3);
+		/*PieceBuffer.Mark m5 =*/ b.Marks.Add(b.Marks.Insert.Position - 3);
 		PieceBuffer.Mark m6 = b.Marks.Add(b.Marks.Insert.Position);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{4,4}{8,8}{9,9}{0,12}{0,12}{0,12}");
 		Assert.AreEqual(GetPieces(), "{0,12}");
 		Assert.AreEqual(GetText(), "fox jump dog");
 		
 		b.Insert(m1, "the ");
-		PieceBuffer.Mark m7 = b.Marks.Add(b.Marks.Insert.Position - 4);
-		PieceBuffer.Mark m8 = b.Marks.Add(b.Marks.Insert.Position - 1);
+		/*PieceBuffer.Mark m7 =*/ b.Marks.Add(b.Marks.Insert.Position - 4);
+		/*PieceBuffer.Mark m8 =*/ b.Marks.Add(b.Marks.Insert.Position - 1);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{0,4}{0,4}{3,7}{4,8}{8,12}{9,13}{0,16}{0,16}");
 		Assert.AreEqual(GetPieces(), "{12,16}{0,12}");
 		Assert.AreEqual(GetText(), "the fox jump dog");
@@ -376,18 +376,18 @@ public class PieceBufferTest
 	{
 		b.Insert("fox jump dog");
 		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position);
-		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 3);
+		/*PieceBuffer.Mark m2 =*/ b.Marks.Add(b.Marks.Insert.Position - 3);
 		PieceBuffer.Mark m3 = b.Marks.Add(b.Marks.Insert.Position - 4);
-		PieceBuffer.Mark m4 = b.Marks.Add(b.Marks.Insert.Position - 8);
-		PieceBuffer.Mark m5 = b.Marks.Add(b.Marks.Insert.Position - 9);
+		/*PieceBuffer.Mark m4 =*/ b.Marks.Add(b.Marks.Insert.Position - 8);
+		/*PieceBuffer.Mark m5 =*/ b.Marks.Add(b.Marks.Insert.Position - 9);
 		PieceBuffer.Mark m6 = b.Marks.Add(b.Marks.Insert.Position - 12);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{4,4}{8,8}{9,9}{0,12}{0,12}{0,12}");
 		Assert.AreEqual(GetPieces(), "{0,12}");
 		Assert.AreEqual(GetText(), "fox jump dog");
 		
 		b.Insert(m6, "the ");
-		PieceBuffer.Mark m7 = b.Marks.Add(b.Marks.Insert.Position - 1);
-		PieceBuffer.Mark m8 = b.Marks.Add(b.Marks.Insert.Position - 4);
+		/*PieceBuffer.Mark m7 =*/ b.Marks.Add(b.Marks.Insert.Position - 1);
+		/*PieceBuffer.Mark m8 =*/ b.Marks.Add(b.Marks.Insert.Position - 4);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{0,4}{0,4}{3,7}{4,8}{8,12}{9,13}{0,16}{0,16}");
 		Assert.AreEqual(GetPieces(), "{12,16}{0,12}");
 		Assert.AreEqual(GetText(), "the fox jump dog");
@@ -409,12 +409,12 @@ public class PieceBufferTest
 		// add some text and mark the beginning and end of each word
 		b.Insert("the quick brown fox");
 		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position - 19);
-		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 16);
+		/*PieceBuffer.Mark m2 =*/ b.Marks.Add(b.Marks.Insert.Position - 16);
 		PieceBuffer.Mark m3 = b.Marks.Add(b.Marks.Insert.Position - 15);
-		PieceBuffer.Mark m4 = b.Marks.Add(b.Marks.Insert.Position - 10);
-		PieceBuffer.Mark m5 = b.Marks.Add(b.Marks.Insert.Position - 9);
+		/*PieceBuffer.Mark m4 =*/ b.Marks.Add(b.Marks.Insert.Position - 10);
+		/*PieceBuffer.Mark m5 =*/ b.Marks.Add(b.Marks.Insert.Position - 9);
 		PieceBuffer.Mark m6 = b.Marks.Add(b.Marks.Insert.Position - 4);
-		PieceBuffer.Mark m7 = b.Marks.Add(b.Marks.Insert.Position - 3);
+		/*PieceBuffer.Mark m7 =*/ b.Marks.Add(b.Marks.Insert.Position - 3);
 		PieceBuffer.Mark m8 = b.Marks.Add(b.Marks.Insert.Position);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{4,4}{9,9}{10,10}{15,15}{16,16}{0,19}{0,19}{0,19}");
 		Assert.AreEqual(GetPieces(), "{0,19}");
@@ -454,12 +454,12 @@ public class PieceBufferTest
 		// add some text and mark the beginning and end of each word
 		b.Insert("the quick brown fox");
 		PieceBuffer.Mark m1 = b.Marks.Add(b.Marks.Insert.Position);
-		PieceBuffer.Mark m2 = b.Marks.Add(b.Marks.Insert.Position - 3);
+		/*PieceBuffer.Mark m2 =*/ b.Marks.Add(b.Marks.Insert.Position - 3);
 		PieceBuffer.Mark m3 = b.Marks.Add(b.Marks.Insert.Position - 4);
-		PieceBuffer.Mark m4 = b.Marks.Add(b.Marks.Insert.Position - 9);
-		PieceBuffer.Mark m5 = b.Marks.Add(b.Marks.Insert.Position - 10);
+		/*PieceBuffer.Mark m4 =*/ b.Marks.Add(b.Marks.Insert.Position - 9);
+		/*PieceBuffer.Mark m5 =*/ b.Marks.Add(b.Marks.Insert.Position - 10);
 		PieceBuffer.Mark m6 = b.Marks.Add(b.Marks.Insert.Position - 15);
-		PieceBuffer.Mark m7 = b.Marks.Add(b.Marks.Insert.Position - 16);
+		/*PieceBuffer.Mark m7 =*/ b.Marks.Add(b.Marks.Insert.Position - 16);
 		PieceBuffer.Mark m8 = b.Marks.Add(b.Marks.Insert.Position - 19);
 		Assert.AreEqual(GetMarks(), "{0,0}{0,0}{3,3}{4,4}{9,9}{10,10}{15,15}{16,16}{0,19}{0,19}{0,19}");
 		Assert.AreEqual(GetPieces(), "{0,19}");
