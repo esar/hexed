@@ -50,11 +50,27 @@ public class Settings
 	
 	public System.Drawing.Image Image(string name)
 	{
-		return System.Drawing.Image.FromFile(string.Format("{0}/icons/{1}", BasePath, name));
+		System.Reflection.Assembly asm = System.Reflection.Assembly.GetEntryAssembly();
+		System.IO.Stream stream = asm.GetManifestResourceStream("hexed." + name);
+		if(stream == null)
+		{
+			Console.WriteLine("missing image: " + name);
+			return null;
+		}
+		else
+			return System.Drawing.Image.FromStream(stream);
 	}
 	
 	public System.Drawing.Icon Icon(string name)
 	{
-		return new Icon(string.Format("{0}/icons/{1}", BasePath, name));
+		System.Reflection.Assembly asm = System.Reflection.Assembly.GetEntryAssembly();
+		System.IO.Stream stream = asm.GetManifestResourceStream("hexed." + name);
+		if(stream == null)
+		{
+			Console.WriteLine("missing icon: " + name);
+			return null;
+		}
+		else
+			return new Icon(stream);
 	}
 }

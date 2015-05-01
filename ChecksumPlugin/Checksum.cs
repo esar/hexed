@@ -288,7 +288,7 @@ namespace ChecksumPlugin
 			Host = host;
 			
 			Host.Commands.Add("Checksum/Calculate", "Calculates the checksums for the selection or document", "Calculate",
-			                  Host.Settings.Image("go_16.png"),
+			                  Host.Settings.Image("icons.go_16.png"),
 			                  null,
 			                  OnCalculate);
 			
@@ -332,7 +332,7 @@ namespace ChecksumPlugin
 
 			
 
-			ConfigButton = new ToolStripButton(Host.Settings.Image("options_16.png"));
+			ConfigButton = new ToolStripButton(Host.Settings.Image("icons.options_16.png"));
 			ConfigButton.ToolTipText = "Configure";
 			ToolBar.Items.Add(ConfigButton);
 			ToolBar.Items.Add(new ToolStripSeparator());
@@ -389,7 +389,7 @@ namespace ChecksumPlugin
 			{
 				if(State.Worker != null && State.Worker.IsBusy)
 				{
-					RefreshButton.Image = Host.Settings.Image("stop_16.png");
+					RefreshButton.Image = Host.Settings.Image("icons.stop_16.png");
 					if(State.Worker.CancellationPending)
 						RefreshButton.Enabled = false;
 					else
@@ -397,13 +397,13 @@ namespace ChecksumPlugin
 				}
 				else
 				{
-					RefreshButton.Image = Host.Settings.Image("go_16.png");
+					RefreshButton.Image = Host.Settings.Image("icons.go_16.png");
 					RefreshButton.Enabled = true;
 				}
 			}
 			else
 			{
-				RefreshButton.Image = Host.Settings.Image("go_16.png");
+				RefreshButton.Image = Host.Settings.Image("icons.go_16.png");
 				RefreshButton.Enabled = false;
 			}
 		}
@@ -527,7 +527,7 @@ namespace ChecksumPlugin
 			
 			List<string> enabledAlgorithms = FindSelectedAlgorithms();
 			
-			RefreshButton.Image = Host.Settings.Image("stop_16.png");
+			RefreshButton.Image = Host.Settings.Image("icons.stop_16.png");
 			
 			long startPos = -1;
 			long endPos = -1;
@@ -568,7 +568,7 @@ namespace ChecksumPlugin
 			
 			if(State.Worker == worker)
 			{
-				RefreshButton.Image = Host.Settings.Image("go_16.png");
+				RefreshButton.Image = Host.Settings.Image("icons.go_16.png");
 				RefreshButton.Enabled = true;
 				State.Worker = null;
 				State.Progress = null;
@@ -580,7 +580,7 @@ namespace ChecksumPlugin
 	
 	public class Checksum : IPlugin
 	{
-		public Image Image { get { return Settings.Instance.Image("checksum_16.png"); } }
+		public Image Image { get { return Settings.Instance.Image("icons.checksum_16.png"); } }
 		public string Name { get { return "Checksum"; } }
 		public string Description { get { return "Calculates checksums of the selection or document"; } }
 		public string Author { get { return "Stephen Robinson"; } }
@@ -590,7 +590,7 @@ namespace ChecksumPlugin
 
 		public void Initialize(IPluginHost host)
 		{
-			host.AddWindow(new ResultWindow(host), "Checksum", host.Settings.Image("checksum_16.png"), DefaultWindowPosition.BottomRight, true);
+			host.AddWindow(new ResultWindow(host), "Checksum", host.Settings.Image("icons.checksum_16.png"), DefaultWindowPosition.BottomRight, true);
 		}
 		
 		public void Dispose()

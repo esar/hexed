@@ -79,7 +79,7 @@ namespace CalculatorPlugin
 	
 	public class MyClass : IPlugin
 	{
-		public Image Image { get { return Settings.Instance.Image("calculator_16.png"); } }
+		public Image Image { get { return Settings.Instance.Image("icons.calculator_16.png"); } }
 		public string Name { get { return "Calculator"; } }
 		public string Description { get { return "Provides a simple calculator"; } }
 		public string Author { get { return "Stephen Robinson"; } }
@@ -89,7 +89,7 @@ namespace CalculatorPlugin
 
 		public void Initialize(IPluginHost host)
 		{
-			host.AddWindow(new CalculatorPanel(host), "Calculator", host.Settings.Image("calculator_16.png"), DefaultWindowPosition.BottomLeft, true);
+			host.AddWindow(new CalculatorPanel(host), "Calculator", host.Settings.Image("icons.calculator_16.png"), DefaultWindowPosition.BottomLeft, true);
 		}
 		
 		public void Dispose()

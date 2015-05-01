@@ -147,23 +147,23 @@ namespace SearchPlugin
 			Host = host;
 
 			host.Commands.Add("Search/Search", "Searches for the specified pattern in the current document", "Search", 
-			                  host.Settings.Image("search_16.png"), 
+			                  host.Settings.Image("icons.search_16.png"), 
 			                  new Keys[] { Keys.Control | Keys.F },
 			                  OnSearch);
 			host.Commands.Add("Search/Next", "Jumps to the next search result", "Next",
-			                  Host.Settings.Image("next_16.png"),
+			                  Host.Settings.Image("icons.next_16.png"),
 			                  new Keys[] { Keys.F3, Keys.Control | Keys.Right },
 			                  OnNext);
 			host.Commands.Add("Search/Prev", "Jumps to the previous search result", "Prev",
-			                  Host.Settings.Image("prev_16.png"),
+			                  Host.Settings.Image("icons.prev_16.png"),
 			                  new Keys[] { Keys.Control | Keys.F3, Keys.Control | Keys.Left },
 			                  OnPrev);
 			host.Commands.Add("Search/First", "Jumps to the first search result", "First",
-			                  Host.Settings.Image("first_16.png"),
+			                  Host.Settings.Image("icons.first_16.png"),
 			                  null,
 			                  OnFirst);
 			host.Commands.Add("Search/Last", "Jumps to the last search result", "Last",
-			                  Host.Settings.Image("last_16.png"),
+			                  Host.Settings.Image("icons.last_16.png"),
 			                  null,
 			                  OnLast);
 			                  
@@ -203,7 +203,7 @@ namespace SearchPlugin
 		{
 			if(Search.IsBusy)
 			{
-				SearchButton.Image = Host.Settings.Image("stop_16.png");
+				SearchButton.Image = Host.Settings.Image("icons.stop_16.png");
 
 				if(Progress == null)
 				{
@@ -215,7 +215,7 @@ namespace SearchPlugin
 			}
 			else
 			{
-				SearchButton.Image = Host.Settings.Image("search_16.png");
+				SearchButton.Image = Host.Settings.Image("icons.search_16.png");
 
 				Host.ProgressNotifications.Remove(Progress);
 				Progress = null;
@@ -405,7 +405,7 @@ namespace SearchPlugin
 	
 	public class SearchPlugin : IPlugin
 	{
-		public Image Image { get { return Settings.Instance.Image("search_16.png"); } }
+		public Image Image { get { return Settings.Instance.Image("icons.search_16.png"); } }
 		public string Name { get { return "Search"; } }
 		public string Description { get { return "Provides a mechanism for searching a document for specific data"; } }
 		public string Author { get { return "Stephen Robinson"; } }
@@ -415,7 +415,7 @@ namespace SearchPlugin
 
 		public void Initialize(IPluginHost host)
 		{
-			host.AddWindow(new SearchPanel(host), "Search", host.Settings.Image("search_16.png"), DefaultWindowPosition.Left, true);
+			host.AddWindow(new SearchPanel(host), "Search", host.Settings.Image("icons.search_16.png"), DefaultWindowPosition.Left, true);
 		}
 		
 		public void Dispose()

@@ -49,7 +49,7 @@ class SplashScreen : Form
 	public SplashScreen()
 	{
 		FormBorderStyle = FormBorderStyle.None;
-		BackgroundImage = Settings.Instance.Image("splash.jpg");
+		BackgroundImage = Settings.Instance.Image("icons.splash.jpg");
 		//BackColor = Color.White;
 		ForeColor = Color.White;
 		Font = new Font(Font.SystemFontName, 10, FontStyle.Bold);

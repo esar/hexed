@@ -105,13 +105,13 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		
 		int numOperations = Enum.GetNames(typeof(PieceBuffer.HistoryOperation)).Length;
 		OperationIcons = new Image[numOperations];
-		Image unknownOpImage = Settings.Instance.Image("unknown_op.png");
+		Image unknownOpImage = Settings.Instance.Image("icons.unknown_op.png");
 		for(int i = 0; i < numOperations; ++i)
 			OperationIcons[i] = unknownOpImage;
-		OperationIcons[(int)PieceBuffer.HistoryOperation.Insert] = Settings.Instance.Image("insert.png");
-		OperationIcons[(int)PieceBuffer.HistoryOperation.Remove] = Settings.Instance.Image("remove.png");
-		OperationIcons[(int)PieceBuffer.HistoryOperation.Open] = Settings.Instance.Image("open_16.png");
-		OperationIcons[(int)PieceBuffer.HistoryOperation.New] = Settings.Instance.Image("new_16.png");
+		OperationIcons[(int)PieceBuffer.HistoryOperation.Insert] = Settings.Instance.Image("icons.insert.png");
+		OperationIcons[(int)PieceBuffer.HistoryOperation.Remove] = Settings.Instance.Image("icons.remove.png");
+		OperationIcons[(int)PieceBuffer.HistoryOperation.Open] = Settings.Instance.Image("icons.open_16.png");
+		OperationIcons[(int)PieceBuffer.HistoryOperation.New] = Settings.Instance.Image("icons.new_16.png");
 		
 		host.ActiveViewChanged += OnActiveViewChanged;
 	}

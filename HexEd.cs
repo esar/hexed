@@ -368,10 +368,10 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		_dockingManager.OuterControl = ToolStripPanel;
 
 		((IPluginHost)this).AddWindow(selectionPanel, "Selection", 
-		                              Settings.Instance.Image("selection_16.png"), 
+		                              Settings.Instance.Image("icons.selection_16.png"), 
 		                              DefaultWindowPosition.BottomLeft, true);
 		((IPluginHost)this).AddWindow(HistoryPanel, "History", 
-		                              Settings.Instance.Image("history_16.png"), 
+		                              Settings.Instance.Image("icons.history_16.png"), 
 		                              DefaultWindowPosition.Left, true);
 
 
@@ -420,11 +420,11 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 	private void CreateCommands()
 	{
 		Commands.Add("File/New", "Creates a new document", "&New",     
-		             Settings.Instance.Image("new_16.png"),  
+		             Settings.Instance.Image("icons.new_16.png"),  
 		             new Keys[] { Keys.Control | Keys.N }, 
 		             OnFileNew, OnUpdateUiElement);
 		Commands.Add("File/Open", "Opens an existing document", "&Open",    
-		             Settings.Instance.Image("open_16.png"), 
+		             Settings.Instance.Image("icons.open_16.png"), 
 		             new Keys[] { Keys.Control | Keys.O },  
 		             OnFileOpen, OnUpdateUiElement);
 		Commands.Add("File/Close", "Closes the current document", "&Close",
@@ -436,7 +436,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		             null,
 		             OnFileCloseAll, OnUpdateUiElement);
 		Commands.Add("File/Save", "Saves the current document", "&Save",    
-		             Settings.Instance.Image("save_16.png"), 
+		             Settings.Instance.Image("icons.save_16.png"), 
 		             new Keys[] { Keys.Control | Keys.S }, 
 		             OnFileSave, OnUpdateUiElement);
 		Commands.Add("File/Save As", "Saves the current document with the specified file name", "Save &As", 
@@ -444,19 +444,19 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		             null,             
 		             OnFileSaveAs, OnUpdateUiElement);
 		Commands.Add("File/Save All", "Saves all open documents", "Save All", 
-		             Settings.Instance.Image("saveall_16.png"), 
+		             Settings.Instance.Image("icons.saveall_16.png"), 
 		             new Keys[] { Keys.Control | Keys.Shift | Keys.S }, 
 		             null, OnUpdateUiElement);
 		Commands.Add("File/Print Setup", "Configures printing", "Print Setup...", 
-		             Settings.Instance.Image("printsetup_16.png"), 
+		             Settings.Instance.Image("icons.printsetup_16.png"), 
 		             null, 
 		             null, OnUpdateUiElement);
 		Commands.Add("File/Print Preview", "Creates a print preview for the current document", "P&rint Preview...", 
-		             Settings.Instance.Image("printpreview_16.png"), 
+		             Settings.Instance.Image("icons.printpreview_16.png"), 
 		             null, 
 		             null, OnUpdateUiElement);
 		Commands.Add("File/Print", "Prints the current document", "&Print", 
-		             Settings.Instance.Image("print_16.png"), 
+		             Settings.Instance.Image("icons.print_16.png"), 
 		             new Keys[] { Keys.Control | Keys.P }, 
 		             null, OnUpdateUiElement);
 		Commands.Add("File/File Properties", "Displays the current document's file properties", "File Properties...", 
@@ -469,27 +469,27 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		             OnFileExit, OnUpdateUiElement);
 
 		Commands.Add("Edit/Undo", "Undoes the last operation", "&Undo",
-		             Settings.Instance.Image("undo_16.png"),
+		             Settings.Instance.Image("icons.undo_16.png"),
 		             new Keys[] { Keys.Control | Keys.Z }, 
 		             null, OnUpdateUiElement);
 		Commands.Add("Edit/Redo", "Redoes the last operation", "&Redo",
-		             Settings.Instance.Image("redo_16.png"),
+		             Settings.Instance.Image("icons.redo_16.png"),
 		             new Keys[] { Keys.Control | Keys.Y },
 		             null, OnUpdateUiElement);
 		Commands.Add("Edit/Cut", "Cuts the current selection to the clipboard", "Cu&t",
-		             Settings.Instance.Image("cut_16.png"),
+		             Settings.Instance.Image("icons.cut_16.png"),
 		             new Keys[] { Keys.Control | Keys.X },
 		             null, OnUpdateUiElement);
 		Commands.Add("Edit/Copy", "Copies the current selection to the clipboard", "&Copy",
-		             Settings.Instance.Image("copy_16.png"),
+		             Settings.Instance.Image("icons.copy_16.png"),
 		             new Keys[] { Keys.Control | Keys.C },
 		             null, OnUpdateUiElement);
 		Commands.Add("Edit/Paste", "Pastes the clipboard to the current document", "&Paste",
-		             Settings.Instance.Image("paste_16.png"),
+		             Settings.Instance.Image("icons.paste_16.png"),
 		             new Keys[] { Keys.Control | Keys.V },
 		             null, OnUpdateUiElement);
 		Commands.Add("Edit/Delete", "Deletes the current selection", "&Delete",
-		             Settings.Instance.Image("delete_16.png"),
+		             Settings.Instance.Image("icons.delete_16.png"),
 		             new Keys[] { Keys.Delete },
 		             null, OnUpdateUiElement);
 		Commands.Add("Edit/Select All", "Selects all of the current document", "Select &All",
@@ -505,7 +505,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		             null,
 		             null, OnUpdateUiElement);
 		Commands.Add("Edit/Preferences", "Displayes the preferences dialog", "&Preferences...",
-		             Settings.Instance.Image("options_16.png"),
+		             Settings.Instance.Image("icons.options_16.png"),
 		             null,
 		             OnEditPreferences, OnUpdateUiElement);
 
@@ -572,11 +572,11 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		
 
 		Commands.Add("Window/Split", "Splits the current view", "&Split",
-		             Settings.Instance.Image("split_16.png"),
+		             Settings.Instance.Image("icons.split_16.png"),
 		             null,
 		             OnWindowSplit, OnUpdateUiElement);
 		Commands.Add("Window/Duplicate", "Duplicates the current view", "&Duplicate",
-		             Settings.Instance.Image("duplicate_16.png"),
+		             Settings.Instance.Image("icons.duplicate_16.png"),
 		             null,
 		             OnWindowDuplicate, OnUpdateUiElement);
 		Commands.Add("Window/Open Windows", null, null,
@@ -1272,7 +1272,7 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 		else
 			form.Title = "New File";
 #if DOTNETMAGIC			
-		form.Image = Settings.Instance.Image("document_16.png");
+		form.Image = Settings.Instance.Image("icons.document_16.png");
 #endif
 		if(form.View.Document.FileName != null)
 			OpenWindowMenu.Add(form.View.Document.FileName, form);

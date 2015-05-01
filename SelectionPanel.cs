@@ -40,37 +40,37 @@ class SelectionPanel : Panel
 		Host = host;
 
 		Host.Commands.Add("Selection/Byte Swap", "Reverses the bytes in the current selection", "Byte Swap",
-		                  Host.Settings.Image("byteswap_16.png"),
+		                  Host.Settings.Image("icons.byteswap_16.png"),
 		                  null,
 		                  OnByteSwap);
 		Host.Commands.Add("Selection/Invert", "Inverts the bits in the current selection", "Invert",
-		                  Host.Settings.Image("invert_16.png"),
+		                  Host.Settings.Image("icons.invert_16.png"),
 		                  null,
 		                  OnInvert);
 		Host.Commands.Add("Selection/Shift Left", "Shifts the selected data left by the specified number of bits", "Shift Left",
-		                  Host.Settings.Image("shiftleft_16.png"),
+		                  Host.Settings.Image("icons.shiftleft_16.png"),
 		                  null,
 		                  OnShiftLeft);
 		Host.Commands.Add("Selection/Shift Right", "Shifts the selected data right by the specified number of bits", "Shift Right",
-		                  Host.Settings.Image("shiftright_16.png"),
+		                  Host.Settings.Image("icons.shiftright_16.png"),
 		                  null,
 		                  OnShiftRight);
 		Host.Commands.Add("Selection/Rotate Left", "Rotates the selected data left by the specified number of bits", "Rotate Left",
-		                  Host.Settings.Image("rotateleft_16.png"),
+		                  Host.Settings.Image("icons.rotateleft_16.png"),
 		                  null);
 		Host.Commands.Add("Selection/Rotate Right", "Rotates the selected data right by the specified number of bits", "Rotate Right",
-		                  Host.Settings.Image("rotateright_16.png"),
+		                  Host.Settings.Image("icons.rotateright_16.png"),
 		                  null);
 		Host.Commands.Add("Selection/AND", "AND's the selected data with the specified pattern", "AND",
-		                  Host.Settings.Image("and_16.png"),
+		                  Host.Settings.Image("icons.and_16.png"),
 		                  null,
 		                  OnAnd);
 		Host.Commands.Add("Selection/OR", "OR's the selected data with the specified pattern", "OR",
-		                  Host.Settings.Image("or_16.png"),
+		                  Host.Settings.Image("icons.or_16.png"),
 		                  null,
 		                  OnOr);
 		Host.Commands.Add("Selection/XOR", "XOR's the selected data with the specified pattern", "XOR",
-		                  Host.Settings.Image("xor_16.png"),
+		                  Host.Settings.Image("icons.xor_16.png"),
 		                  null,
 		                  OnXor);
 		

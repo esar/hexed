@@ -287,7 +287,7 @@ namespace StructurePlugin
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
 			Controls.Add(ToolBar);
 
-			ToolBar.Items.Add(Settings.Instance.Image("open_16.png")).Click += new EventHandler(OnOpenStructureDef);
+			ToolBar.Items.Add(Settings.Instance.Image("icons.open_16.png")).Click += new EventHandler(OnOpenStructureDef);
 		}
 
 		protected void OnActiveViewChanged(object sender, EventArgs e)
@@ -388,7 +388,7 @@ namespace StructurePlugin
 	
 	public class StructurePlugin : IPlugin
 	{
-		public Image Image { get { return Settings.Instance.Image("structure_16.png"); } }
+		public Image Image { get { return Settings.Instance.Image("icons.structure_16.png"); } }
 		public string Name { get { return "Structure"; } }
 		public string Description { get { return "Displays a documents structure based on structure definition scripts"; } }
 		public string Author { get { return "Stephen Robinson"; } }
@@ -398,7 +398,7 @@ namespace StructurePlugin
 
 		public void Initialize(IPluginHost host)
 		{
-			host.AddWindow(new StructurePanel(host), "Structure", host.Settings.Image("structure_16.png"), DefaultWindowPosition.Left, true);
+			host.AddWindow(new StructurePanel(host), "Structure", host.Settings.Image("icons.structure_16.png"), DefaultWindowPosition.Left, true);
 		}
 		
 		public void Dispose()

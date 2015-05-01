@@ -116,31 +116,31 @@ namespace BookmarkPlugin
 			Host = host;
 			
 			Host.Commands.Add("Bookmark/Add Bookmark", "Adds a new bookmark", "Add Bookmark",
-			                  Host.Settings.Image("bookmark_16.png"),
+			                  Host.Settings.Image("icons.bookmark_16.png"),
 			                  new Keys[] { Keys.Control | Keys.B },
 			                  OnAddBookmark);
 			Host.Commands.Add("Bookmark/New Folder", "Creates a new bookmark folder", "New Folder",
-			                  Host.Settings.Image("newfolder_16.png"),
+			                  Host.Settings.Image("icons.newfolder_16.png"),
 			                  null,
 			                  OnNewFolder);
 			Host.Commands.Add("Bookmark/Delete", "Deletes the selected bookmark or folder", "Delete",
-			                  Host.Settings.Image("delete_16.png"),
+			                  Host.Settings.Image("icons.delete_16.png"),
 			                  null,
 			                  OnDelete);
 			Host.Commands.Add("Bookmark/Move First", "Jumps to the first bookmark", "Move First",
-			                  Host.Settings.Image("first_16.png"),
+			                  Host.Settings.Image("icons.first_16.png"),
 			                  null,
 			                  OnMoveFirst);
 			Host.Commands.Add("Bookmark/Move Previous", "Jumps to the previous bookmark", "Move Previous",
-			                  Host.Settings.Image("prev_16.png"),
+			                  Host.Settings.Image("icons.prev_16.png"),
 			                  new Keys[] { Keys.Control | Keys.Up },
 			                  OnMovePrev);
 			Host.Commands.Add("Bookmark/Move Next", "Jumps to the next bookmark", "Move Next",
-			                  Host.Settings.Image("next_16.png"),
+			                  Host.Settings.Image("icons.next_16.png"),
 			                  new Keys[] { Keys.Control | Keys.Down },
 			                  OnMoveNext);
 			Host.Commands.Add("Bookmark/Move Last", "Jumps to the last bookmark", "Move Last",
-			                  Host.Settings.Image("last_16.png"),
+			                  Host.Settings.Image("icons.last_16.png"),
 			                  null,
 			                  OnMoveLast);
 			
@@ -486,7 +486,7 @@ namespace BookmarkPlugin
 
 	public class BookmarkPlugin : IPlugin
 	{
-		public Image Image { get { return Settings.Instance.Image("bookmark_16.png"); } }
+		public Image Image { get { return Settings.Instance.Image("icons.bookmark_16.png"); } }
 		public string Name { get { return "Bookmarks"; } }
 		public string Description { get { return "Provides a mechanism for bookmarking sections of a document"; } }
 		public string Author { get { return "Stephen Robinson"; } }
@@ -496,7 +496,7 @@ namespace BookmarkPlugin
 
 		public void Initialize(IPluginHost host)
 		{
-			host.AddWindow(new BookmarkPanel(host), "Bookmarks", host.Settings.Image("bookmark_16.png"), DefaultWindowPosition.Left, true);
+			host.AddWindow(new BookmarkPanel(host), "Bookmarks", host.Settings.Image("icons.bookmark_16.png"), DefaultWindowPosition.Left, true);
 		}
 		
 		public void Dispose()

@@ -163,7 +163,7 @@ class EditorAppearanceSettingsPage : SettingsPage
 		{
 			Text = "Hexed Settings";
 //			Icon = Settings.Instance.Icon("overlays.ico");
-			Image = Settings.Instance.Image("settings-48.png");
+			Image = Settings.Instance.Image("icons.settings-48.png");
 			Description = "Change the settings below to customise the behaviour and appearance of Hexed";
 			DockPadding.All = 5;
 
@@ -185,16 +185,16 @@ class EditorAppearanceSettingsPage : SettingsPage
 
 			ImageList.ColorDepth = ColorDepth.Depth32Bit;
 			ImageList.ImageSize = new Size(16, 16);
-/*			ImageList.Images.Add(Settings.Instance.Image("settings-48.png"));
-			ImageList.Images.Add(Settings.Instance.Image("overlays-16.png"));
-			ImageList.Images.Add(Settings.Instance.Image("diff-16.png"));
-			ImageList.Images.Add(Settings.Instance.Image("commit-16.png"));
-			ImageList.Images.Add(Settings.Instance.Image("extprogs-16.png"));
-			ImageList.Images.Add(Settings.Instance.Image("extprog-16.png"));
-			ImageList.Images.Add(Settings.Instance.Image("revgraph-16.png"));
-			ImageList.Images.Add(Settings.Instance.Image("locale-16.png"));
-			ImageList.Images.Add(Settings.Instance.Image("repo-16.png"));
-			ImageList.Images.Add(Settings.Instance.Image("commands-16.png"));
+/*			ImageList.Images.Add(Settings.Instance.Image("icons.settings-48.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.overlays-16.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.diff-16.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.commit-16.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.extprogs-16.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.extprog-16.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.revgraph-16.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.locale-16.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.repo-16.png"));
+			ImageList.Images.Add(Settings.Instance.Image("icons.commands-16.png"));
 			ImageList.Images.Add(Settings.Instance.Icon("merge.ico"));
 */			TreeView.ImageList = ImageList;
 

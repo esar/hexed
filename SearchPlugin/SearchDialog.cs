@@ -42,7 +42,7 @@ namespace SearchPlugin
 		public SearchDialog()
 		{
 			Text = "Search";
-			Icon = Settings.Instance.Icon("search.ico");
+			Icon = Settings.Instance.Icon("icons.search.ico");
 			
 			Extras.RowCount = 2;
 			Extras.ColumnCount = 2;

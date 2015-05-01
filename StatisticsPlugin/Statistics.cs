@@ -512,19 +512,19 @@ namespace StatisticsPlugin
 			Host.ActiveViewChanged += OnActiveViewChanged;
 
 			Host.Commands.Add("Statistics/Show Graph", "Shows the results as a bar graph", "Show Graph",
-			                  Host.Settings.Image("histogram_16.png"),
+			                  Host.Settings.Image("icons.histogram_16.png"),
 			                  null,
 			                  OnShowGraph);
 			Host.Commands.Add("Statistics/Show Table", "Shows the results as a table", "Show Table",
-			                  Host.Settings.Image("table_16.png"),
+			                  Host.Settings.Image("icons.table_16.png"),
 			                  null,
 			                  OnShowTable);
 			Host.Commands.Add("Statistics/Show Statistics", "Shows the results as a table of statistics", "Show Statistics",
-			                  Host.Settings.Image("stats_16.png"),
+			                  Host.Settings.Image("icons.stats_16.png"),
 			                  null,
 			                  OnShowStats);			
 			Host.Commands.Add("Statistics/Calculate", "Calculates the statistics for the selection or document", "Calculate",
-			                  Host.Settings.Image("go_16.png"),
+			                  Host.Settings.Image("icons.go_16.png"),
 			                  null,
 			                  OnCalculate);
 			
@@ -721,7 +721,7 @@ namespace StatisticsPlugin
 			{
 				if(State.Worker != null && State.Worker.IsBusy)
 				{
-					RefreshButton.Image = Host.Settings.Image("stop_16.png");
+					RefreshButton.Image = Host.Settings.Image("icons.stop_16.png");
 					if(State.Worker.CancellationPending)
 						RefreshButton.Enabled = false;
 					else
@@ -729,7 +729,7 @@ namespace StatisticsPlugin
 				}
 				else
 				{
-					RefreshButton.Image = Host.Settings.Image("go_16.png");
+					RefreshButton.Image = Host.Settings.Image("icons.go_16.png");
 					RefreshButton.Enabled = true;
 				}
 
@@ -738,7 +738,7 @@ namespace StatisticsPlugin
 			}
 			else
 			{
-				RefreshButton.Image = Host.Settings.Image("go_16.png");
+				RefreshButton.Image = Host.Settings.Image("icons.go_16.png");
 				RefreshButton.Enabled = false;
 
 				ClearList();
@@ -788,7 +788,7 @@ namespace StatisticsPlugin
 			}
 			
 			Statistics.Clear();
-			RefreshButton.Image = Host.Settings.Image("stop_16.png");
+			RefreshButton.Image = Host.Settings.Image("icons.stop_16.png");
 			
 			long startPos = -1;
 			long endPos = -1;
@@ -828,7 +828,7 @@ namespace StatisticsPlugin
 			worker.Dispose();
 			if(State.Worker == worker)
 			{
-				RefreshButton.Image = Host.Settings.Image("go_16.png");
+				RefreshButton.Image = Host.Settings.Image("icons.go_16.png");
 				RefreshButton.Enabled = true;
 				State.Worker = null;
 				State.Progress = null;
@@ -838,7 +838,7 @@ namespace StatisticsPlugin
 	
 	public class StatisticsPlugin : IPlugin
 	{
-		public Image Image { get { return Settings.Instance.Image("histogram_16.png"); } }
+		public Image Image { get { return Settings.Instance.Image("icons.histogram_16.png"); } }
 		public string Name { get { return "Statistics"; } }
 		public string Description { get { return "Provides statisitcs about the contents of a document"; } }
 		public string Author { get { return "Stephen Robinson"; } }
@@ -848,7 +848,7 @@ namespace StatisticsPlugin
 
 		public void Initialize(IPluginHost host)
 		{
-			host.AddWindow(new StatisticsPanel(host), "Statistics", host.Settings.Image("histogram_16.png"), DefaultWindowPosition.BottomRight, true);
+			host.AddWindow(new StatisticsPanel(host), "Statistics", host.Settings.Image("icons.histogram_16.png"), DefaultWindowPosition.BottomRight, true);
 		}
 		
 		public void Dispose()

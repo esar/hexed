@@ -246,7 +246,7 @@ namespace PythonConsolePlugin
 			Host = host;
 
 			Host.Commands.Add("Python Console/Clear Console", "Clears the contents of the console", "Clear Console",
-			                  Host.Settings.Image("delete_16.png"),
+			                  Host.Settings.Image("icons.delete_16.png"),
 			                  null,
 			                  OnClearConsole);
 			
@@ -268,7 +268,7 @@ namespace PythonConsolePlugin
 
 	public class PythonConsolePlugin : IPlugin
 	{
-		public Image Image { get { return Settings.Instance.Image("console_16.png"); } }
+		public Image Image { get { return Settings.Instance.Image("icons.console_16.png"); } }
 		public string Name { get { return "Python Console"; } }
 		public string Description { get { return "Provides an interactive python console"; } }
 		public string Author { get { return "Stephen Robinson"; } }
@@ -278,7 +278,7 @@ namespace PythonConsolePlugin
 
 		public void Initialize(IPluginHost host)
 		{
-			host.AddWindow(new PythonConsolePanel(host), "Python Console", host.Settings.Image("console_16.png"), DefaultWindowPosition.BottomRight, true);
+			host.AddWindow(new PythonConsolePanel(host), "Python Console", host.Settings.Image("icons.console_16.png"), DefaultWindowPosition.BottomRight, true);
 		}
 		
 		public void Dispose()
