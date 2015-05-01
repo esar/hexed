@@ -50,7 +50,7 @@
       <Project>{D6F74BFC-29D8-436B-9A93-B7AA58F75A32}</Project>
       <Name>hexed</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Aga.Controls\Aga.Controls.csproj">
+    <ProjectReference Include="..\extlib\treeviewadv\Aga.Controls\Aga.Controls.csproj">
       <Project>{E73BB233-D88B-44A7-A98F-D71EE158381D}</Project>
       <Name>Aga.Controls</Name>
     </ProjectReference>
