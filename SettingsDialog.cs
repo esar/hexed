@@ -104,39 +104,6 @@ class EditorAppearanceSettingsPage : SettingsPage
 	}
 }
 
-	class ExternalProgramsSettingsPage : SettingsPage
-	{
-		Label	Description = new Label();
-
-		public ExternalProgramsSettingsPage()
-		{
-			Text = "External Programs";
-
-			Description.Text = "Change the settings on the sub pages to specify the location and to customise the behaviour of the external programs that TortoiseHg uses.";
-			Description.Dock = DockStyle.Fill;
-			Description.Padding = new Padding(0, 5, 0, 0);
-			Controls.Add(Description);
-		}
-	}
-
-
-
-	class CommandsSettingsPage : SettingsPage
-	{
-		public CommandsSettingsPage()
-		{
-			Text = "Commands";
-		}
-	}
-
-	class RevisionGraphSettingsPage : SettingsPage
-	{
-		public RevisionGraphSettingsPage()
-		{
-			Text = "Revision Graph";
-		}
-	}
-
 	class SettingsPage : Panel
 	{
 		public virtual void Save()
@@ -201,9 +168,6 @@ class EditorAppearanceSettingsPage : SettingsPage
 
 			SettingsPage page;
 
-//			AddPage(new GeneralSettingsPage(), 7);
-//			AddPage(new OverlaySettingsPage(), 1);
-
 			page = AddPage(new EditorSettingsPage(), 3);
 			AddPage(page, new EditorLayoutSettingsPage(), 3);
 			AddPage(page, new EditorAppearanceSettingsPage(), 3);
@@ -211,16 +175,6 @@ class EditorAppearanceSettingsPage : SettingsPage
 			page = AddPage(new PluginsSettingsPage(app), 3);
 			page = AddPage(new ShortcutsSettingsPage(app), 3);
 		
-			page = AddPage(new CommandsSettingsPage(), 9);
-			AddPage(page, new RevisionGraphSettingsPage(), 6);
-//			AddPage(page, new CommitSettingsPage(), 3);
-
-			page = AddPage(new ExternalProgramsSettingsPage(), 4);
-//			AddPage(page, new MercurialSettingsPage(), 5);
-//			AddPage(page, new GraphVizSettingsPage(), 5);
-
-//			page = AddPage(new RepositoriesSettingsPage(), 8);
-
 			TreeView.AfterSelect += new TreeViewEventHandler(OnTreeAfterSelect);
 
 			TreeView.ExpandAll();
