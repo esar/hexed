@@ -24,3 +24,5 @@ Hasn't been tested on anything other than Linux/Mono recently.
  4. git submodule update
  5. xbuild hexed.sln
 
+## Screenshot (May 2015)
+![Screenshot](https://github.com/esar/hexed/blob/master/doc/hexed.jpg?raw=true)
