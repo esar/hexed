@@ -247,7 +247,7 @@ public partial class PieceBuffer
 				// Find nearest mark before the destination position and move the
 				// specified mark to that position (must be to the right in mark chain)
 				InternalMark m = mark;
-				while((m = m.Next) != _Sentinel && m.Position <= mark.Position + distance)
+				while((m = m.Next) != _End && m.Position <= mark.Position + distance)
 					;
 				if(m.Prev != mark)
 				{
@@ -306,7 +306,7 @@ public partial class PieceBuffer
 				// Find nearest mark after the destination position and move the
 				// specified mark to that position (must be to left in mark chain)
 				InternalMark m = mark;
-				while((m = m.Prev) != _Sentinel && m.Position >= mark.Position - distance)
+				while((m = m.Prev) != _Sentinel && m.Position > mark.Position - distance)
 					;
 				if(m.Next != mark)
 				{
@@ -397,7 +397,7 @@ public partial class PieceBuffer
 			Debug.Assert(m.Next.Prev == m, "Mark chain sentinel's next pointer is bad");
 			Debug.Assert(m.Prev.Next == m, "Mark chain sentinel's prev pointer is bad");
 
-			// List must never be empty, insert_mark always exists
+			// List must never be empty: start, insert and end marks always exist
 			Debug.Assert(m.Prev != _Sentinel, "Mark chain is empty");
 
 			while((m = m.Prev) != _Sentinel)
@@ -420,6 +420,9 @@ public partial class PieceBuffer
 					Debug.Assert(m.Next.Offset - m.Offset == m.Next.Position - m.Position, "Mark chain node's position/offset don't match");
 				}
 			}
+			
+			Debug.Assert(Sentinel.Next == Start, "Start mark must always be first in list");
+			Debug.Assert(Sentinel.Prev == End, "End mark must always be last in list");
 
 			return true;
 		}
