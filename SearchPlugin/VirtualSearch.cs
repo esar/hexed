@@ -116,7 +116,6 @@ namespace SearchPlugin
 		private Document  Document;
 		private byte[]    Pattern;
 
-		DocumentMatchBucketCollection Hits;
 		List<RestartPosition> RestartPositions = new List<RestartPosition>();
 		SearchResult[]   CachedResults;
 		long             FirstCachedResult;
@@ -134,6 +133,8 @@ namespace SearchPlugin
 		public delegate void VirtualSearchProgressEventHandler(object sender, VirtualSearchProgressEventArgs e); 
 		public event VirtualSearchProgressEventHandler ProgressChanged;
 		
+		public DocumentMatchBucketCollection MatchBuckets;
+
 		private long     _ResultCount;
 		public long      ResultCount
 		{
@@ -162,13 +163,13 @@ namespace SearchPlugin
 			CachedResults = new SearchResult[CACHE_SIZE];
 		}
 		
-		public void Initialize(Document document, byte[] pattern, DocumentMatchBucketCollection hits)
+		public void Initialize(Document document, byte[] pattern)
 		{
 			Document = document;
 			Pattern = pattern;
 
-			Hits = hits;
-			
+			MatchBuckets = new DocumentMatchBucketCollection(document.Length, 512);
+
 			_ResultCount = 0;
 			FirstCachedResult = 0;
 			Array.Clear(CachedResults, 0, CACHE_SIZE);
@@ -343,8 +344,8 @@ namespace SearchPlugin
 				else if(RestartPositions.Count == 0 || progress.NewResults[i].Position >= RestartPositions[RestartPositions.Count - 1].Position + RESTART_GAP)
 					RestartPositions.Add(new RestartPosition(index, progress.NewResults[i].Position));
 
-				if(Hits != null)
-					Hits.Add(progress.NewResults[i].Position);
+				if(MatchBuckets != null)
+					MatchBuckets.Add(progress.NewResults[i].Position);
 			}
 
 			if(_ResultCount != oldResultCount && ResultCountChanged != null)

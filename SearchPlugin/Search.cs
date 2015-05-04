@@ -29,9 +29,10 @@ namespace SearchPlugin
 {
 	class DocumentMatchBucketCollection
 	{
-		DocumentMatchIndicator Owner;
 		bool[] Buckets;
 		public long BucketWidth;
+
+		public event EventHandler Changed;
 		
 		public int BucketCount
 		{
@@ -43,11 +44,12 @@ namespace SearchPlugin
 			get { return Buckets[i]; }
 		}
 		
-		public DocumentMatchBucketCollection(DocumentMatchIndicator owner, long documentLength, int numBuckets)
+		public DocumentMatchBucketCollection(long documentLength, int numBuckets)
 		{
-			Owner = owner;
 			Buckets = new bool[numBuckets];
 			BucketWidth = documentLength / numBuckets;
+			if(BucketWidth == 0)
+				BucketWidth = 1;
 		}
 		
 		public void Add(long position)
@@ -56,7 +58,9 @@ namespace SearchPlugin
 			if(bucket > Buckets.Length - 1)
 				bucket = Buckets.Length - 1;
 			Buckets[bucket] = true;
-			Owner.Invalidate();
+
+			if(Changed != null)
+				Changed(this, new EventArgs());
 		}
 	}
 	
@@ -69,7 +73,24 @@ namespace SearchPlugin
 			set { _SelectedMatch = value; Invalidate(); }
 		}
 		
-		public DocumentMatchBucketCollection Matches;
+		protected DocumentMatchBucketCollection _Matches;
+		public DocumentMatchBucketCollection Matches
+		{
+			get { return _Matches; }
+			set
+			{
+				if(_Matches != null)
+					_Matches.Changed -= OnMatchesChanged;
+
+				_SelectedMatch = -1;
+				_Matches = value;
+
+				if(_Matches != null)
+					_Matches.Changed += OnMatchesChanged;
+
+				Invalidate();
+			}
+		}
 		
 		protected SolidBrush Brush;
 		protected SolidBrush HighlightBrush;
@@ -81,37 +102,37 @@ namespace SearchPlugin
 			Width = 25;
 		}
 
-		public void Reset(long documentLength, int numBuckets)
+		protected void OnMatchesChanged(object sender, EventArgs e)
 		{
-			Matches = new DocumentMatchBucketCollection(this, documentLength, numBuckets);
+			Invalidate();
 		}
-		
+
 		protected override void OnPaint(PaintEventArgs e)
 		{
 			const int border = 5;
 			
 			base.OnPaint(e);
 
-			if(Matches != null)
+			if(_Matches != null)
 			{
-				float bucketPixelWidth = (float)(ClientSize.Height - border*2) / Matches.BucketCount;
+				float bucketPixelWidth = (float)(ClientSize.Height - border*2) / _Matches.BucketCount;
 				
-				for(int i = 0; i < Matches.BucketCount; ++i)
+				for(int i = 0; i < _Matches.BucketCount; ++i)
 				{
-					if(Matches[i])
+					if(_Matches[i])
 					{
 						RectangleF r = new RectangleF(border, bucketPixelWidth * i + border, ClientSize.Width - border*2, bucketPixelWidth);
 						if(r.Height < 1)
 							r.Height = 1;
 
-						if(i != _SelectedMatch / Matches.BucketWidth)
+						if(i != _SelectedMatch / _Matches.BucketWidth)
 							e.Graphics.FillRectangle(Brush, r);
 					}
 				}
 
 				if(_SelectedMatch >= 0)
 				{
-					int i = (int)(_SelectedMatch / Matches.BucketWidth);
+					int i = (int)(_SelectedMatch / _Matches.BucketWidth);
 					RectangleF r = new RectangleF(border, bucketPixelWidth * i + border, ClientSize.Width - border*2, bucketPixelWidth);
 					if(r.Height < 1)
 						r.Height = 1;
@@ -129,6 +150,7 @@ namespace SearchPlugin
 		const int LIST_ITEM_CACHE_SIZE = 256;
 		
 		IPluginHost Host;
+		Document Document;
 		DocumentMatchIndicator MatchIndicator = new DocumentMatchIndicator();
 		ListView ListView = new ListView();
 		ToolStrip ToolBar = new ToolStrip();
@@ -166,7 +188,8 @@ namespace SearchPlugin
 			                  Host.Settings.Image("icons.last_16.png"),
 			                  null,
 			                  OnLast);
-			                  
+
+			host.ActiveViewChanged += OnActiveViewChanged;
 			
 			ListView.Columns.Add("Position");
 			ListView.Columns.Add("Length");
@@ -192,11 +215,39 @@ namespace SearchPlugin
 			ToolBar.Items.Add(Host.CreateToolButton("Search/Last"));
 			Controls.Add(ToolBar);
 
-			Search = new VirtualSearch();
-			Search.ResultCountChanged += OnSearchResultCountChanged;
-			Search.ProgressChanged += OnSearchProgressChanged;
-			
 			ListView.SelectedIndexChanged += OnListViewSelectedIndexChanged;
+		}
+
+		protected void OnActiveViewChanged(object sender, EventArgs e)
+		{
+			if(Search != null)
+			{
+				Search.ResultCountChanged -= OnSearchResultCountChanged;
+				Search.ProgressChanged -= OnSearchProgressChanged;
+				Search = null;
+			}
+			Document = null;
+
+			if(Host.ActiveView != null)
+				Document = Host.ActiveView.Document;
+
+			if(Document != null)
+			{
+				object o;
+				if(!Document.MetaData.TryGetValue("Search", out o))
+				{
+					Search = new VirtualSearch();
+					Document.MetaData.Add("Search", Search);
+				}
+				else
+					Search = o as VirtualSearch;
+
+				Search.ResultCountChanged += OnSearchResultCountChanged;
+				Search.ProgressChanged += OnSearchProgressChanged;
+
+				ListView.VirtualListSize = (int)Search.ResultCount;
+				MatchIndicator.Matches = Search.MatchBuckets;
+			}
 		}
 
 		protected void OnSearchProgressChanged(object sender, VirtualSearchProgressEventArgs e)
@@ -225,8 +276,9 @@ namespace SearchPlugin
 		protected void OnSearchResultCountChanged(object sender, EventArgs e)
 		{
 			ListView.VirtualListSize = (int)Search.ResultCount;
-			if(FoundFirstHit == false)
+			if(FoundFirstHit == false && Search.ResultCount > 0)
 			{
+Console.WriteLine("Count: " + Search.ResultCount);
 				FoundFirstHit = true;
 				OnFirst(this, EventArgs.Empty);
 			}
@@ -321,8 +373,10 @@ namespace SearchPlugin
 
 			ClearListItemCache();
 			FoundFirstHit = false;
-			MatchIndicator.Reset(Host.ActiveView.Document.Length, 512);
-			Search.Initialize(Host.ActiveView.Document, dlg.Pattern, MatchIndicator.Matches);
+			ListView.VirtualListSize = 0;
+			Search.Initialize(Host.ActiveView.Document, dlg.Pattern);
+			MatchIndicator.Matches = Search.MatchBuckets;
+			
 			//ListView.Refresh();
 		}
 		
