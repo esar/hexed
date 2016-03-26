@@ -922,6 +922,14 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 	{
 		base.OnActivated(e);
 		SplashScreen.Hide();
+
+		string[] args = Environment.GetCommandLineArgs();
+		for(int i = 1; i < args.Length; ++i)
+		{
+			Document doc = OpenDocument(args[i]);
+			if(doc != null)
+				CreateView(doc);
+		}
 	}
 
 
