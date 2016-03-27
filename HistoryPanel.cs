@@ -197,24 +197,24 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			PieceBuffer.HistoryItem item = _TreeView.GetPath(_TreeView.SelectedNode).LastNode as PieceBuffer.HistoryItem;
 			if(item != null)
 			{
+				long offset = 0;
+
 				RangeIndicator.Ranges.Clear();
 				if(item.OldLength > 0)
 				{
 					RangeIndicator.Ranges.Add(new DocumentRange(item.StartPosition, 
 					                                            item.StartPosition + item.OldLength,
 					                                            Color.FromArgb(128, 255, 0, 0)));
+					offset = item.OldLength;
 				}
 				if(item.NewLength > 0)
 				{
-					RangeIndicator.Ranges.Add(new DocumentRange(item.StartPosition,
-					                                            item.StartPosition + item.NewLength,
+					RangeIndicator.Ranges.Add(new DocumentRange(item.StartPosition + offset,
+					                                            item.StartPosition + offset + item.NewLength,
 					                                            Color.FromArgb(128, 0, 255, 0)));
 				}
 
-				if(item.NewLength - item.OldLength > 0)
-					RangeIndicator.DocumentLength = item.DocumentLength + (item.NewLength - item.OldLength);
-				else
-					RangeIndicator.DocumentLength = item.DocumentLength;
+				RangeIndicator.DocumentLength = item.DocumentLength + item.NewLength;
 			}
 			else
 				RangeIndicator.Ranges.Clear();
