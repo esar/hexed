@@ -312,7 +312,7 @@ public partial class PieceBuffer : IDisposable
 		CurrentBlock = MemoryBlock.Create(OpenBlocks, 4096);
 		
 		_History = new HistoryTree();
-		_History.Add(new InternalHistoryItem(DateTime.Now, "New", 0, 0, 0, 0, 0, 0, null, null));
+		_History.Add(new InternalHistoryItem(DateTime.Now, "New", 0, 0, 0, 0, 0, 0, 0, null, null));
 
 		IndexCacheBytes = new byte[IndexCacheSize];
 		IndexCacheStartOffset = Int64.MaxValue;
@@ -344,8 +344,9 @@ public partial class PieceBuffer : IDisposable
 
 		_History = new HistoryTree();
 		_History.Add(new InternalHistoryItem(DateTime.Now, "Open", 
-		                                                           0, 0, block.Length, 0, 0, block.Length, 
-		                                                           null, null));
+		                                     0, 0, block.Length, 0, 
+		                                     0, 0, block.Length, 
+		                                     null, null));
 
 		IndexCacheBytes = new byte[IndexCacheSize];
 		IndexCacheStartOffset = Int64.MaxValue;

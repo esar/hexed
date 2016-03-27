@@ -58,6 +58,9 @@ public partial class PieceBuffer : IDisposable
 		protected long _NewLength;
 		public long NewLength { get { return _NewLength; } }
 		
+		protected long _DocumentLength;
+		public long DocumentLength { get { return _DocumentLength; } }
+
 		protected HistoryItem _Parent;
 		public HistoryItem Parent { get { return _Parent; } }
 		
@@ -101,6 +104,11 @@ public partial class PieceBuffer : IDisposable
 		{
 			get { return _NewLength; }
 			set { _NewLength = value; } 
+		}
+		public new long DocumentLength
+		{
+			get { return _DocumentLength; }
+			set { _DocumentLength = value; }
 		}
 		
 		public new HistoryItem Parent 
@@ -173,7 +181,7 @@ public partial class PieceBuffer : IDisposable
 		}
 
 		public InternalHistoryItem(DateTime date, string op, 
-		                           long startPosition, long oldLength, long newLength, 
+		                           long startPosition, long oldLength, long newLength, long docLength,
 		                           long pieceStartPos, long pieceOldLength, long pieceNewLength,
 		                           Piece head, Piece tail)
 		{
@@ -183,6 +191,7 @@ public partial class PieceBuffer : IDisposable
 			StartPosition = startPosition;
 			OldLength = oldLength;
 			NewLength = newLength;
+			DocumentLength = docLength;
 			Head = head;
 			Tail = tail;
 			PieceStartPosition = pieceStartPos;
@@ -269,7 +278,7 @@ public partial class PieceBuffer : IDisposable
 			history = history.Current.GroupHistory;
 
 		InternalHistoryItem newItem = new InternalHistoryItem(DateTime.Now, operation, startPosition, 
-		                                                      oldLength, newLength, 
+		                                                      oldLength, newLength, Length,
 		                                                      pieceStartPos, pieceOldLength, pieceNewLength,
 		                                                      start, end);
 
