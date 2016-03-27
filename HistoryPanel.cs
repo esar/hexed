@@ -34,7 +34,8 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	private Aga.Controls.Tree.TreeColumn _TreeColumnName;
 	private Aga.Controls.Tree.TreeColumn _TreeColumnDate;
 	private Aga.Controls.Tree.TreeColumn _TreeColumnRange;
-	
+
+	private DocumentRangeIndicator RangeIndicator;
 	private Dictionary<string, Image> OperationIcons;
 	private Image UnknownOperationIcon;
 	
@@ -82,6 +83,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		_TreeView.NodeControls.Add(this._NodeControlRange);
 		_TreeView.ShowNodeToolTips = true;
 		_TreeView.NodeMouseDoubleClick += OnNodeDoubleClick;
+		_TreeView.SelectionChanged += OnSelectionChanged;
 		
 		_NodeControlIcon.ParentColumn = _TreeColumnName;
 		_NodeControlIcon.VirtualMode = true;
@@ -103,6 +105,10 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		
 		_TreeView.Dock = DockStyle.Fill;
 		Controls.Add(_TreeView);
+
+		RangeIndicator = new DocumentRangeIndicator();
+		RangeIndicator.Dock = DockStyle.Left;
+		Controls.Add(RangeIndicator);
 		
 		OperationIcons = new Dictionary<string, Image>();
 		UnknownOperationIcon = Settings.Instance.Image("icons.unknown_op.png");
@@ -182,6 +188,37 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		PieceBuffer.HistoryItem item = _TreeView.GetPath(e.Node).LastNode as PieceBuffer.HistoryItem;
 		if(item != LastDocument.History)
 			LastDocument.HistoryJump(item);
+	}
+
+	private void OnSelectionChanged(object sender, EventArgs e)
+	{
+		if(_TreeView.SelectedNode != null)
+		{
+			PieceBuffer.HistoryItem item = _TreeView.GetPath(_TreeView.SelectedNode).LastNode as PieceBuffer.HistoryItem;
+			if(item != null)
+			{
+				RangeIndicator.Ranges.Clear();
+				if(item.OldLength > 0)
+				{
+					RangeIndicator.Ranges.Add(new DocumentRange(item.StartPosition, 
+					                                            item.StartPosition + item.OldLength,
+					                                            Color.FromArgb(128, 255, 0, 0)));
+				}
+				if(item.NewLength > 0)
+				{
+					RangeIndicator.Ranges.Add(new DocumentRange(item.StartPosition,
+					                                            item.StartPosition + item.NewLength,
+					                                            Color.FromArgb(128, 0, 255, 0)));
+				}
+
+				if(item.NewLength - item.OldLength > 0)
+					RangeIndicator.DocumentLength = item.DocumentLength + (item.NewLength - item.OldLength);
+				else
+					RangeIndicator.DocumentLength = item.DocumentLength;
+			}
+			else
+				RangeIndicator.Ranges.Clear();
+		}
 	}
 	
 	public void OnHistoryAdded(object sender, PieceBuffer.HistoryEventArgs e)
