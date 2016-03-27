@@ -310,6 +310,7 @@ namespace ChecksumPlugin
 			NodeControlCheckBox.DataPropertyName = "CheckState";
 			NodeControlCheckBox.ParentColumn = NameColumn;
 			NodeControlCheckBox.CheckStateChanged += OnNodeControlCheckStateChanged;
+			NodeControlCheckBox.EditEnabled = true;
 			NodeControlIcon = new NodeStateIcon();
 			NodeControlIcon.ParentColumn = NameColumn;
 			NodeControlName = new NodeTextBox();
