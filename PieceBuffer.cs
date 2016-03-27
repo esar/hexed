@@ -688,7 +688,8 @@ public partial class PieceBuffer : IDisposable
 				}
 			}
 
-			Replace("Insert", (InternalMark)destStart, (InternalMark)destEnd, head, tail, origLength);
+			Replace(destStart.Position == destEnd.Position ? "Insert" : "Replace", 
+			        (InternalMark)destStart, (InternalMark)destEnd, head, tail, origLength);
 		}
 	}
 

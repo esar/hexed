@@ -107,6 +107,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		OperationIcons = new Dictionary<string, Image>();
 		UnknownOperationIcon = Settings.Instance.Image("icons.unknown_op.png");
 		OperationIcons["Insert"] = Settings.Instance.Image("icons.insert.png");
+		OperationIcons["Replace"] = Settings.Instance.Image("icons.insert.png");
 		OperationIcons["Remove"] = Settings.Instance.Image("icons.remove.png");
 		OperationIcons["Open"] = Settings.Instance.Image("icons.open_16.png");
 		OperationIcons["New"] = Settings.Instance.Image("icons.new_16.png");
