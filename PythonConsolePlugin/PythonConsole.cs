@@ -132,6 +132,27 @@ namespace PythonConsolePlugin
 			Python.SetStandardError(StderrStream);
 		}
 
+		public void ExecuteFile(string filename)
+		{
+			PieceBuffer.HistoryItem historyGroup = null;
+
+			if(CurrentDocument != null)
+				historyGroup = CurrentDocument.BeginHistoryGroup("Python: " + filename);
+
+			try
+			{
+				Python.ExecuteFile(filename);
+			}
+			catch(Exception exp)
+			{
+				AppendText(exp.Message + "\r\n", ErrorFont, Color.Red);
+				CurrentExpression.Remove(0, CurrentExpression.Length);
+			}
+
+			if(CurrentDocument != null && historyGroup != null)
+				CurrentDocument.EndHistoryGroup(historyGroup);
+		}
+
 		public void Feed(PythonConsoleFeederStream sender, string text)
 		{
 			if(sender == StdoutStream)
@@ -216,7 +237,7 @@ namespace PythonConsolePlugin
 						PieceBuffer.HistoryItem historyGroup = null;
 
 						if(CurrentDocument != null)
-							historyGroup = CurrentDocument.BeginHistoryGroup("Interactive Python");
+							historyGroup = CurrentDocument.BeginHistoryGroup("Python: Interactive");
 
 						try
 						{
@@ -262,6 +283,10 @@ namespace PythonConsolePlugin
 			                  Host.Settings.Image("icons.delete_16.png"),
 			                  null,
 			                  OnClearConsole);
+			Host.Commands.Add("Python Console/Run Script", "Runs a python script from a file", "Run Script",
+			                  Host.Settings.Image("icons.open_16.png"),
+			                  null,
+			                  OnRunScript);
 			
 			Console = new PythonConsole(host);
 			Console.Dock = DockStyle.Fill;
@@ -270,12 +295,23 @@ namespace PythonConsolePlugin
 			ToolBar = new ToolStrip();
 			ToolBar.GripStyle = ToolStripGripStyle.Hidden;
 			ToolBar.Items.Add(Host.CreateToolButton("Python Console/Clear Console"));
+			ToolBar.Items.Add(Host.CreateToolButton("Python Console/Run Script"));
 			Controls.Add(ToolBar);
 		}
 		
 		protected void OnClearConsole(object sender, EventArgs e)
 		{
 			Console.Clear();
+		}
+
+		protected void OnRunScript(object sender, EventArgs e)
+		{
+			OpenFileDialog ofd = new OpenFileDialog();
+			ofd.Title = "Select File";
+			ofd.Filter = "All Files (*.*)|*.*";
+
+			if(ofd.ShowDialog() == DialogResult.OK)
+				Console.ExecuteFile(ofd.FileName);
 		}
 	}
 
