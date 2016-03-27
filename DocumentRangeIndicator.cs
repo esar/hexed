@@ -46,12 +46,26 @@ public class DocumentRange
 		get { return _EndPosition - _StartPosition; }
 		set { _EndPosition -= (_EndPosition - _StartPosition) - value; }
 	}
+
+	protected Color _Color;
+	public Color Color
+	{
+		get { return _Color; }
+		set { _Color = value; }
+	}
 	
 	public DocumentRange() {}
 	public DocumentRange(long start, long end)
 	{
 		_StartPosition = start;
 		_EndPosition = end;
+	}
+
+	public DocumentRange(long start, long end, Color color)
+	{
+		_StartPosition = start;
+		_EndPosition = end;
+		_Color = color;
 	}
 }
 
@@ -92,6 +106,12 @@ public class DocumentRangeCollection : ICollection<DocumentRange>
 	public void Add(long start, long end)
 	{
 		Ranges.Add(new DocumentRange(start, end));
+		Owner.Invalidate();
+	}
+
+	public void Add(long start, long end, Color color)
+	{
+		Ranges.Add(new DocumentRange(start, end, color));
 		Owner.Invalidate();
 	}
 
@@ -192,7 +212,15 @@ public class DocumentRangeIndicator : UserControl
 				                                 (float)(r.EndPosition - r.StartPosition) * scaleRatio);
 				if(rect.Height < 1)
 					rect.Height = 1;
-				e.Graphics.FillRectangle(Brush, rect);
+
+				if(r.Color != Color.Empty)
+				{
+					Brush brush = new SolidBrush(r.Color);
+					e.Graphics.FillRectangle(brush, rect);
+					brush.Dispose();
+				}
+				else
+					e.Graphics.FillRectangle(Brush, rect);
 			}
 			
 			if(_SelectedRange != null)
