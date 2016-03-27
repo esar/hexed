@@ -35,7 +35,8 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	private Aga.Controls.Tree.TreeColumn _TreeColumnDate;
 	private Aga.Controls.Tree.TreeColumn _TreeColumnRange;
 	
-	private Image[] OperationIcons;
+	private Dictionary<string, Image> OperationIcons;
+	private Image UnknownOperationIcon;
 	
 	private Font _BoldFont;
 
@@ -103,15 +104,12 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		_TreeView.Dock = DockStyle.Fill;
 		Controls.Add(_TreeView);
 		
-		int numOperations = Enum.GetNames(typeof(PieceBuffer.HistoryOperation)).Length;
-		OperationIcons = new Image[numOperations];
-		Image unknownOpImage = Settings.Instance.Image("icons.unknown_op.png");
-		for(int i = 0; i < numOperations; ++i)
-			OperationIcons[i] = unknownOpImage;
-		OperationIcons[(int)PieceBuffer.HistoryOperation.Insert] = Settings.Instance.Image("icons.insert.png");
-		OperationIcons[(int)PieceBuffer.HistoryOperation.Remove] = Settings.Instance.Image("icons.remove.png");
-		OperationIcons[(int)PieceBuffer.HistoryOperation.Open] = Settings.Instance.Image("icons.open_16.png");
-		OperationIcons[(int)PieceBuffer.HistoryOperation.New] = Settings.Instance.Image("icons.new_16.png");
+		OperationIcons = new Dictionary<string, Image>();
+		UnknownOperationIcon = Settings.Instance.Image("icons.unknown_op.png");
+		OperationIcons["Insert"] = Settings.Instance.Image("icons.insert.png");
+		OperationIcons["Remove"] = Settings.Instance.Image("icons.remove.png");
+		OperationIcons["Open"] = Settings.Instance.Image("icons.open_16.png");
+		OperationIcons["New"] = Settings.Instance.Image("icons.new_16.png");
 		
 		host.ActiveViewChanged += OnActiveViewChanged;
 	}
@@ -122,6 +120,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		if(LastDocument != null)
 		{
 			LastDocument.HistoryAdded -= OnHistoryAdded;
+			LastDocument.HistoryRemoved -= OnHistoryRemoved;
 			LastDocument.HistoryUndone -= OnHistoryUndone;
 			LastDocument.HistoryRedone -= OnHistoryRedone;
 			LastDocument.HistoryJumped -= OnHistoryJumped;
@@ -132,6 +131,7 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		{
 			LastDocument = Host.ActiveView.Document;
 			LastDocument.HistoryAdded += OnHistoryAdded;
+			LastDocument.HistoryRemoved += OnHistoryRemoved;
 			LastDocument.HistoryUndone += OnHistoryUndone;
 			LastDocument.HistoryRedone += OnHistoryRedone;
 			LastDocument.HistoryJumped += OnHistoryJumped;
@@ -160,7 +160,11 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	public void OnIconValueNeeded(object sender, Aga.Controls.Tree.NodeControls.NodeControlValueEventArgs e)
 	{
 		PieceBuffer.HistoryItem item = _TreeView.GetPath(e.Node).LastNode as PieceBuffer.HistoryItem;
-		e.Value = OperationIcons[(int)item.Operation];
+		Image icon;
+		if(OperationIcons.TryGetValue(item.Operation, out icon))
+			e.Value = icon;
+		else
+			e.Value = UnknownOperationIcon;
 	}
 	
 	public void OnRangeValueNeeded(object sender, Aga.Controls.Tree.NodeControls.NodeControlValueEventArgs e)
@@ -205,6 +209,12 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		_TreeView.EnsureVisible(_TreeView.FindNode(new Aga.Controls.Tree.TreePath(new object [] {e.NewItem})));
 	}
 	
+	public void OnHistoryRemoved(object sender, PieceBuffer.HistoryEventArgs e)
+	{
+		NodesRemoved(this, new Aga.Controls.Tree.TreeModelEventArgs(new Aga.Controls.Tree.TreePath(), 
+		                                                            new object[] { e.OldItem }));
+	}
+
 	public void OnHistoryUndone(object sender, PieceBuffer.HistoryEventArgs e)
 	{
 		if(NodesChanged != null)

@@ -57,49 +57,68 @@ public partial class PieceBuffer : IDisposable
 		Console.Write("\n");
 	}
 
-	protected void DebugDumpHistory(InternalHistoryItem item, int indent)
+	protected void DebugDumpHistory(HistoryTree history, InternalHistoryItem item, int indent)
 	{
 		const string padding = "                                                                                ";
 		string pad = padding.Substring(0, indent * 4);
 
 		while(item != null)
 		{
-			if(item == History)
+			if(item == history.Current)
 				Console.Write("=>" + pad.Substring(2));
 			else
 				Console.Write(pad);
 
-			if(item.Parent != null)
+			if(item.GroupHistory != null)
 			{
-				Console.Write("Head: " + (item.Head.Start == Int64.MaxValue ? -1 : item.Head.Start));
-				Console.Write(" => " + (item.Head.End == Int64.MaxValue ? -1 : item.Head.End));
-				Console.Write(", Tail: " + (item.Tail.Start == Int64.MaxValue ? -1 : item.Tail.Start));
-				Console.Write(" => " + (item.Tail.End == Int64.MaxValue ? -1 : item.Tail.End));
-				Console.Write(", RHead: " + (item.Head.Prev.Start == Int64.MaxValue ? -1 : item.Head.Prev.Start));
-				Console.Write(" => " + (item.Head.Prev.End == Int64.MaxValue ? -1 : item.Head.Prev.End));
-				Console.Write(", RTail: " + (item.Tail.Next.Start == Int64.MaxValue ? -1 : item.Tail.Next.Start));
-				Console.Write(" => " + (item.Tail.Next.End == Int64.MaxValue ? -1 : item.Tail.Next.End));
-				Console.Write("\n");
+				Console.Write("Group: " + item.Operation + "\n");
 
-				DebugDumpPieceText(pad, item.Head, item.Tail, false);
-				DebugDumpPieceText(pad, item.Head.Prev, item.Tail.Next, false);				
+				InternalHistoryItem i = item.GroupHistory.Current;
+				if(i != null)
+				{
+					while(i.InternalParent != null)
+						i = i.InternalParent;
+					DebugDumpHistory(item.GroupHistory, i, indent + 1);
+				}
 			}
 			else
-				Console.Write("HistoryHead\n");
+			{
+				Console.Write(item.Operation + ": ");
+				if(item.Head != null && item.Tail != null)
+				{
+					Console.Write("Head: " + (item.Head.Start == Int64.MaxValue ? -1 : item.Head.Start));
+					Console.Write(" => " + (item.Head.End == Int64.MaxValue ? -1 : item.Head.End));
+					Console.Write(", Tail: " + (item.Tail.Start == Int64.MaxValue ? -1 : item.Tail.Start));
+					Console.Write(" => " + (item.Tail.End == Int64.MaxValue ? -1 : item.Tail.End));
+					Console.Write(", RHead: " + (item.Head.Prev.Start == Int64.MaxValue ? -1 : item.Head.Prev.Start));
+					Console.Write(" => " + (item.Head.Prev.End == Int64.MaxValue ? -1 : item.Head.Prev.End));
+					Console.Write(", RTail: " + (item.Tail.Next.Start == Int64.MaxValue ? -1 : item.Tail.Next.Start));
+					Console.Write(" => " + (item.Tail.Next.End == Int64.MaxValue ? -1 : item.Tail.Next.End));
+				}
+				Console.Write("\n");
+
+				if(item.Head != null && item.Tail != null)
+				{
+					//DebugDumpPieceText(pad, item.Head, item.Tail, false);
+					//DebugDumpPieceText(pad, item.Head.Prev, item.Tail.Next, false);
+				}
+			}
 				
-			DebugDumpHistory(item.InternalFirstChild, indent + 1);
+			DebugDumpHistory(history, item.InternalFirstChild, indent + 1);
 			item = item.InternalNextSibling;
 		}
 	}
+
 	protected void DebugDumpHistory(string msg)
 	{
-		/*
+		return;
+
 		Console.WriteLine("\n" + msg + "\n========\n");
 
-		InternalHistoryItem i = _History;
+		InternalHistoryItem i = _History.Current;
 		while(i.InternalParent != null)
 			i = i.InternalParent;
-		DebugDumpHistory(i, 1); */
+		DebugDumpHistory(_History, i, 1); 
 	}
 	
 	public string DebugGetPieces()

@@ -38,28 +38,6 @@ public partial class PieceBuffer : IDisposable
 		}
 	}
 	
-	public enum HistoryOperation
-	{
-		None,
-		New,
-		Open,
-		Insert,
-		InsertFile,
-		FillConstant,
-		Copy,
-		Remove,
-		Replace,
-		And,
-		Or,
-		Xor,
-		Invert,
-		ShiftLeft,
-		ShiftRight,
-		RotateLeft,
-		RotateRight,
-		Reverse
-	}
-	
 	public class HistoryItem
 	{
 		protected bool _Active;
@@ -68,8 +46,8 @@ public partial class PieceBuffer : IDisposable
 		protected DateTime _Date;
 		public DateTime Date { get { return _Date; } }
 		
-		protected HistoryOperation _Operation;
-		public HistoryOperation Operation { get { return _Operation; } }
+		protected string _Operation;
+		public string Operation { get { return _Operation; } }
 		
 		protected long _StartPosition;
 		public long StartPosition { get { return _StartPosition; } }
@@ -104,7 +82,7 @@ public partial class PieceBuffer : IDisposable
 			get { return _Date; }
 			set { _Date = value; } 
 		}
-		public new HistoryOperation Operation 
+		public new string Operation 
 		{
 			get { return _Operation; }
 			set { _Operation = value; } 
@@ -159,11 +137,11 @@ public partial class PieceBuffer : IDisposable
 			set { _Tail = value; }
 		}
 
-		protected int _GroupLevel;
-		public int GroupLevel
+		protected HistoryTree _GroupHistory;
+		public HistoryTree GroupHistory
 		{
-			get { return _GroupLevel; }
-			set { _GroupLevel = value; }
+			get { return _GroupHistory; }
+			set { _GroupHistory = value; }
 		}
 
 		protected long _PieceStartPosition;
@@ -187,10 +165,17 @@ public partial class PieceBuffer : IDisposable
 			set { _PieceNewLength = value; }
 		}
 
-		public InternalHistoryItem(DateTime date, HistoryOperation op, 
+		protected HistoryTree _Tree;
+		public HistoryTree Tree
+		{
+			get { return _Tree; }
+			set { _Tree = value; }
+		}
+
+		public InternalHistoryItem(DateTime date, string op, 
 		                           long startPosition, long oldLength, long newLength, 
 		                           long pieceStartPos, long pieceOldLength, long pieceNewLength,
-		                           Piece head, Piece tail, int groupLevel)
+		                           Piece head, Piece tail)
 		{
 			Active = true;
 			Date = date;
@@ -200,55 +185,124 @@ public partial class PieceBuffer : IDisposable
 			NewLength = newLength;
 			Head = head;
 			Tail = tail;
-			GroupLevel = groupLevel;
 			PieceStartPosition = pieceStartPos;
 			PieceOldLength = pieceOldLength;
 			PieceNewLength = pieceNewLength;
 		}
 	}
 
-	protected void BeginHistoryGroup() { ++HistoryGroupLevel; }
-	protected void EndHistoryGroup() { --HistoryGroupLevel; }
-
-	protected void AddHistory(HistoryOperation operation, long startPosition, long oldLength, long newLength, 
-	                          long pieceStartPos, long pieceOldLength, long pieceNewLength, Piece start, Piece end)
+	protected class HistoryTree
 	{
-		InternalHistoryItem oldItem = _History;
+		protected InternalHistoryItem _Root;
+		protected InternalHistoryItem _Current;
+		protected bool                _Active;
+		                                              
+		public InternalHistoryItem Root    { get { return _Root; } }
+		public InternalHistoryItem Current { get { return _Current; } set { _Current = value; } }
+		public bool                IsEmpty { get { return _Root == null; } }
+		public bool                Active  { get { return _Active; } set { _Active = value; } }
+
+		public HistoryTree()
+		{
+			_Root = _Current = null;
+			_Active = true;
+		}
+
+		public void Add(InternalHistoryItem item)
+		{
+			if(_Root == null)
+				_Root = item;
+
+			if(_Current != null)
+			{
+				item.NextSibling = _Current.FirstChild;
+				_Current.FirstChild = item;
+			}
+			else
+				item.NextSibling = null;
+
+			item.FirstChild = null;
+			item.Parent = _Current;
+			_Current = item;
+
+			item.Tree = this;
+		}
+	}
+
+	public HistoryItem BeginHistoryGroup(string operation) 
+	{
+		InternalHistoryItem item = AddHistory(operation, 0, 0, 0, 0, 0, 0, null, null);
+		item.GroupHistory = new HistoryTree();
+		AddHistory("New", 0, 0, 0, 0, 0, 0, null, null);
+		return item;
+	}
+
+	public void EndHistoryGroup(HistoryItem group) 
+	{
+		InternalHistoryItem item = (InternalHistoryItem)group;
+
+		// If no actual actions happened within this group
+		// then delete it and pretend it never happened.
+		if(item.GroupHistory.Current == item.GroupHistory.Root)
+		{
+			if(item.InternalFirstChild != null)
+				item.InternalFirstChild.Parent = item.Parent;
+			if(item.InternalParent != null)
+				item.InternalParent.FirstChild = item.FirstChild;
+			if(item.Tree.Current == item)
+				item.Tree.Current = item.InternalParent;
+
+			if(HistoryRemoved != null)
+				HistoryRemoved(this, new HistoryEventArgs(item, null));
+		}
+
+		item.GroupHistory.Active = false;
+	}
+
+	protected InternalHistoryItem AddHistory(string operation, long startPosition, long oldLength, long newLength, 
+	                                         long pieceStartPos, long pieceOldLength, long pieceNewLength, Piece start, Piece end)
+	{
+		InternalHistoryItem oldItem = _History.Current;
+
+		HistoryTree history = _History;
+		while(history.Current != null && history.Current.GroupHistory != null && history.Current.GroupHistory.Active)
+			history = history.Current.GroupHistory;
+
 		InternalHistoryItem newItem = new InternalHistoryItem(DateTime.Now, operation, startPosition, 
 		                                                      oldLength, newLength, 
 		                                                      pieceStartPos, pieceOldLength, pieceNewLength,
-		                                                      start, end, HistoryGroupLevel);
+		                                                      start, end);
 
-		newItem.NextSibling = History.FirstChild;
-		_History.FirstChild = newItem;
-		newItem.Parent = History;
-		_History = newItem;
+		history.Add(newItem);
 		
-		if(HistoryAdded != null)
-			HistoryAdded(this, new HistoryEventArgs(oldItem, newItem));
+		if(HistoryAdded != null && oldItem != _History.Current)
+			HistoryAdded(this, new HistoryEventArgs(oldItem, _History.Current));
 
 		DebugDumpHistory(String.Empty);
+
+		return newItem;
 	}
 
-	protected void UndoRedo(long editStartPos, long editEndPos, long oldLength, long newLength,
+	protected void UndoRedo(HistoryTree history, 
+	                        long editStartPos, long editEndPos, long oldLength, long newLength,
 	                        long changeStartPos, long changeEndPos)
 	{
 		Debug.Assert(Marks.DebugMarkChainIsValid(), "Undo: Enter: Invalid mark chain");
 
-		if(History != null)
+		if(history.Current != null)
 		{
-			Piece removeHead = _History.Head.Prev.Next;
-			Piece removeTail = _History.Tail.Next.Prev;
-			Piece insertHead = _History.Head;
-			Piece insertTail = _History.Tail;
-			Piece insertAfter = _History.Head.Prev;
+			Piece removeHead = history.Current.Head.Prev.Next;
+			Piece removeTail = history.Current.Tail.Next.Prev;
+			Piece insertHead = history.Current.Head;
+			Piece insertTail = history.Current.Tail;
+			Piece insertAfter = history.Current.Head.Prev;
 			Mark editStartMark = Marks.Add(editStartPos);
 			Mark editEndMark = Marks.Add(editEndPos);
 
 			if(removeHead != insertTail.Next && removeTail != insertHead.Prev)
 			{
-				_History.Head = removeHead;
-				_History.Tail = removeTail;
+				history.Current.Head = removeHead;
+				history.Current.Tail = removeTail;
 				Piece.ListRemoveRange(removeHead, removeTail);
 			}
 			else
@@ -256,8 +310,8 @@ public partial class PieceBuffer : IDisposable
 				Piece empty = new Piece(AllocatedPieces);
 				empty.Prev = insertAfter;
 				empty.Next = insertAfter.Next;
-				_History.Head = empty;
-				_History.Tail = empty;
+				history.Current.Head = empty;
+				history.Current.Tail = empty;
 			}
 
 			if(insertHead != insertTail)
@@ -278,30 +332,71 @@ public partial class PieceBuffer : IDisposable
 		Debug.Assert(Marks.DebugMarkChainIsValid(), "Undo: Leave: Invalid mark chain");
 	}
 
+	protected void Undo(HistoryTree history)
+	{
+		if(history.Current.GroupHistory == null)
+		{
+			long changeEndPos;
+			if(history.Current.OldLength == history.Current.NewLength)
+				changeEndPos = history.Current.StartPosition + history.Current.OldLength;
+			else
+				changeEndPos = Length;
+
+			UndoRedo(history, 
+			         history.Current.PieceStartPosition,
+			         history.Current.PieceStartPosition + history.Current.PieceNewLength,
+			         history.Current.NewLength, history.Current.OldLength,
+			         history.Current.StartPosition, changeEndPos);
+		}
+		else
+		{
+			while(history.Current.GroupHistory.Current != history.Current.GroupHistory.Root)
+				Undo(history.Current.GroupHistory);
+		}
+
+		history.Current.Active = false;
+		history.Current = history.Current.InternalParent;
+	}
+
 	public void Undo()
 	{
 		lock(Lock)
 		{
-			if(History.Parent != null)
+			if(_History.Current != _History.Root)
 			{
-				InternalHistoryItem oldItem = _History;
-				InternalHistoryItem newItem = _History.InternalParent;
-				long changeEndPos;
-				if(_History.OldLength == _History.NewLength)
-					changeEndPos = _History.StartPosition + _History.OldLength;
-				else
-					changeEndPos = Length;
+				InternalHistoryItem oldItem = _History.Current;
 
-				UndoRedo(_History.PieceStartPosition, 
-				         _History.PieceStartPosition + _History.PieceNewLength, 
-				         _History.NewLength, _History.OldLength,
-				         _History.StartPosition, changeEndPos);
-				_History = _History.InternalParent;
-				oldItem.Active = false;
+				Undo(_History);
 				
-				if(HistoryUndone != null)
-					HistoryUndone(this, new HistoryEventArgs(oldItem, newItem));
+				if(HistoryUndone != null && oldItem != _History.Current)
+					HistoryUndone(this, new HistoryEventArgs(oldItem, _History.Current));
 			}
+		}
+	}
+
+	protected void Redo(HistoryTree history)
+	{
+		history.Current = history.Current.InternalFirstChild;
+		history.Current.Active = true;
+
+		if(history.Current.GroupHistory == null)
+		{
+			long changeEndPos;
+			if(history.Current.OldLength == history.Current.NewLength)
+				changeEndPos = history.Current.StartPosition + history.Current.OldLength;
+			else
+				changeEndPos = Length;
+
+			UndoRedo(history,
+			         history.Current.PieceStartPosition,
+			         history.Current.PieceStartPosition + history.Current.PieceOldLength,
+			         history.Current.OldLength, history.Current.NewLength,
+			         history.Current.StartPosition, changeEndPos);
+		}
+		else
+		{
+			while(history.Current.GroupHistory.Current.FirstChild != null)
+				Redo(history.Current.GroupHistory);
 		}
 	}
 
@@ -311,25 +406,12 @@ public partial class PieceBuffer : IDisposable
 		{
 			if(History.FirstChild != null)
 			{
-				InternalHistoryItem oldItem = _History;
-				InternalHistoryItem newItem = _History.InternalFirstChild;
+				InternalHistoryItem oldItem = _History.Current;
 
-				_History = newItem;
+				Redo(_History);
 
-				long changeEndPos;
-				if(_History.OldLength == _History.NewLength)
-					changeEndPos = _History.StartPosition + _History.OldLength;
-				else
-					changeEndPos = Length;
-
-				UndoRedo(_History.PieceStartPosition, 
-				         _History.PieceStartPosition + _History.PieceOldLength,
-				         _History.OldLength, _History.NewLength,
-				         _History.StartPosition, changeEndPos);
-				newItem.Active = true;
-
-				if(HistoryRedone != null)
-					HistoryRedone(this, new HistoryEventArgs(oldItem, newItem));
+				if(HistoryRedone != null && oldItem != _History.Current)
+					HistoryRedone(this, new HistoryEventArgs(oldItem, _History.Current));
 			}
 		}
 	}
@@ -338,7 +420,7 @@ public partial class PieceBuffer : IDisposable
 	{
 		lock(Lock)
 		{
-			InternalHistoryItem oldItem = _History;
+			InternalHistoryItem oldItem = _History.Current;
 			Stack<InternalHistoryItem> redoPath = new Stack<InternalHistoryItem>();
 			
 			// Find where the destination branch joins the current branch
@@ -352,29 +434,16 @@ public partial class PieceBuffer : IDisposable
 			HistoryItem commonParent = item;
 			
 			// Undo back to the point where the branches meet
-			while(History != commonParent)
-			{
-				long changeEndPos;
-				if(_History.OldLength == _History.NewLength)
-					changeEndPos = _History.StartPosition + _History.OldLength;
-				else
-					changeEndPos = Length;
-
-				UndoRedo(_History.PieceStartPosition, 
-				         _History.PieceStartPosition + _History.PieceNewLength, 
-				         _History.NewLength, _History.OldLength,
-				         _History.StartPosition, changeEndPos);
-				_History.Active = false;
-				_History = _History.InternalParent;
-			}
-			
+			while(_History.Current != commonParent)
+				Undo(_History);
+						
 			// Redo to the destination
-			while(History != destination)
+			while(_History.Current != destination)
 			{
 				InternalHistoryItem next = redoPath.Pop();
-				InternalHistoryItem prev = _History.InternalFirstChild;
+				InternalHistoryItem prev = _History.Current.InternalFirstChild;
 				
-				item = _History.InternalFirstChild;
+				item = _History.Current.InternalFirstChild;
 				while(item != next)
 				{
 					prev = item;
@@ -382,23 +451,11 @@ public partial class PieceBuffer : IDisposable
 				}
 
 				HistoryItem tmp = next.NextSibling;
-				next.NextSibling = History.FirstChild;
-				_History.FirstChild = next;
+				next.NextSibling = _History.Current.FirstChild;
+				_History.Current.FirstChild = next;
 				prev.NextSibling = tmp;
 				
-				_History = item;
-
-				long changeEndPos;
-				if(_History.OldLength == _History.NewLength)
-					changeEndPos = _History.StartPosition + _History.OldLength;
-				else
-					changeEndPos = Length;
-
-				UndoRedo(_History.PieceStartPosition, 
-				         _History.PieceStartPosition + _History.PieceOldLength,
-				         _History.OldLength, _History.NewLength,
-				         _History.StartPosition, changeEndPos);
-				_History.Active = true;
+				Redo(_History);
 			}
 			
 			if(HistoryJumped != null)

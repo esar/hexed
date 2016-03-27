@@ -216,15 +216,13 @@ public partial class PieceBuffer : IDisposable
 	protected Dictionary<string, Block> OpenBlocks; 
 	protected FileBlock              OriginalFileBlock;
 	protected Block                  CurrentBlock;
-	protected InternalHistoryItem    _History;
-	public HistoryItem               History { get { return _History; } }
-	protected InternalHistoryItem   _HistoryRoot;
-	public HistoryItem              HistoryRoot { get { return _HistoryRoot; } }
-	public bool                     CanUndo { get { return _History != null && _History.Parent != null; } }
-	public bool                     CanRedo { get { return _History != null && _History.FirstChild != null; } }
-	public bool                     IsModified { get { return _History != null && _History.Parent != null; } }
-	protected int                   HistoryGroupLevel;
-	protected InternalSavePlan      CachedSavePlan;
+	protected HistoryTree            _History;
+	public HistoryItem               History { get { return _History.Current; } }
+	public HistoryItem               HistoryRoot { get { return _History.Root; } }
+	public bool                      CanUndo { get { return _History.Current != null && _History.Current.Parent != null; } }
+	public bool                      CanRedo { get { return _History.Current != null && _History.Current.FirstChild != null; } }
+	public bool                      IsModified { get { return _History.Current != null && _History.Current.Parent != null; } }
+	protected InternalSavePlan       CachedSavePlan;
 
 	const int IndexCacheSize = 4096;
 	long IndexCacheStartOffset;
@@ -235,6 +233,7 @@ public partial class PieceBuffer : IDisposable
 	
 	public delegate void HistoryEventHandler(object sender, HistoryEventArgs e);
 	public event HistoryEventHandler HistoryAdded;
+	public event HistoryEventHandler HistoryRemoved;
 	public event HistoryEventHandler HistoryUndone;
 	public event HistoryEventHandler HistoryRedone;
 	public event HistoryEventHandler HistoryJumped;
@@ -312,14 +311,14 @@ public partial class PieceBuffer : IDisposable
 
 		CurrentBlock = MemoryBlock.Create(OpenBlocks, 4096);
 		
-		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.New, 0, 0, 0, 0, 0, 0, null, null, 0);
-		HistoryGroupLevel = 0;
+		_History = new HistoryTree();
+		_History.Add(new InternalHistoryItem(DateTime.Now, "New", 0, 0, 0, 0, 0, 0, null, null));
 
 		IndexCacheBytes = new byte[IndexCacheSize];
 		IndexCacheStartOffset = Int64.MaxValue;
 
 		if(HistoryAdded != null)
-			HistoryAdded(this, new HistoryEventArgs(null, _History));
+			HistoryAdded(this, new HistoryEventArgs(null, _History.Current));
 	}
 
 	public void Open(string filename)
@@ -343,16 +342,16 @@ public partial class PieceBuffer : IDisposable
 
 		CurrentBlock = MemoryBlock.Create(OpenBlocks, 4096);
 
-		_HistoryRoot = _History = new InternalHistoryItem(DateTime.Now, HistoryOperation.Open, 
-		                                                  0, 0, block.Length, 0, 0, block.Length, 
-		                                                  null, null, 0);
-		HistoryGroupLevel = 0;
+		_History = new HistoryTree();
+		_History.Add(new InternalHistoryItem(DateTime.Now, "Open", 
+		                                                           0, 0, block.Length, 0, 0, block.Length, 
+		                                                           null, null));
 
 		IndexCacheBytes = new byte[IndexCacheSize];
 		IndexCacheStartOffset = Int64.MaxValue;
 
 		if(HistoryAdded != null)
-			HistoryAdded(this, new HistoryEventArgs(null, _History));
+			HistoryAdded(this, new HistoryEventArgs(null, _History.Current));
 	}
 
 	public void Reopen()
@@ -388,7 +387,7 @@ public partial class PieceBuffer : IDisposable
 		CurrentBlock = null;
 		OriginalFileBlock = null;
 		_Marks = null;
-		_HistoryRoot = _History = null;
+		_History = new HistoryTree();
 		IndexCacheBytes = null;
 		CachedSavePlan = null;
 
@@ -566,7 +565,7 @@ public partial class PieceBuffer : IDisposable
 		Debug.Assert(Marks.DebugMarkChainIsValid(), "Splice: Leave: Invalid mark chain");
 	}
 
-	protected void Replace(HistoryOperation operation, InternalMark curStart, InternalMark curEnd, 
+	protected void Replace(string operation, InternalMark curStart, InternalMark curEnd, 
 	                       Piece newStart, Piece newEnd, long newLength)
 	{
 		Debug.Assert(curStart != null && curEnd != null, "Replace: Enter: Invalid curStart/curEnd");
@@ -689,7 +688,7 @@ public partial class PieceBuffer : IDisposable
 				}
 			}
 
-			Replace(HistoryOperation.Insert, (InternalMark)destStart, (InternalMark)destEnd, head, tail, origLength);
+			Replace("Insert", (InternalMark)destStart, (InternalMark)destEnd, head, tail, origLength);
 		}
 	}
 
@@ -769,7 +768,7 @@ public partial class PieceBuffer : IDisposable
 		{
 			Block block = FileBlock.Create(OpenBlocks, filename);
 			Piece piece = new Piece(AllocatedPieces, block, offset, offset + length);
-			Replace(HistoryOperation.InsertFile, (InternalMark)destStart, (InternalMark)destEnd, piece, piece, length);
+			Replace("Insert File", (InternalMark)destStart, (InternalMark)destEnd, piece, piece, length);
 		}
 	}
 
@@ -783,7 +782,7 @@ public partial class PieceBuffer : IDisposable
 			Piece piece = null;
 			Block block = ConstantBlock.Create(OpenBlocks, constant);
 			piece = new Piece(AllocatedPieces, block, 0, length);
-			Replace(HistoryOperation.FillConstant, (InternalMark)destStart, (InternalMark)destEnd, 
+			Replace("Fill Constant", (InternalMark)destStart, (InternalMark)destEnd, 
 			        piece, piece, length);
 		}
 	}
@@ -803,7 +802,7 @@ public partial class PieceBuffer : IDisposable
 	{
 		lock(Lock)
 		{
-			Replace(HistoryOperation.Remove, (InternalMark)start, (InternalMark)end, null, null, 0);
+			Replace("Remove", (InternalMark)start, (InternalMark)end, null, null, 0);
 		}
 	}
 
@@ -812,7 +811,7 @@ public partial class PieceBuffer : IDisposable
 		lock(Lock)
 		{
 			Mark end = Marks.Add(Marks.Insert.Position + length);
-			Replace(HistoryOperation.Remove, (InternalMark)Marks.Insert, (InternalMark)end, null, null, 0);
+			Replace("Remove", (InternalMark)Marks.Insert, (InternalMark)end, null, null, 0);
 			Marks.Remove(end);
 		}
 	}
@@ -821,7 +820,7 @@ public partial class PieceBuffer : IDisposable
 	{
 		lock(Lock)
 		{
-			Replace(HistoryOperation.Remove, (InternalMark)range.Start, (InternalMark)range.End, null, null, 0);
+			Replace("Remove", (InternalMark)range.Start, (InternalMark)range.End, null, null, 0);
 		}
 	}
 
@@ -831,7 +830,7 @@ public partial class PieceBuffer : IDisposable
 		{
 			Mark s = Marks.Add(start);
 			Mark e = Marks.Add(end);
-			Replace(HistoryOperation.Remove, (InternalMark)s, (InternalMark)e, null, null, 0);
+			Replace("Remove", (InternalMark)s, (InternalMark)e, null, null, 0);
 			Marks.Remove(s);
 			Marks.Remove(e);
 		}
@@ -877,7 +876,7 @@ public partial class PieceBuffer : IDisposable
 			tail = head;
 		}
 
-		Replace(HistoryOperation.Copy, destStart, destEnd, head, tail, length);
+		Replace("Copy", destStart, destEnd, head, tail, length);
 	}
 	
 	public void Copy(Mark destStart, Mark destEnd, Mark srcStart, Mark srcEnd)
@@ -942,10 +941,10 @@ public partial class PieceBuffer : IDisposable
 	{
 		lock(Lock)
 		{
-			BeginHistoryGroup();
+			HistoryItem group = BeginHistoryGroup("Move");
 			Copy(destStart, destEnd, srcStart, srcEnd);
 			Remove(srcStart, srcEnd);
-			EndHistoryGroup();
+			EndHistoryGroup(group);
 		}
 	}
 
@@ -953,10 +952,10 @@ public partial class PieceBuffer : IDisposable
 	{
 		lock(Lock)
 		{
-			BeginHistoryGroup();
+			HistoryItem group = BeginHistoryGroup("Move");
 			Copy(dest, dest, range.Start, range.End);
 			Remove(range.Start, range.End);
-			EndHistoryGroup();
+			EndHistoryGroup(group);
 		}
 	}
 
@@ -966,10 +965,10 @@ public partial class PieceBuffer : IDisposable
 		{
 			Mark s = Marks.Add(start);
 			Mark e = Marks.Add(end);
-			BeginHistoryGroup();
+			HistoryItem group = BeginHistoryGroup("Move");
 			Copy(dest, dest, s, e);
 			Remove(s, e);
-			EndHistoryGroup();
+			EndHistoryGroup(group);
 			Marks.Remove(s);
 			Marks.Remove(e);
 		}
@@ -979,10 +978,10 @@ public partial class PieceBuffer : IDisposable
 	{
 		lock(Lock)
 		{
-			BeginHistoryGroup();
+			HistoryItem group = BeginHistoryGroup("Move");
 			Copy(Marks.Insert, Marks.Insert, start, end);
 			Remove(start, end);
-			EndHistoryGroup();
+			EndHistoryGroup(group);
 		}
 	}
 
@@ -990,10 +989,10 @@ public partial class PieceBuffer : IDisposable
 	{
 		lock(Lock)
 		{
-			BeginHistoryGroup();
+			HistoryItem group = BeginHistoryGroup("Move");
 			Copy(Marks.Insert, Marks.Insert, range.Start, range.End);
 			Remove(range.Start, range.End);
-			EndHistoryGroup();
+			EndHistoryGroup(group);
 		}
 	}
 
@@ -1022,7 +1021,7 @@ public partial class PieceBuffer : IDisposable
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
 		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationOr(constant), src);
-		Replace(HistoryOperation.Or, s, e, piece, piece, e.Position - s.Position);
+		Replace("Or", s, e, piece, piece, e.Position - s.Position);
 	}
 	
 	public void Or(Mark start, Mark end, byte constant)
@@ -1043,7 +1042,7 @@ public partial class PieceBuffer : IDisposable
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
 		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationAnd(constant), src);
-		Replace(HistoryOperation.And, s, e, piece, piece, e.Position - s.Position);
+		Replace("And", s, e, piece, piece, e.Position - s.Position);
 	}		
 	
 	public void And(Mark start, Mark end, byte constant)
@@ -1063,7 +1062,7 @@ public partial class PieceBuffer : IDisposable
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
 		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationXor(constant), src);
-		Replace(HistoryOperation.Xor, s, e, piece, piece, e.Position - s.Position);
+		Replace("Xor", s, e, piece, piece, e.Position - s.Position);
 	}		
 	
 	public void Xor(Mark start, Mark end, byte constant)
@@ -1083,7 +1082,7 @@ public partial class PieceBuffer : IDisposable
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
 		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationInvert(), src);
-		Replace(HistoryOperation.Invert, s, e, piece, piece, e.Position - s.Position);
+		Replace("Invert", s, e, piece, piece, e.Position - s.Position);
 	}		
 
 	public void Reverse(Mark start, Mark end)
@@ -1098,7 +1097,7 @@ public partial class PieceBuffer : IDisposable
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
 		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationReverse(), src);
-		Replace(HistoryOperation.Reverse, s, e, piece, piece, e.Position - s.Position);
+		Replace("Reverse", s, e, piece, piece, e.Position - s.Position);
 	}		
 	
 	public void Shift(Mark start, Mark end, int distance)
@@ -1113,7 +1112,7 @@ public partial class PieceBuffer : IDisposable
 		                                                                    e.Piece, e.Offset, 
 		                                                                    e.Position - s.Position);
 		Piece piece = new TransformPiece(AllocatedPieces, new TransformOperationShift(distance), src);
-		Replace(distance > 0 ? HistoryOperation.ShiftRight : HistoryOperation.ShiftLeft, s, e, 
+		Replace(distance > 0 ? "Shift Right" : "Shift Left", s, e, 
 		        piece, piece, e.Position - s.Position);
 	}
 	

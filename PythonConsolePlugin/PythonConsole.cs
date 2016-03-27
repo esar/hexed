@@ -213,8 +213,21 @@ namespace PythonConsolePlugin
 					CurrentExpression.Append("\n");
 					if(Python.ParseInteractiveInput(CurrentExpression.ToString(), newText.Trim().Length != 0))
 					{
-						Python.ExecuteToConsole(CurrentExpression.ToString());
-						CurrentExpression.Remove(0, CurrentExpression.Length);
+						PieceBuffer.HistoryItem historyGroup = null;
+
+						if(CurrentDocument != null)
+							historyGroup = CurrentDocument.BeginHistoryGroup("Interactive Python");
+
+						try
+						{
+							Python.ExecuteToConsole(CurrentExpression.ToString());
+							CurrentExpression.Remove(0, CurrentExpression.Length);
+						}
+						finally
+						{
+							if(CurrentDocument != null && historyGroup != null)
+								CurrentDocument.EndHistoryGroup(historyGroup);
+						}
 					}
 					else
 					{
