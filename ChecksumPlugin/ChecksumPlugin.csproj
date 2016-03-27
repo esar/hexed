@@ -16,7 +16,7 @@
     <RootNamespace>
     </RootNamespace>
     <Optimize>true</Optimize>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG</DefineConstants>
     <WarningLevel>4</WarningLevel>
     <DebugType>full</DebugType>
@@ -26,7 +26,7 @@
     <RootNamespace>
     </RootNamespace>
     <Optimize>true</Optimize>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <WarningLevel>4</WarningLevel>
     <DebugType>none</DebugType>
   </PropertyGroup>
