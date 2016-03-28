@@ -916,12 +916,6 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 	{
 		base.OnLoad(e);
 		PluginManager.LoadPlugins();
-	}
-	
-	protected override void OnActivated(EventArgs e)
-	{
-		base.OnActivated(e);
-		SplashScreen.Hide();
 
 		string[] args = Environment.GetCommandLineArgs();
 		for(int i = 1; i < args.Length; ++i)
@@ -930,6 +924,12 @@ class HexEdApp : Form, IPluginHost, IEnumerable<Document>
 			if(doc != null)
 				CreateView(doc);
 		}
+	}
+	
+	protected override void OnActivated(EventArgs e)
+	{
+		base.OnActivated(e);
+		SplashScreen.Hide();
 	}
 
 
