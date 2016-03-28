@@ -36,6 +36,14 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	private Aga.Controls.Tree.TreeColumn _TreeColumnRange;
 
 	private DocumentRangeIndicator RangeIndicator;
+
+	private ToolStrip         ToolBar;
+	private ToolStripComboBox TaggedRevisionComboBox;
+	private ToolStripButton   TagAddButton;
+	private ToolStripButton   TagDeleteButton;
+	private ToolStripButton   TagRevertButton;
+	private List< KeyValuePair<string, PieceBuffer.HistoryItem> > TaggedRevisionList;
+
 	private Dictionary<string, Image> OperationIcons;
 	private Image UnknownOperationIcon;
 	
@@ -48,7 +56,20 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 	public HistoryPanel(IPluginHost host)
 	{
 		Host = host;
-		
+	
+		Host.Commands.Add("History/Tag Revision", "Tags the current revision in the undo/redo history", "Tag Revision",
+		                  Host.Settings.Image("icons.bookmark_16.png"),
+		                  null,
+		                  OnTagRevision);
+		Host.Commands.Add("History/Revert To Tag", "Jumps to the selected tag", "Revert To Tag",
+		                  Host.Settings.Image("icons.go_16.png"),
+		                  null,
+		                  OnRevertToTag);
+		Host.Commands.Add("History/Delete Tag", "Deletes the selected tag", "Delete Tag",
+		                  Host.Settings.Image("icons.delete_16.png"),
+		                  null,
+		                  OnDeleteTag);
+	
 		_TreeView = new Aga.Controls.Tree.TreeViewAdv();
 		_TreeColumnName = new Aga.Controls.Tree.TreeColumn("Name", 100);
 		_TreeColumnDate = new Aga.Controls.Tree.TreeColumn("Date", 100);
@@ -110,6 +131,30 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		RangeIndicator.Dock = DockStyle.Left;
 		Controls.Add(RangeIndicator);
 		
+		TaggedRevisionList = new List< KeyValuePair<string, PieceBuffer.HistoryItem> >();
+
+		ToolBar = new ToolStrip();
+		TagAddButton = Host.CreateToolButton("History/Tag Revision");
+		TagAddButton.Enabled = false;
+		ToolBar.Items.Add(TagAddButton);
+		ToolBar.Items.Add(new ToolStripSeparator());
+		TaggedRevisionComboBox = new ToolStripComboBox();
+		TaggedRevisionComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+		TaggedRevisionComboBox.Dock = DockStyle.Fill;
+		TaggedRevisionComboBox.ComboBox.DataSource = new BindingSource(TaggedRevisionList, null);
+		TaggedRevisionComboBox.ComboBox.DisplayMember = "Key";
+		TaggedRevisionComboBox.ComboBox.ValueMember = "Value";
+		TaggedRevisionComboBox.ComboBox.SelectedValueChanged += OnTaggedRevisionSelectedValueChanged;
+		ToolBar.Items.Add(TaggedRevisionComboBox);
+		TagDeleteButton = Host.CreateToolButton("History/Delete Tag");
+		TagDeleteButton.Enabled = false;
+		ToolBar.Items.Add(TagDeleteButton);
+		TagRevertButton = Host.CreateToolButton("History/Revert To Tag");
+		TagRevertButton.Enabled = false;
+		ToolBar.Items.Add(TagRevertButton);
+		ToolBar.GripStyle = ToolStripGripStyle.Hidden;
+		Controls.Add(ToolBar);
+
 		OperationIcons = new Dictionary<string, Image>();
 		UnknownOperationIcon = Settings.Instance.Image("icons.unknown_op.png");
 		OperationIcons["Insert"] = Settings.Instance.Image("icons.insert.png");
@@ -121,6 +166,56 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 		host.ActiveViewChanged += OnActiveViewChanged;
 	}
 
+	public void OnTaggedRevisionSelectedValueChanged(object sender, EventArgs e)
+	{
+		if(TaggedRevisionComboBox.ComboBox.SelectedValue != null)
+		{
+Console.WriteLine("SelectedValue: " + TaggedRevisionComboBox.ComboBox.SelectedValue.ToString());
+			TagDeleteButton.Enabled = true;
+			TagRevertButton.Enabled = true;
+		}
+		else
+		{
+Console.WriteLine("SelectedValue: null");
+			TagDeleteButton.Enabled = false;
+			TagRevertButton.Enabled = false;
+		}
+	}
+
+	public void OnTagRevision(object sender, EventArgs e)
+	{
+		string name = "";
+
+		if(InputDialog.Show("Tag Revision", "Tag Name:", ref name) == DialogResult.OK)
+		{
+			TaggedRevisionList.Add(new KeyValuePair<string, PieceBuffer.HistoryItem>(name, LastDocument.History));
+			((BindingSource)TaggedRevisionComboBox.ComboBox.DataSource).ResetBindings(false);
+			TaggedRevisionComboBox.ComboBox.SelectedIndex = TaggedRevisionList.Count - 1;
+		}
+	}
+
+	public void OnRevertToTag(object sender, EventArgs e)
+	{
+		if(TaggedRevisionComboBox.ComboBox.SelectedValue != null)
+			LastDocument.HistoryJump(TaggedRevisionComboBox.ComboBox.SelectedValue as PieceBuffer.HistoryItem);
+	}
+
+	public void OnDeleteTag(object sender, EventArgs e)
+	{
+		if(TaggedRevisionComboBox.ComboBox.SelectedIndex >= 0)
+		{
+			if(MessageBox.Show(this, "Are you sure you want to delete the tag?",
+			                   "Delete Tag?",
+			                   MessageBoxButtons.YesNo,
+			                   MessageBoxIcon.Question) == DialogResult.Yes)
+			{
+				TaggedRevisionList.RemoveAt(TaggedRevisionComboBox.ComboBox.SelectedIndex);
+				((BindingSource)TaggedRevisionComboBox.ComboBox.DataSource).ResetBindings(false);
+				TaggedRevisionComboBox.SelectedIndex = TaggedRevisionList.Count - 1;
+				OnTaggedRevisionSelectedValueChanged(this, null);
+			}
+		}
+	}
 
 	public void OnActiveViewChanged(object sender, EventArgs e)
 	{
@@ -218,6 +313,13 @@ class HistoryPanel : Panel, Aga.Controls.Tree.ITreeModel
 			}
 			else
 				RangeIndicator.Ranges.Clear();
+
+			TagAddButton.Enabled = true;
+		}
+		else
+		{
+			RangeIndicator.Ranges.Clear();
+			TagAddButton.Enabled = false;
 		}
 	}
 	

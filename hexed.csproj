@@ -99,6 +99,7 @@
     <Compile Include="Settings\ShortcutsSettingsPage.cs" />
     <Compile Include="RadixMenu.cs" />
     <Compile Include="ConfirmSaveDialog.cs" />
+    <Compile Include="InputDialog.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="icons\and_16.png" />
